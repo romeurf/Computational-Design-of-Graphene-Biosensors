@@ -1,5 +1,14 @@
 # 🧬 Computational Design of Graphene Biosensors
 
+![Python](https://img.shields.io/badge/Python-3.9%2B-blue?logo=python&logoColor=white)
+![License](https://img.shields.io/badge/License-Academic%20Use%20Only-lightgrey)
+![Status](https://img.shields.io/badge/Status-In%20Development-yellow)
+![University](https://img.shields.io/badge/University-Minho-darkgreen?logo=academia&logoColor=white)
+![Thesis](https://img.shields.io/badge/Thesis-Bioinformatics%20%2F%20CompBio-blueviolet)
+![MAFFT](https://img.shields.io/badge/Alignment-MAFFT%207.526-orange)
+![primer3](https://img.shields.io/badge/Thermodynamics-primer3--py-red)
+![NCBI](https://img.shields.io/badge/Data-NCBI%20Entrez-0070c0?logo=databricks&logoColor=white)
+
 > **Master's Thesis — Bioinformatics / Computational Biology**  
 > University of Minho · PG45861  
 > Computational pipeline for the *in silico* design of DNA probes for **Graphene Field-Effect Transistor (GFET) biosensors** targeting bacterial pathogens.
@@ -24,7 +33,7 @@ The work is structured in two main phases:
 Six clinically validated gene markers across two groups:
 
 | Gene | Organism | Group | Clinical Relevance |
-|------|----------|-------|--------------------|
+|------|----------|-------|-------------------|
 | `nuc` | *Staphylococcus aureus* | A | Thermostable nuclease — GFET benchmark (Purwidyantri 2021) |
 | `rmpM` | *Neisseria meningitidis* | A | Class 4 OMP — electrochemical benchmark (Appaturi 2013) |
 | `lytA` | *Streptococcus pneumoniae* | B | Autolysin LytA — gold-standard clinical marker |
