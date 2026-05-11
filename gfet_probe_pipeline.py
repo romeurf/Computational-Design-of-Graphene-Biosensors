@@ -232,7 +232,7 @@ def calc_homodimer_dg(seq: str) -> float:
     except Exception:
         return None
 
-def score_probe(seq: str) -> dict:
+def score_probe(seq: str, gene_name: str = "default") -> dict:
     """
     Calcula todos os scores ViruScope-style para uma sequência de probe.
     Retorna dict com métricas e flags de PASS/FAIL.
@@ -244,25 +244,29 @@ def score_probe(seq: str) -> dict:
     hp  = calc_hairpin_dg(seq)
     hd  = calc_homodimer_dg(seq)
 
-    # Critérios de PASS (equivalentes ao ViruScope)
-    gc_ok = GC_MIN <= gc <= GC_MAX
-    tm_ok  = TM_MIN <= tm <= TM_MAX
-    fold_ok = (hp is None) or (hp > HAIRPIN_DG_MAX)       # ΔG > -2 → não faz fold significativo
-    dimer_ok = hd > HOMODIMER_DG_MAX     # ΔG > -6 → baixo risco de dimerização
+    # Lookup per-gene (fallback para valor global se gene não estiver no dict)
+    gc_min = GC_MIN.get(gene_name, 0.40) if isinstance(GC_MIN, dict) else GC_MIN
+    gc_max = GC_MAX.get(gene_name, 0.65) if isinstance(GC_MAX, dict) else GC_MAX
+    tm_min = TM_MIN.get(gene_name, 52.0) if isinstance(TM_MIN, dict) else TM_MIN
+
+    gc_ok    = gc_min <= gc <= gc_max
+    tm_ok    = tm_min <= tm <= TM_MAX
+    fold_ok  = (hp is None) or (hp > HAIRPIN_DG_MAX)
+    dimer_ok = (hd is None) or (hd > HOMODIMER_DG_MAX)  # ← bug fix: None = sem estrutura = OK
 
     pass_all = gc_ok and tm_ok and fold_ok and dimer_ok
 
     return {
-        "length"        : n,
-        "gc_content"    : round(gc, 3),
-        "tm_celsius"    : round(tm, 1),
-        "hairpin_dg"    : hp,
-        "homodimer_dg"  : hd,
-        "gc_ok"         : gc_ok,
-        "tm_ok"         : tm_ok,
-        "no_fold"       : fold_ok,
-        "no_dimer"      : dimer_ok,
-        "PASS"          : pass_all,
+        "length"       : n,
+        "gc_content"   : round(gc, 3),
+        "tm_celsius"   : round(tm, 1),
+        "hairpin_dg"   : hp,
+        "homodimer_dg" : hd,
+        "gc_ok"        : gc_ok,
+        "tm_ok"        : tm_ok,
+        "no_fold"      : fold_ok,
+        "no_dimer"     : dimer_ok,
+        "PASS"         : pass_all,
     }
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -410,6 +414,10 @@ def probes_from_single_seq(seq: str, gene_name: str) -> list:
     Conservação = 1.0 (trivialmente, só há 1 sequência).
     """
     seq = seq.upper().replace("-", "")
+
+    gc_min = GC_MIN.get(gene_name, 0.40) if isinstance(GC_MIN, dict) else GC_MIN
+    gc_max = GC_MAX.get(gene_name, 0.65) if isinstance(GC_MAX, dict) else GC_MAX
+
     windows = []
     for start in range(len(seq)):
         for length in range(PROBE_LEN_MIN, PROBE_LEN_MAX + 1):
@@ -424,12 +432,14 @@ def probes_from_single_seq(seq: str, gene_name: str) -> list:
                 "start"            : start,
                 "end"              : end,
                 "length"           : length,
-                "avg_conservation" : 1.0,    # só 1 seq — conservação trivial
+                "avg_conservation" : 1.0,
                 "avg_gap"          : 0.0,
                 "consensus"        : candidate,
             })
-    # Filtrar por GC e remover sobreposições
-    windows = [w for w in windows if GC_MIN <= (w["consensus"].count("G")+w["consensus"].count("C"))/w["length"] <= GC_MAX]
+
+    # Filtrar por GC (per-gene) e remover sobreposições
+    windows = [w for w in windows
+               if gc_min <= (w["consensus"].count("G") + w["consensus"].count("C")) / w["length"] <= gc_max]
     windows.sort(key=lambda x: x["start"])
     best, used = [], set()
     for w in windows:
@@ -443,11 +453,11 @@ def probes_from_single_seq(seq: str, gene_name: str) -> list:
 # ══════════════════════════════════════════════════════════════════════════════
 # SCORING DAS JANELAS (adicionar métricas ViruScope)
 # ══════════════════════════════════════════════════════════════════════════════
-def score_windows(windows: list) -> list:
+def score_windows(windows: list, gene_name: str = "default") -> list:
     """Adiciona scores ViruScope a cada janela candidata."""
     scored = []
     for w in windows:
-        metrics = score_probe(w["consensus"])
+        metrics = score_probe(w["consensus"], gene_name)
         w.update(metrics)
         scored.append(w)
     # Ordenar: PASS primeiro, depois por conservação
@@ -488,7 +498,10 @@ def write_outputs(gene_dir: Path, gene_name: str, target_info: dict,
         f.write(f"\n{'─'*70}\n")
         f.write(f"  PROBES CANDIDATAS — ViruScope Scoring (primer3-py)\n")
         f.write(f"  Filtro alinhamento: cons ≥ {cons_thr:.2f}, gap ≤ {gap_thr:.0%}\n")
-        f.write(f"  Filtro ViruScope  : Tm {TM_MIN}–{TM_MAX}°C | GC {GC_MIN:.0%}–{GC_MAX:.0%} | hairpin ΔG > {HAIRPIN_DG_MAX} | dimer ΔG > {HOMODIMER_DG_MAX}\n")
+        _tm_min = TM_MIN.get(gene_name, 52.0) if isinstance(TM_MIN, dict) else TM_MIN
+        _gc_min = GC_MIN.get(gene_name, 0.40) if isinstance(GC_MIN, dict) else GC_MIN
+        _gc_max = GC_MAX.get(gene_name, 0.65) if isinstance(GC_MAX, dict) else GC_MAX
+        f.write(f"  Filtro ViruScope  : Tm {_tm_min}–{TM_MAX}°C | GC {_gc_min:.0%}–{_gc_max:.0%} | hairpin ΔG > {HAIRPIN_DG_MAX} | dimer ΔG > {HOMODIMER_DG_MAX}\n")
         f.write(f"  Critério no-fold  : hairpin ΔG > {HAIRPIN_DG_MAX} kcal/mol (ssDNA para hibridação directa)\n")
         f.write(f"{'─'*70}\n\n")
 
@@ -499,7 +512,8 @@ def write_outputs(gene_dir: Path, gene_name: str, target_info: dict,
             status = "✔ PASS" if w.get("PASS") else "✘ FAIL"
             flags  = []
             if not w.get("gc_ok"):    flags.append(f"GC={w['gc_content']:.0%} fora 40-60%")
-            if not w.get("tm_ok"):    flags.append(f"Tm={w['tm_celsius']:.1f}°C fora {TM_MIN}-{TM_MAX}")
+            _tm_min_flag = TM_MIN.get(gene_name, 52.0) if isinstance(TM_MIN, dict) else TM_MIN
+            if not w.get("tm_ok"):    flags.append(f"Tm={w['tm_celsius']:.1f}°C fora {_tm_min_flag}-{TM_MAX}")
             if not w.get("no_fold"):  flags.append(f"hairpin ΔG={w['hairpin_dg']} ≤ {HAIRPIN_DG_MAX} (faz fold!)")
             if not w.get("no_dimer"): flags.append(f"dimer ΔG={w['homodimer_dg']} ≤ {HOMODIMER_DG_MAX}")
             flag_str = "  ← " + "; ".join(flags) if flags else ""
@@ -755,7 +769,9 @@ def process_target(gene_name: str, target_info: dict, skip_fetch: bool = False):
     print("  [3/5] Análise de conservação e janelas candidatas...")
     if single_seq_mode:
         windows = probes_from_single_seq(seq_str, gene_name)
-        print(f"    ✔ {len(windows)} janelas da referência (sliding window, GC {GC_MIN:.0%}–{GC_MAX:.0%})")
+        _gc_min_p = GC_MIN.get(gene_name, 0.40) if isinstance(GC_MIN, dict) else GC_MIN
+        _gc_max_p = GC_MAX.get(gene_name, 0.65) if isinstance(GC_MAX, dict) else GC_MAX
+        print(f"    ✔ {len(windows)} janelas da referência (sliding window, GC {_gc_min_p:.0%}–{_gc_max_p:.0%})")
     else:
         conservation, windows = analyse_conservation(aligned_fasta, gene_name, target_info)
         cons_thr = target_info.get("cons_threshold", 0.85)
@@ -769,7 +785,7 @@ def process_target(gene_name: str, target_info: dict, skip_fetch: bool = False):
 
     # ── 4. SCORING VIROSCOPE ──────────────────────────────────────────────
     print("  [4/5] Scoring ViruScope (Tm, GC, hairpin ΔG, dimer ΔG)...")
-    windows = score_windows(windows)
+    windows = score_windows(windows, gene_name)
     pass_n  = sum(1 for w in windows if w.get("PASS"))
     print(f"    ✔ {pass_n}/{len(windows)} probes passam todos os critérios")
     if pass_n == 0:
