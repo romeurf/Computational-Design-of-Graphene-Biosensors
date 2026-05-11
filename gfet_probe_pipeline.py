@@ -34,10 +34,31 @@ MAX_SEQS   = 20
 
 PROBE_LEN_MIN   = 18        # Wetmur 1991
 PROBE_LEN_MAX   = 28        # Wetmur 1991
-TM_MIN          = 52.0      # SantaLucia & Hicks 2004 (genes AT-ricos)
+TM_MIN = {
+    "nuc":  50.0,   # gene AT-rico — SantaLucia 1998, justificado por baixo GC do nuc locus
+    "rmpM": 55.0,
+    "lytA": 52.0,
+    "oprL": 55.0,
+    "algD": 55.0,
+    "frdB": 55.0,
+}
 TM_MAX          = 72.0
-GC_MIN          = 0.40
-GC_MAX          = 0.65      # IDT guidelines (P. aeruginosa GC-rich)
+GC_MIN = {
+    "nuc":  0.38,   # AT-rico, aceitar GC um pouco abaixo de 40%
+    "rmpM": 0.40,
+    "lytA": 0.40,
+    "oprL": 0.40,   # GC_MAX alargado abaixo
+    "algD": 0.40,
+    "frdB": 0.38,
+}
+GC_MAX = {
+    "nuc":  0.60,
+    "rmpM": 0.65,   # IDT guidelines (P. aeruginosa GC-rich)
+    "lytA": 0.65,
+    "oprL": 0.70,   # P. aeruginosa ~67% GC genómico — Nature Comm. 2026
+    "algD": 0.70,
+    "frdB": 0.60,
+}
 HAIRPIN_DG_MAX  = -1.0      # SantaLucia & Hicks 2004 — Eq. 8-10
 HOMODIMER_DG_MAX= -6.0      # Zadeh et al. 2011 (NUPACK)
 
@@ -225,7 +246,7 @@ def score_probe(seq: str) -> dict:
 
     # Critérios de PASS (equivalentes ao ViruScope)
     gc_ok = GC_MIN <= gc <= GC_MAX
-    tm_ok = TM_MIN <= tm <= TM_MAX
+    tm_ok  = TM_MIN <= tm <= TM_MAX
     fold_ok = (hp is None) or (hp > HAIRPIN_DG_MAX)       # ΔG > -2 → não faz fold significativo
     dimer_ok = hd > HOMODIMER_DG_MAX     # ΔG > -6 → baixo risco de dimerização
 
