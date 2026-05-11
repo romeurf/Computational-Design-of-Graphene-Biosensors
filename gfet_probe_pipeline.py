@@ -652,17 +652,6 @@ def write_final_summary(all_results: dict):
     print(f"\n  Resumo guardado em: {summary_path}")
     return summary_path
 
-import glob
-dfs = []
-for tsv_path in glob.glob(str(OUTPUT_DIR / "*" / "*_probes_scored.tsv")):
-    df = pd.read_csv(tsv_path, sep="\t")
-    df["fonte"] = "romeu"
-    dfs.append(df)
-if dfs:
-    final_df = pd.concat(dfs, ignore_index=True)
-    out_csv = OUTPUT_DIR / "FINAL_PROBES_ALL.csv"
-    final_df.to_csv(out_csv, index=False)
-    print(f"\n  ✔ CSV unificado: {out_csv}  ({len(final_df)} probes total)")
 # ══════════════════════════════════════════════════════════════════════════════
 # PIPELINE PRINCIPAL POR TARGET
 # ══════════════════════════════════════════════════════════════════════════════
@@ -818,5 +807,20 @@ def main():
     # Lista final consolidada
     write_final_summary(all_results)
 
+    # ── CSV unificado com todas as probes ────────────────────────────────
+    import glob
+    dfs = []
+    for tsv_path in glob.glob(str(OUTPUT_DIR / "*" / "*_probes_scored.tsv")):
+        df = pd.read_csv(tsv_path, sep="\t")
+        df["fonte"] = "romeu"
+        dfs.append(df)
+    if dfs:
+        final_df = pd.concat(dfs, ignore_index=True)
+        out_csv = OUTPUT_DIR / "FINAL_PROBES_ALL.csv"
+        final_df.to_csv(out_csv, index=False)
+        print(f"\n  ✔ CSV unificado: {out_csv}  ({len(final_df)} probes total)")
+    else:
+        print("\n  ⚠ Nenhum TSV encontrado para consolidar.")
+        
 if __name__ == "__main__":
     main()
