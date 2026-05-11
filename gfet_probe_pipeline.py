@@ -32,15 +32,14 @@ Entrez.tool  = "gfet_probe_pipeline_v3"
 OUTPUT_DIR = Path("alignments")
 MAX_SEQS   = 20
 
-# Critérios ViruScope / GFET (podem ser ajustados por target)
-PROBE_LEN_MIN   = 20        # nt mínimo da probe
-PROBE_LEN_MAX   = 25        # nt máximo da probe
-TM_MIN          = 55.0      # °C — Tm mínima aceitável
-TM_MAX          = 72.0      # °C — Tm máxima aceitável
-GC_MIN          = 0.40      # GC mínimo
-GC_MAX          = 0.60      # GC máximo
-HAIRPIN_DG_MAX  = -2.0      # kcal/mol — acima disto = sem fold significativo (critério no-fold)
-HOMODIMER_DG_MAX= -6.0      # kcal/mol — acima disto = baixo risco de dimerização
+PROBE_LEN_MIN   = 18        # Wetmur 1991
+PROBE_LEN_MAX   = 28        # Wetmur 1991
+TM_MIN          = 52.0      # SantaLucia & Hicks 2004 (genes AT-ricos)
+TM_MAX          = 72.0
+GC_MIN          = 0.40
+GC_MAX          = 0.65      # IDT guidelines (P. aeruginosa GC-rich)
+HAIRPIN_DG_MAX  = -1.0      # SantaLucia & Hicks 2004 — Eq. 8-10
+HOMODIMER_DG_MAX= -6.0      # Zadeh et al. 2011 (NUPACK)
 
 # Primer3 thermodynamic parameters (equivalentes ao ViruScope)
 P3_MV_CONC  = 50.0    # [Na+] mM
@@ -505,16 +504,25 @@ def write_outputs(gene_dir: Path, gene_name: str, target_info: dict,
 
     # ── 2. probe_windows_scored.tsv ───────────────────────────────────────
     tsv = gene_dir / f"{gene_name}_probes_scored.tsv"
-    cols = ["rank", "gene", "start", "end", "length",
-            "avg_conservation", "avg_gap", "gc_content",
-            "tm_celsius", "hairpin_dg", "homodimer_dg",
-            "gc_ok", "tm_ok", "no_fold", "no_dimer", "PASS",
-            "consensus_5to3"]
+    cols = ["probe_id", "rank", "gene", "start", "end", "length",
+        "avg_conservation", "avg_gap", "gc_content",
+        "tm_celsius", "hairpin_dg", "homodimer_dg",
+        "gc_ok", "tm_ok", "no_fold", "no_dimer", "PASS",
+        "consensus_5to3"]
     with open(tsv, "w", encoding="utf-8") as f:
         f.write("\t".join(cols) + "\n")
         for i, w in enumerate(windows, 1):
+            sp_map = {"nuc":"Saur","rmpM":"Nmen","lytA":"Spne","oprL":"Paer","algD":"Paer","frdB":"Hinf"}
+            sp = sp_map.get(gene_name, gene_name[:4].capitalize())
+            status_str = "PASS" if w.get("PASS") else "FAIL"
+            probe_id = (f"p{i:03d}_{sp}_{gene_name}_"
+                        f"pos{w['start']}-{w['end']}_"
+                        f"Tm{w.get('tm_celsius','NA'):.1f}_"
+                        f"GC{int(w.get('gc_content',0)*100)}_"
+                        f"hp{w.get('hairpin_dg','NA')}_"
+                        f"{status_str}")
             row = [
-                i, gene_name, w["start"], w["end"], w["length"],
+                probe_id, i, gene_name, w["start"], w["end"], w["length"],
                 w["avg_conservation"], w["avg_gap"], w["gc_content"],
                 w.get("tm_celsius", "N/A"), w.get("hairpin_dg", "N/A"),
                 w.get("homodimer_dg", "N/A"),
@@ -532,11 +540,21 @@ def write_outputs(gene_dir: Path, gene_name: str, target_info: dict,
     with open(vs_fasta, "w", encoding="utf-8") as f:
         for i, w in enumerate(to_export, 1):
             status = "PASS" if w.get("PASS") else "FAIL"
-            f.write(f">{gene_name}_probe_{i:02d}_{status}_"
-                    f"pos{w['start']}-{w['end']}_"
-                    f"Tm{w.get('tm_celsius','NA')}_"
-                    f"GC{w['gc_content']:.2f}_"
-                    f"hp{w.get('hairpin_dg','NA')}\n")
+            # Abreviatura do organismo (3+3 letras)
+            sp_map = {
+                "nuc": "Saur", "rmpM": "Nmen", "lytA": "Spne",
+                "oprL": "Paer", "algD": "Paer", "frdB": "Hinf"
+            }
+            sp = sp_map.get(gene_name, gene_name[:4].capitalize())
+            probe_id = (
+                f"p{i:03d}_{sp}_{gene_name}_"
+                f"pos{w['start']}-{w['end']}_"
+                f"Tm{w.get('tm_celsius','NA'):.1f}_"
+                f"GC{int(w['gc_content']*100)}_"
+                f"hp{w.get('hairpin_dg','NA')}_"
+                f"{status}"
+            )
+            f.write(f">{probe_id}\n")
             f.write(f"{w['consensus']}\n")
 
     return rpt, tsv, vs_fasta
@@ -573,7 +591,7 @@ def write_final_summary(all_results: dict):
 
         windows = data["windows"]
 
-        # 🔥 TOP 5 (já ordenado no pipeline)
+        # TOP 5 (já ordenado no pipeline)
         best_list = windows[:5]
 
         # verifica se alguma PASS existe no top 5
@@ -634,6 +652,17 @@ def write_final_summary(all_results: dict):
     print(f"\n  Resumo guardado em: {summary_path}")
     return summary_path
 
+import glob
+dfs = []
+for tsv_path in glob.glob(str(OUTPUT_DIR / "*" / "*_probes_scored.tsv")):
+    df = pd.read_csv(tsv_path, sep="\t")
+    df["fonte"] = "romeu"
+    dfs.append(df)
+if dfs:
+    final_df = pd.concat(dfs, ignore_index=True)
+    out_csv = OUTPUT_DIR / "FINAL_PROBES_ALL.csv"
+    final_df.to_csv(out_csv, index=False)
+    print(f"\n  ✔ CSV unificado: {out_csv}  ({len(final_df)} probes total)")
 # ══════════════════════════════════════════════════════════════════════════════
 # PIPELINE PRINCIPAL POR TARGET
 # ══════════════════════════════════════════════════════════════════════════════
