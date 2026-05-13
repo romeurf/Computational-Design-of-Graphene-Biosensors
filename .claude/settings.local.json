@@ -53,7 +53,10 @@
       "Bash(C:/Users/Romeu/AppData/Local/Programs/Python/Python312/python.exe -m pip install boltz)",
       "Bash(C:/Users/Romeu/AppData/Local/Programs/Python/Python312/python.exe -m boltz predict --help)",
       "Bash(boltz predict *)",
-      "Bash(C:/Users/Romeu/AppData/Local/Programs/Python/Python312/python.exe -c \"import shutil; t,u,f=shutil.disk_usage\\('C:/'\\); print\\(f'Total: {t//1e9:.0f}GB  Usado: {u//1e9:.0f}GB  Livre: {f//1e9:.0f}GB'\\)\")"
+      "Bash(C:/Users/Romeu/AppData/Local/Programs/Python/Python312/python.exe -c \"import shutil; t,u,f=shutil.disk_usage\\('C:/'\\); print\\(f'Total: {t//1e9:.0f}GB  Usado: {u//1e9:.0f}GB  Livre: {f//1e9:.0f}GB'\\)\")",
+      "Bash(C:/Users/Romeu/AppData/Local/Programs/Python/Python312/python.exe -m pip show python-docx)",
+      "Bash(C:/Users/Romeu/AppData/Local/Programs/Python/Python312/python.exe -m pip install python-docx -q)",
+      "Bash(C:/Users/Romeu/AppData/Local/Programs/Python/Python312/python.exe make_doc.py)"
     ]
   }
 }
