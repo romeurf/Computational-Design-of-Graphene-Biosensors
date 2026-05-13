@@ -777,7 +777,7 @@ def run_pipeline(run_nupack=True, run_3d=True):
 
         # 4. Scoring básico
         probes: list[Probe] = []
-        print(f"  [4/6] Scoring básico (Tm, GC, hairpin, homodimer)...")
+        print(f"  [4/5] Scoring básico (Tm, GC, hairpin, homodimer)...")
         for w in windows:
             sc = score_probe(w["seq"])
             p  = Probe(
@@ -801,49 +801,68 @@ def run_pipeline(run_nupack=True, run_3d=True):
 
         # 5. seqfold — estrutura secundária (só nas probes básicas aprovadas)
         if run_nupack:
-            print(f"  [5/6] seqfold (ΔG MFE + fracção emparelhada) ...")
+            print(f"  [5/5] seqfold (ΔG MFE + fracção emparelhada) ...")
             for p in probes:
                 if p.pass_basic:
                     p = run_seqfold_probe(p, gene_key)
             n_nup = sum(p.pass_nupack for p in probes if p.pass_basic)
             print(f"    ✔ {n_nup}/{n_pass} probes passam seqfold")
 
-        # 6. Estrutura 3D + RMSD (só PASS básico + seqfold)
-        if run_3d:
-            _nf_ok     = NUCLEOFOLD3D_SCRIPT.exists()
-            _boltz_ok  = _boltz_cmd() is not None
-            if not _nf_ok and not _boltz_ok:
-                print(f"  [6/6] Estrutura 3D: ferramentas não disponíveis — a saltar.")
-                print(f"    NucleoFold3D : não encontrado em {NUCLEOFOLD3D_SCRIPT}")
-                print(f"    Boltz-2      : não instalado neste Python ({sys.executable})")
-                print(f"    → Para 3D: pip install boltz  ou  correr com python conda")
-            else:
-                print(f"  [6/6] Estrutura 3D (NucleoFold → Boltz-2)...")
-                for p in probes:
-                    gate = p.pass_basic and (p.pass_nupack if run_nupack else True)
-                    if gate:
-                        p = run_3d_pipeline(p)
-
         write_gene_outputs(probes, gene_key)
         all_probes.extend(probes)
 
-    # CSV final consolidado
+    # CSV consolidado (sem 3D ainda)
     write_consolidated_csv(all_probes)
 
-    # Resumo
+    # Resumo intermédio
+    print("\n" + "═"*60)
+    print("  RESUMO — SCORING")
+    print("═"*60)
+    total_pass = 0
+    for gene_key in TARGETS:
+        ps = [p for p in all_probes if p.gene == gene_key]
+        nb = sum(p.pass_basic  for p in ps)
+        nn = sum(p.pass_nupack for p in ps)
+        total_pass += nn
+        print(f"  {gene_key:<8} basic={nb:<5} seqfold={nn}")
+
+    # ── Boltz-2: corre no final em todas as probes que passaram ──────────────
+    if run_3d:
+        gate_probes = [p for p in all_probes
+                       if p.pass_basic and (p.pass_nupack if run_nupack else True)]
+
+        print(f"\n{'═'*60}")
+        print(f"  PREDIÇÃO 3D — Boltz-2")
+        print(f"  {len(gate_probes)} probes qualificadas (todos os critérios PASS)")
+        print(f"{'═'*60}")
+
+        if not _boltz_cmd():
+            print("  Boltz-2 não disponível. Instalar: pip install boltz")
+        elif len(gate_probes) == 0:
+            print("  Nenhuma probe passou todos os critérios — 3D ignorado.")
+        else:
+            print("  (Primeira execução: download do modelo ~3GB — aguardar...)\n")
+            for i, p in enumerate(gate_probes, 1):
+                print(f"  [{i}/{len(gate_probes)}] {p.probe_id}", flush=True)
+                p = run_3d_pipeline(p)
+
+            # Actualizar CSV com resultados 3D
+            write_consolidated_csv(all_probes)
+
+    # Resumo final
     print("\n" + "═"*60)
     print("  RESUMO FINAL")
     print("═"*60)
     for gene_key in TARGETS:
         ps = [p for p in all_probes if p.gene == gene_key]
-        nb = sum(p.pass_basic for p in ps)
+        nb = sum(p.pass_basic  for p in ps)
         nn = sum(p.pass_nupack for p in ps)
-        n3 = sum(p.pass_3d for p in ps)
-        print(f"  {gene_key:<8} basic={nb}  nupack={nn}  3d={n3}")
+        n3 = sum(p.pass_3d     for p in ps)
+        print(f"  {gene_key:<8} basic={nb:<5} seqfold={nn:<5} 3d={n3}")
 
 if __name__ == "__main__":
     import argparse
-    ap = argparse.ArgumentParser(description="GFET Probe Pipeline v4")
+    ap = argparse.ArgumentParser(description="GFET Probe Pipeline")
     ap.add_argument("--no-nupack", action="store_true", help="Saltar seqfold (estrutura secundária)")
     ap.add_argument("--no-3d",    action="store_true", help="Saltar modelação 3D")
     args = ap.parse_args()
