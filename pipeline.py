@@ -53,10 +53,16 @@ ALIGN_DIR    = BASE_DIR / "output" / "alignments"
 STRUCT_DIR   = BASE_DIR / "output" / "structures"
 BEATRIZ_XLSX = BASE_DIR / "data" / "BeatrizMasterThesis_ProbesData_IPLEXMED_ENERGIAS_CAPS.xlsx"
 
-# MAFFT: procura no PATH do sistema primeiro, depois tenta localização local
-_mafft_path  = shutil.which("mafft") or shutil.which("mafft.bat")
-MAFFT_BIN    = Path(_mafft_path) if _mafft_path else \
-               BASE_DIR / "tools" / "MAFFT" / "mafft-7.526-win64-signed" / "mafft-win" / "mafft.bat"
+# MAFFT: procura no projeto primeiro (duas estruturas possíveis), depois PATH, depois Tese
+_MAFFT_CANDIDATES = [
+    str(BASE_DIR / "MAFFT" / "mafft-win" / "mafft.bat"),
+    str(BASE_DIR / "MAFFT" / "mafft-7.526-win64-signed" / "mafft-win" / "mafft.bat"),
+    shutil.which("mafft"),
+    shutil.which("mafft.bat"),
+    str(Path.home() / "OneDrive" / "Ambiente de Trabalho" / "Tese"
+        / "MAFFT" / "mafft-7.526-win64-signed" / "mafft-win" / "mafft.bat"),
+]
+MAFFT_BIN = Path(next(p for p in _MAFFT_CANDIDATES if p and Path(p).exists()))
 
 # NucleoFold3D: actualizar se o script estiver noutro sítio
 NUCLEOFOLD3D_SCRIPT = (
