@@ -800,13 +800,21 @@ def run_pipeline(run_nupack=True, run_3d=True):
             n_nup = sum(p.pass_nupack for p in probes if p.pass_basic)
             print(f"    ✔ {n_nup}/{n_pass} probes passam seqfold")
 
-        # 6. Estrutura 3D + RMSD (só PASS básico + NUPACK)
+        # 6. Estrutura 3D + RMSD (só PASS básico + seqfold)
         if run_3d:
-            print(f"  [6/6] Estrutura 3D (NucleoFold → Boltz-2)...")
-            for p in probes:
-                gate = p.pass_basic and (p.pass_nupack if run_nupack else True)
-                if gate:
-                    p = run_3d_pipeline(p)
+            _nf_ok     = NUCLEOFOLD3D_SCRIPT.exists()
+            _boltz_ok  = _boltz_cmd() is not None
+            if not _nf_ok and not _boltz_ok:
+                print(f"  [6/6] Estrutura 3D: ferramentas não disponíveis — a saltar.")
+                print(f"    NucleoFold3D : não encontrado em {NUCLEOFOLD3D_SCRIPT}")
+                print(f"    Boltz-2      : não instalado neste Python ({sys.executable})")
+                print(f"    → Para 3D: pip install boltz  ou  correr com python conda")
+            else:
+                print(f"  [6/6] Estrutura 3D (NucleoFold → Boltz-2)...")
+                for p in probes:
+                    gate = p.pass_basic and (p.pass_nupack if run_nupack else True)
+                    if gate:
+                        p = run_3d_pipeline(p)
 
         write_gene_outputs(probes, gene_key)
         all_probes.extend(probes)

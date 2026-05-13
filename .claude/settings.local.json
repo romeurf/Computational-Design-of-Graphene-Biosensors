@@ -49,7 +49,8 @@
       "Bash(xargs ls -la)",
       "Bash(sort -k5 -rn)",
       "Bash(git checkout *)",
-      "Bash(python -c \"import ast; ast.parse\\(open\\('c:/Users/Romeu/OneDrive/Documentos/GitHub/Computational-Design-of-Graphene-Biosensors/pipeline.py', encoding='utf-8'\\).read\\(\\)\\); print\\('OK'\\)\")"
+      "Bash(python -c \"import ast; ast.parse\\(open\\('c:/Users/Romeu/OneDrive/Documentos/GitHub/Computational-Design-of-Graphene-Biosensors/pipeline.py', encoding='utf-8'\\).read\\(\\)\\); print\\('OK'\\)\")",
+      "Bash(C:/Users/Romeu/AppData/Local/Programs/Python/Python312/python.exe -m pip install boltz)"
     ]
   }
 }
