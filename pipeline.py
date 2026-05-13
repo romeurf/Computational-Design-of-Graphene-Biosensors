@@ -482,9 +482,10 @@ def run_boltz2(probe: Probe, n_samples: int = 3) -> list[Path]:
                 "--recycling_steps", "3",
                 "--sampling_steps", "200",
                 "--diffusion_samples", str(n_samples),
-                "--device", "cpu",
+                "--accelerator", "cpu",
+                "--model", "boltz2",
             ],
-            check=True, capture_output=True, timeout=600
+            check=True, capture_output=True, timeout=1800
         )
     except Exception as e:
         probe.notes += f"[Boltz erro: {e}] "

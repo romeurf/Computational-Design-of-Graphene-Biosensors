@@ -117,7 +117,8 @@ def run_boltz(seq: str, probe_id: str, samples: int, device: str) -> list[Path]:
         "--recycling_steps",  "3",
         "--sampling_steps",   "200",
         "--diffusion_samples", str(samples),
-        "--device",           device,
+        "--accelerator",      device,
+        "--model",            "boltz2",
     ]
     try:
         subprocess.run(cmd, check=True, capture_output=True, timeout=900)
