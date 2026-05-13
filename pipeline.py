@@ -18,6 +18,7 @@ Referências dos limiares:
 """
 
 import os, sys, re, csv, json, yaml, shutil, subprocess, tempfile, textwrap, itertools, time
+from io import StringIO
 from pathlib import Path
 from dataclasses import dataclass, field, asdict
 from typing import Optional
@@ -229,7 +230,10 @@ def fetch_sequences(gene_key: str) -> list[SeqRecord]:
                     return []
                 time.sleep(0.5)
                 h    = Entrez.efetch(db="nucleotide", id=ids, rettype="fasta", retmode="text")
-                recs = list(SeqIO.parse(h, "fasta-pearson")); h.close()
+                raw  = "\n".join(l for l in h.read().splitlines()
+                                 if not l.startswith(("!", "#", ";")))
+                h.close()
+                recs = list(SeqIO.parse(StringIO(raw), "fasta"))
                 return [r for r in recs if min_l <= len(r.seq) <= max_l]
             except Exception as e:
                 print(f"    ⚠ Tentativa {attempt+1}/3: {e}")
@@ -259,7 +263,10 @@ def fetch_sequences(gene_key: str) -> list[SeqRecord]:
             try:
                 time.sleep(0.5)
                 h    = Entrez.efetch(db="nucleotide", id=fb, rettype="fasta", retmode="text")
-                records = list(SeqIO.parse(h, "fasta-pearson")); h.close()
+                raw  = "\n".join(l for l in h.read().splitlines()
+                                 if not l.startswith(("!", "#", ";")))
+                h.close()
+                records = list(SeqIO.parse(StringIO(raw), "fasta"))
                 print(f"    ✔ Referência {fb} descarregada.")
             except Exception as e:
                 raise RuntimeError(f"Sem dados para {gene_key}: {e}")
