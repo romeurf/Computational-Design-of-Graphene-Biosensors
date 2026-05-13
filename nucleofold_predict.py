@@ -1,102 +1,95 @@
 """
-nucleofold_predict.py
+nucleofold_predict.py — wrapper para NucleoFold3D.py (pipeline 3D local)
 ─────────────────────────────────────────────────────────────────────────────
-Script standalone: submete probes à API pública do NucleoFold (3dRNA)
-e guarda as estruturas CIF em structures/<probe_id>_nucleofold.cif.
+Prepara o CSV de input para NucleoFold3D.py, invoca o pipeline,
+recolhe os PDB resultantes e calcula o RMSD entre as 5 réplicas
+como critério de qualidade interna.
+
+REQUISITO: NucleoFold3D.py precisa de ferramentas Linux:
+  • nsp       ~/nsp_final/cirRNA_and_DNA/nsp  (coarse-grained assembly)
+  • RNAfold   ViennaRNA                       (estrutura secundária)
+  • tleap, sander, ambpdb  AmberTools ≥ 22    (minimização AMBER)
+  → Em Windows: correr dentro do WSL.
+  → Instalar AmberTools: conda install -c conda-forge ambertools
+  → Instalar ViennaRNA:  conda install -c bioconda viennarna
 
 Uso:
-    python nucleofold_predict.py [--input CSV] [--filter {basic,nupack,all}]
-                                 [--out-csv nucleofold_results.csv]
+    # Passo 1 — preparar CSV (corre em Python nativo, Windows ou Linux)
+    python nucleofold_predict.py --filter basic --prepare-only
+
+    # Passo 2 — correr NucleoFold3D (requer WSL/Linux)
+    #   A flag --run invoca automaticamente; sem ela imprime o comando manual.
+    python nucleofold_predict.py --filter basic [--run]
+
+    # Passo 3 — recolher resultados e calcular RMSD
+    python nucleofold_predict.py --collect
 
 Argumentos:
-    --input   : CSV com probes (padrão: alignments/FINAL_PROBES_ALL.csv)
-    --filter  : quais probes processar
-                  basic  → pass_basic == True   (padrão)
-                  nupack → pass_nupack == True
-                  all    → todas as linhas com sequência
-    --out-csv : onde guardar o CSV de resultados
+    --input        CSV de probes (padrão: alignments/FINAL_PROBES_ALL.csv)
+    --filter       basic | nupack | all  (padrão: nupack)
+    --nucleofold   path para NucleoFold3D.py
+    --results-dir  directório de resultados do NucleoFold3D
+                   (padrão: ~/scripts/results_gfet_probes)
+    --rmsd-max     RMSD máximo para pass_3d entre as 5 réplicas (padrão: 2.0 Å)
+    --prepare-only só cria o CSV, não corre NucleoFold3D
+    --run          invoca NucleoFold3D.py directamente (requer WSL/Linux)
+    --collect      recolhe resultados existentes e calcula RMSD
+    --out-csv      CSV de resultados (padrão: nucleofold_results.csv)
 
-Saídas:
-    structures/<probe_id>_nucleofold.cif   — estruturas em formato CIF
-    <out-csv>                              — CSV com colunas probe_id,
-                                             structure_cif, status, notes
-
-Referência do servidor:
-    3dRNA v2.0 — http://biophy.hust.edu.cn/new/3dRNA
-    Zhao et al. 2012, NAR; Wang et al. 2023 (update)
+Ref. NucleoFold3D:  RNAfold → NSP → AMBER OL15 (DNA) / OL3 (RNA)
+                    Mathews 2004 DNA params; Onufriev GB igb=5; saltcon=0.15
 ─────────────────────────────────────────────────────────────────────────────
 """
 
-import argparse, csv, sys, time
+import argparse, csv, itertools, subprocess, sys
 from pathlib import Path
 from typing import Optional
-
-import requests
 
 BASE_DIR   = Path(__file__).parent
 STRUCT_DIR = BASE_DIR / "structures"
 STRUCT_DIR.mkdir(parents=True, exist_ok=True)
 
-# NucleoFold / 3dRNA API endpoints
-_API_SUBMIT = "http://biophy.hust.edu.cn/new/3dRNA/api/submit"
-_API_RESULT = "http://biophy.hust.edu.cn/new/3dRNA/api/result"
-_POLL_SEC   = 10    # segundos entre polls
-_MAX_POLLS  = 72    # 72 × 10 s = 12 min máx por probe
+_RMSD_MAX_DEFAULT    = 2.0
+_NUCLEOFOLD3D_DEFAULT = (
+    Path.home() / "OneDrive" / "Ambiente de Trabalho" / "Tese" / "NucleoFold" / "NucleoFold3D.py"
+)
 
 
-def submit_nucleofold(sequence: str, probe_id: str) -> Optional[str]:
-    """Submete uma sequência DNA ao NucleoFold. Devolve job_id ou None."""
-    try:
-        resp = requests.post(
-            _API_SUBMIT,
-            json={"sequence": sequence, "type": "DNA", "name": probe_id},
-            timeout=30,
-        )
-        resp.raise_for_status()
-        data = resp.json()
-        return data.get("job_id") or data.get("id")
-    except Exception as e:
-        print(f"    ✘ Submissão falhou ({probe_id}): {e}")
+# ─── RMSD via Biopython (PDB, usa C4' do esqueleto) ──────────────────────────
+
+def calc_rmsd_pdbs(pdb_paths: list[Path]) -> Optional[float]:
+    """
+    RMSD médio entre pares de PDB usando Bio.PDB Superimposer (C4').
+    Idêntico ao calc_rmsd de boltz2_predict.py mas lê PDB em vez de CIF.
+    Ref: Hamelryck & Manderick 2003 (Bio.PDB)
+    """
+    if len(pdb_paths) < 2:
         return None
-
-
-def poll_nucleofold(job_id: str, probe_id: str) -> Optional[str]:
-    """
-    Aguarda conclusão do job NucleoFold e devolve o URL do ficheiro CIF,
-    ou None se falhar ou expirar.
-    """
-    for i in range(_MAX_POLLS):
-        time.sleep(_POLL_SEC)
+    try:
+        from Bio.PDB import PDBParser, Superimposer
+    except ImportError:
+        print("    ⚠ Biopython não disponível — instalar: pip install biopython")
+        return None
+    parser = PDBParser(QUIET=True)
+    sup    = Superimposer()
+    rmsds  = []
+    for a, b in itertools.combinations(pdb_paths, 2):
         try:
-            r = requests.get(f"{_API_RESULT}/{job_id}", timeout=30)
-            r.raise_for_status()
-            d = r.json()
-            status = d.get("status", "").lower()
-            if status in ("done", "finished", "completed"):
-                return d.get("cif_url") or d.get("structure_url") or d.get("result_url")
-            if status in ("error", "failed"):
-                print(f"    ✘ Job {job_id} falhou (probe {probe_id}).")
-                return None
-            if i % 6 == 0:
-                print(f"    ⏳ Aguardando NucleoFold ({probe_id}) — {(i+1)*_POLL_SEC}s ...")
-        except Exception as e:
-            print(f"    ⚠ Erro ao consultar job {job_id}: {e}")
-    print(f"    ✘ Timeout NucleoFold ({probe_id}).")
-    return None
+            s1 = parser.get_structure("s1", str(a))
+            s2 = parser.get_structure("s2", str(b))
+            at1 = [x for x in s1.get_atoms() if x.get_name() == "C4'"]
+            at2 = [x for x in s2.get_atoms() if x.get_name() == "C4'"]
+            n   = min(len(at1), len(at2))
+            if n < 3:
+                continue
+            sup.set_atoms(at1[:n], at2[:n])
+            rmsds.append(sup.rms)
+        except Exception:
+            continue
+    return round(sum(rmsds) / len(rmsds), 3) if rmsds else None
 
 
-def download_cif(url: str, probe_id: str) -> Optional[Path]:
-    """Descarrega o CIF e guarda em structures/<probe_id>_nucleofold.cif."""
-    out = STRUCT_DIR / f"{probe_id}_nucleofold.cif"
-    try:
-        r = requests.get(url, timeout=60)
-        r.raise_for_status()
-        out.write_text(r.text)
-        return out
-    except Exception as e:
-        print(f"    ✘ Download CIF falhou ({probe_id}): {e}")
-        return None
-
+# ─── Helpers ─────────────────────────────────────────────────────────────────
 
 def load_probes(csv_path: Path, filter_mode: str) -> list[dict]:
     if not csv_path.exists():
@@ -115,73 +108,181 @@ def load_probes(csv_path: Path, filter_mode: str) -> list[dict]:
     return probes
 
 
-def run(input_csv: Path, filter_mode: str, out_csv: Path):
-    probes = load_probes(input_csv, filter_mode)
-    print(f"\n{'═'*60}")
-    print(f"  NucleoFold Predict — {len(probes)} probes  |  filtro: {filter_mode}")
-    print(f"{'═'*60}")
+def prepare_input_csv(probes: list[dict], out_csv: Path):
+    """Cria o CSV no formato que NucleoFold3D.py espera: job_name,sequence"""
+    with open(out_csv, "w", newline="", encoding="utf-8") as f:
+        w = csv.writer(f)
+        w.writerow(["job_name", "sequence"])
+        for p in probes:
+            pid = p.get("probe_id", "probe")
+            seq = p["sequence"]
+            w.writerow([pid, seq])
+    print(f"  ✔ CSV de input criado: {out_csv}  ({len(probes)} probes)")
 
+
+def collect_results(probes: list[dict], results_dir: Path,
+                    rmsd_max: float, out_csv: Path):
+    """
+    Percorre resultados do NucleoFold3D.py, calcula RMSD entre as 5 réplicas
+    e gera o CSV de resultados.
+    """
     results = []
-    for i, probe in enumerate(probes, 1):
-        pid = probe.get("probe_id", f"probe{i:03d}")
-        seq = probe["sequence"]
-        print(f"\n  [{i}/{len(probes)}] {pid}  ({len(seq)} nt)")
+    for probe in probes:
+        pid       = probe.get("probe_id", "probe")
+        job_dir   = results_dir / pid
 
-        # Skip se já temos CIF
-        existing = STRUCT_DIR / f"{pid}_nucleofold.cif"
-        if existing.exists():
-            print(f"    ℹ CIF já existe — a saltar.")
-            results.append({**probe, "structure_cif": str(existing),
-                             "status": "existing", "notes": ""})
+        # NucleoFold3D pode adicionar sufixo _2, _3 se já existia pasta
+        # tentar encontrar o directório mais recente
+        candidates = sorted(results_dir.glob(f"{pid}*"), key=lambda p: p.stat().st_mtime,
+                            reverse=True) if results_dir.exists() else []
+        if candidates:
+            job_dir = candidates[0]
+
+        if not job_dir.exists():
+            print(f"  ⚠ {pid}: resultados não encontrados em {job_dir}")
+            results.append({**probe, "structure_pdb": "", "nucleofold_pdbs": "",
+                             "n_models": 0, "rmsd_intra": "", "pass_3d": False,
+                             "status": "not_found", "notes": ""})
             continue
 
-        job_id = submit_nucleofold(seq, pid)
-        if not job_id:
-            results.append({**probe, "structure_cif": "",
-                             "status": "submit_failed", "notes": "submit failed"})
+        # Recolher os 5 PDB de final_structures/
+        fs_dir = job_dir / "final_structures"
+        pdbs   = sorted(fs_dir.glob(f"{pid}[1-5].pdb")) if fs_dir.exists() else []
+        if not pdbs:
+            # Tentar com nome do job real (pode ter sufixo)
+            actual_name = job_dir.name
+            pdbs        = sorted(fs_dir.glob(f"{actual_name}[1-5].pdb")) if fs_dir.exists() else []
+
+        # Estrutura de menor energia
+        min_pdb = next(job_dir.glob(f"{pid}*_minenerg.pdb"), None)
+        if min_pdb is None:
+            min_pdb = next(job_dir.glob(f"*_minenerg.pdb"), None)
+
+        if not pdbs and min_pdb is None:
+            print(f"  ⚠ {pid}: nenhum PDB encontrado em {job_dir}")
+            results.append({**probe, "structure_pdb": "", "nucleofold_pdbs": "",
+                             "n_models": 0, "rmsd_intra": "", "pass_3d": False,
+                             "status": "no_pdb", "notes": ""})
             continue
 
-        print(f"    ✔ job_id={job_id}  a aguardar resultado...")
-        cif_url = poll_nucleofold(job_id, pid)
-        if not cif_url:
-            results.append({**probe, "structure_cif": "",
-                             "status": "failed", "notes": f"job_id={job_id}"})
-            continue
+        # Copiar min energy PDB para structures/
+        dest_pdb = None
+        if min_pdb:
+            dest_pdb = STRUCT_DIR / f"{pid}_nucleofold_minenerg.pdb"
+            import shutil
+            shutil.copy(min_pdb, dest_pdb)
 
-        cif_path = download_cif(cif_url, pid)
-        if cif_path:
-            print(f"    ✔ {cif_path.name}")
-            results.append({**probe, "structure_cif": str(cif_path),
-                             "status": "done", "notes": ""})
-        else:
-            results.append({**probe, "structure_cif": "",
-                             "status": "download_failed",
-                             "notes": f"cif_url={cif_url}"})
+        # RMSD entre as 5 réplicas (qualidade interna)
+        rmsd = calc_rmsd_pdbs(pdbs) if len(pdbs) >= 2 else None
+        pass_3d = (rmsd is not None and rmsd < rmsd_max)
+        rmsd_str = f"{rmsd:.3f} Å" if rmsd is not None else "N/A (< 2 modelos)"
 
-    # Escrever CSV de resultados
+        flag = ("✔ PASS" if pass_3d else "✘ FAIL") if rmsd is not None else "⚠ RMSD N/A"
+        print(f"  {flag}  {pid}  {len(pdbs)} modelos  RMSD intra={rmsd_str}")
+
+        results.append({
+            **probe,
+            "structure_pdb":   str(dest_pdb) if dest_pdb else "",
+            "nucleofold_pdbs": ";".join(str(p) for p in pdbs),
+            "n_models":        len(pdbs),
+            "rmsd_intra":      rmsd if rmsd is not None else "",
+            "pass_3d":         pass_3d,
+            "status":          "done",
+            "notes":           f"RMSD={rmsd_str}",
+        })
+
     if results:
         fields = list(results[0].keys())
         with open(out_csv, "w", newline="", encoding="utf-8") as f:
             w = csv.DictWriter(f, fieldnames=fields, extrasaction="ignore")
-            w.writeheader(); w.writerows(results)
+            w.writeheader()
+            w.writerows(results)
 
-    done  = sum(1 for r in results if r["status"] in ("done", "existing"))
-    total = len(results)
-    print(f"\n  ✔ Concluído: {done}/{total} estruturas  →  {out_csv}")
+    n_pass = sum(1 for r in results if r.get("pass_3d") is True)
+    print(f"\n  ✔ Recolhidos: {n_pass}/{len(results)} pass_3d  →  {out_csv}")
+
+
+# ─── Main ─────────────────────────────────────────────────────────────────────
+
+def run(input_csv: Path, filter_mode: str, nucleofold_script: Path,
+        results_dir: Path, rmsd_max: float, out_csv: Path,
+        prepare_only: bool, run_now: bool, collect: bool):
+
+    probes = load_probes(input_csv, filter_mode)
+    print(f"\n{'═'*60}")
+    print(f"  NucleoFold3D Wrapper — {len(probes)} probes  |  filtro: {filter_mode}")
+    print(f"{'═'*60}")
+
+    # CSV input para NucleoFold3D.py
+    input_for_nf3d = BASE_DIR / "nucleofold_input.csv"
+
+    if not collect:
+        prepare_input_csv(probes, input_for_nf3d)
+
+        cmd_str = f"python \"{nucleofold_script}\" --csv \"{input_for_nf3d}\""
+
+        if prepare_only:
+            print(f"\n  CSV de input pronto. Correr manualmente (em WSL/Linux):")
+            print(f"    {cmd_str}")
+            return
+
+        if run_now:
+            print(f"\n  A invocar NucleoFold3D.py ...")
+            print(f"    {cmd_str}")
+            try:
+                subprocess.run(
+                    ["python", str(nucleofold_script), "--csv", str(input_for_nf3d)],
+                    check=True, timeout=86400   # 24 h
+                )
+            except FileNotFoundError:
+                print("  ✘ python/NucleoFold3D.py não encontrado.")
+                print("    Em Windows, correr dentro do WSL:")
+                print(f"    wsl python {nucleofold_script} --csv {input_for_nf3d}")
+                return
+            except subprocess.CalledProcessError as e:
+                print(f"  ✘ NucleoFold3D.py falhou: {e}")
+                return
+        else:
+            print(f"\n  ─────────────────────────────────────────────────────")
+            print(f"  Próximo passo: correr NucleoFold3D.py (requer WSL/Linux)")
+            print(f"  ─────────────────────────────────────────────────────")
+            print(f"  Abrir WSL e correr:")
+            print(f"    python {nucleofold_script} --csv {input_for_nf3d}")
+            print(f"  Depois recolher resultados com:")
+            print(f"    python nucleofold_predict.py --collect")
+            print(f"  ─────────────────────────────────────────────────────")
+            return
+
+    # Recolher resultados
+    print(f"\n  A recolher resultados de: {results_dir}")
+    collect_results(probes, results_dir, rmsd_max, out_csv)
 
 
 if __name__ == "__main__":
-    ap = argparse.ArgumentParser(description="NucleoFold standalone prediction")
-    ap.add_argument("--input",   default="alignments/FINAL_PROBES_ALL.csv",
-                    help="CSV de probes (padrão: alignments/FINAL_PROBES_ALL.csv)")
-    ap.add_argument("--filter",  default="basic",
-                    choices=["basic", "nupack", "all"],
-                    help="Quais probes processar (padrão: basic)")
-    ap.add_argument("--out-csv", default="nucleofold_results.csv",
-                    help="CSV de resultados (padrão: nucleofold_results.csv)")
+    ap = argparse.ArgumentParser(description="NucleoFold3D wrapper + RMSD intra-réplicas")
+    ap.add_argument("--input",       default="alignments/FINAL_PROBES_ALL.csv")
+    ap.add_argument("--filter",      default="nupack", choices=["basic", "nupack", "all"])
+    ap.add_argument("--nucleofold",  default=str(_NUCLEOFOLD3D_DEFAULT),
+                    help="Path para NucleoFold3D.py")
+    ap.add_argument("--results-dir", default=str(Path.home() / "scripts" / "results_nucleofold_input"),
+                    help="Directório de resultados do NucleoFold3D.py")
+    ap.add_argument("--rmsd-max",    type=float, default=_RMSD_MAX_DEFAULT)
+    ap.add_argument("--out-csv",     default="nucleofold_results.csv")
+    ap.add_argument("--prepare-only", action="store_true",
+                    help="Só criar CSV de input, não correr NucleoFold3D")
+    ap.add_argument("--run",         action="store_true",
+                    help="Invocar NucleoFold3D.py directamente (requer WSL/Linux)")
+    ap.add_argument("--collect",     action="store_true",
+                    help="Recolher resultados existentes e calcular RMSD")
     args = ap.parse_args()
     run(
-        input_csv   = BASE_DIR / args.input,
-        filter_mode = args.filter,
-        out_csv     = BASE_DIR / args.out_csv,
+        input_csv        = BASE_DIR / args.input,
+        filter_mode      = args.filter,
+        nucleofold_script = Path(args.nucleofold),
+        results_dir      = Path(args.results_dir),
+        rmsd_max         = args.rmsd_max,
+        out_csv          = BASE_DIR / args.out_csv,
+        prepare_only     = args.prepare_only,
+        run_now          = args.run,
+        collect          = args.collect,
     )

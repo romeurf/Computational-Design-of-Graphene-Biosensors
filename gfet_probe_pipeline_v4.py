@@ -2,19 +2,24 @@
 GFET Probe Pipeline v4
 ─────────────────────────────────────────────────────────────────────────────
 Novidades face à v3:
-  • build_probe_id()         — nome codificado: p001_Saur_nuc_pos373-395_Tm54.1_GC40_hp-0.38_PASS
-  • Limiares por gene        — definidos em TARGETS{} (fácil de ajustar)
-  • run_nupack_probe()       — ΔG ensemble + defect normalizado (NUPACK CLI)
-  • run_nucleofold()         — estrutura 3D via NucleoFold API
-  • run_boltz2()             — fallback 3D via Boltz-2 (YAML + CLI)
-  • _calc_rmsd_between_cifs()— RMSD entre réplicas (Biopython Superimposer)
-  • write_consolidated_csv() — CSV único com probes Romeu + Beatriz
+  • build_probe_id()          — nome codificado: p001_Saur_nuc_pos373-395_Tm54.1_GC40_hp-0.38_PASS
+  • Limiares por gene         — definidos em TARGETS{} (fácil de ajustar)
+  • run_seqfold_probe()       — ΔG MFE + fracção emparelhada via seqfold (open-source, MIT)
+                                Substitui NUPACK (não gratuito para uso geral).
+                                Instalar: pip install seqfold
+  • run_nucleofold()          — estrutura 3D via 3dRNA/NucleoFold (submissão manual recomendada;
+                                o servidor não expõe REST API pública)
+  • run_boltz2()              — fallback 3D local via Boltz-2 (YAML + CLI)
+                                Instalar: pip install boltz  [requer Python ≥ 3.10]
+  • _calc_rmsd_between_cifs() — RMSD entre réplicas (Biopython Superimposer)
+  • write_consolidated_csv()  — CSV único com probes Romeu + Beatriz (XLSX, duas sheets)
 
 Referências dos limiares:
-  SantaLucia & Hicks 2004  — Tm nearest-neighbour
+  SantaLucia & Hicks 2004  — Tm nearest-neighbour, parâmetros primer3
   Wetmur 1991              — comprimento da probe (18–28 nt)
-  Zadeh et al. 2011        — NUPACK ΔG ensemble e defect
+  Zadeh et al. 2011        — NUPACK (referência conceptual; substituído por seqfold)
   IDT OligoAnalyzer        — GC 40–65%, homodimer ΔG > -5 kcal/mol
+  Stover et al. 2000       — P. aeruginosa GC genómico ~67% (PAO1)
 ─────────────────────────────────────────────────────────────────────────────
 """
 
@@ -143,8 +148,10 @@ DEFAULTS = {
     "max_seqs":           20,     # seqs a descarregar do NCBI
     "min_len":           100,     # bp — comprimento mínimo da sequência alvo
     "max_len":          5000,     # bp
-    "nupack_dg_max":    -12.0,    # kcal/mol — Zadeh et al. 2011
-    "nupack_defect_max":  0.10,   # defect normalizado — Zadeh et al. 2011
+    "nupack_dg_max":     -3.0,    # kcal/mol — ΔG MFE seqfold (proxy NUPACK, Zadeh 2011)
+                                  # Escala seqfold ≠ NUPACK ensemble: 0 a ~-6 para 18-28 nt
+                                  # Probe com hairpin > -3 kcal/mol rejeita
+    "nupack_defect_max":  0.15,   # fracção de bases emparelhadas (seqfold) — proxy defect NUPACK
     "rmsd_max":           2.0,    # Å — threshold de qualidade estrutural
 }
 
@@ -340,40 +347,51 @@ def passes_basic(probe: Probe, gene_key: str) -> bool:
     )
     return ok
 
-# ─── 6. NUPACK ───────────────────────────────────────────────────────────────
-def run_nupack_probe(probe: Probe, gene_key: str) -> Probe:
+# ─── 6. seqfold (substituto open-source do NUPACK) ───────────────────────────
+def run_seqfold_probe(probe: Probe, gene_key: str) -> Probe:
     """
-    Corre o NUPACK (pfunc) para uma probe.
-    Preenche nupack_dg, nupack_defect e pass_nupack.
-    Requer NUPACK 4+ instalado e acessível via PATH.
-    Ref: Zadeh et al. 2011, J. Comput. Chem.
+    Análise de estrutura secundária via seqfold (algoritmo Nussinov, MIT license).
+    Substitui NUPACK (não gratuito) como filtro de estrutura secundária da probe.
+
+    Métricas calculadas:
+      nupack_dg     : ΔG MFE a 37°C (kcal/mol) — quanto mais negativo, mais estrutura
+      nupack_defect : fracção de bases emparelhadas no modelo MFE (proxy ensemble defect)
+
+    Critérios (armazenados nos campos nupack_* para compatibilidade de CSV):
+      nupack_dg     ≥ nupack_dg_max     (padrão -3.0 kcal/mol)  — hairpin fraco/ausente
+      nupack_defect ≤ nupack_defect_max (padrão 0.15)            — < 15% bases emparelhadas
+
+    Instalar: pip install seqfold
+    Ref conceptual: Zadeh et al. 2011 (NUPACK); Reuter & Mathews 2010 (Nussinov)
     """
-    if shutil.which("nupack") is None:
-        probe.notes += "[NUPACK não encontrado] "
+    try:
+        import seqfold as sf
+    except ImportError:
+        probe.notes += "[seqfold não instalado: pip install seqfold] "
         return probe
-    with tempfile.TemporaryDirectory() as tmpdir:
-        inp = Path(tmpdir) / "probe.in"
-        inp.write_text(f"1\n{probe.sequence}\n")
-        try:
-            result = subprocess.run(
-                ["nupack", "pfunc", str(inp)],
-                capture_output=True, text=True, timeout=60
-            )
-            # parse ΔG ensemble
-            for line in result.stdout.splitlines():
-                if "Free energy" in line or "dG" in line:
-                    m = re.search(r"[-\d.]+", line)
-                    if m:
-                        probe.nupack_dg = float(m.group())
-                if "Ensemble defect" in line or "defect" in line.lower():
-                    m = re.search(r"[\d.]+", line)
-                    if m:
-                        probe.nupack_defect = float(m.group())
-        except Exception as e:
-            probe.notes += f"[NUPACK erro: {e}] "
-            return probe
-    dg_ok  = probe.nupack_dg     is not None and probe.nupack_dg     <= cfg(gene_key, "nupack_dg_max")
-    def_ok = probe.nupack_defect is not None and probe.nupack_defect <= cfg(gene_key, "nupack_defect_max")
+
+    seq = probe.sequence
+    try:
+        dg = sf.dg(seq, temp=37.0)
+        structs = sf.fold(seq, temp=37.0)
+
+        # Fracção de bases emparelhadas no modelo MFE
+        paired: set[int] = set()
+        for s in structs:
+            i, j = s.ij
+            if i >= 0 and j >= 0 and j > i:
+                paired.add(i)
+                paired.add(j)
+        paired_frac = len(paired) / len(seq) if seq else 0.0
+
+        probe.nupack_dg     = round(dg, 2)
+        probe.nupack_defect = round(paired_frac, 3)
+    except Exception as e:
+        probe.notes += f"[seqfold erro: {e}] "
+        return probe
+
+    dg_ok  = probe.nupack_dg     >= cfg(gene_key, "nupack_dg_max")
+    def_ok = probe.nupack_defect <= cfg(gene_key, "nupack_defect_max")
     probe.pass_nupack = dg_ok and def_ok
     return probe
 
@@ -730,12 +748,12 @@ def run_pipeline(run_nupack=True, run_3d=True):
         n_pass = sum(p.pass_basic for p in probes)
         print(f"    ✔ {n_pass}/{len(probes)} probes passam critérios básicos")
 
-        # 5. NUPACK (só nas probes básicas aprovadas)
+        # 5. seqfold — estrutura secundária (só nas probes básicas aprovadas)
         if run_nupack:
-            print(f"  [5/6] NUPACK (ΔG ensemble + defect)...")
+            print(f"  [5/6] seqfold (ΔG MFE + fracção emparelhada) ...")
             for p in probes:
                 if p.pass_basic:
-                    p = run_nupack_probe(p, gene_key)
+                    p = run_seqfold_probe(p, gene_key)
             n_nup = sum(p.pass_nupack for p in probes if p.pass_basic)
             print(f"    ✔ {n_nup}/{n_pass} probes passam NUPACK")
 
@@ -767,7 +785,7 @@ def run_pipeline(run_nupack=True, run_3d=True):
 if __name__ == "__main__":
     import argparse
     ap = argparse.ArgumentParser(description="GFET Probe Pipeline v4")
-    ap.add_argument("--no-nupack", action="store_true", help="Saltar NUPACK")
+    ap.add_argument("--no-nupack", action="store_true", help="Saltar seqfold (estrutura secundária)")
     ap.add_argument("--no-3d",    action="store_true", help="Saltar modelação 3D")
     args = ap.parse_args()
     run_pipeline(run_nupack=not args.no_nupack, run_3d=not args.no_3d)
