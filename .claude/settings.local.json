@@ -1,0 +1,19 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python -c \"import openpyxl; wb = openpyxl.load_workbook\\(r'c:\\\\Users\\\\Romeu\\\\OneDrive\\\\Documentos\\\\GitHub\\\\Computational-Design-of-Graphene-Biosensors\\\\BeatrizMasterThesis_ProbesData_IPLEXMED_ENERGIAS_CAPS.xlsx'\\); print\\('Sheets:', wb.sheetnames\\); ws = wb.active; print\\('Headers:', [cell.value for cell in ws[1]]\\); print\\('Row2:', [cell.value for cell in ws[2]]\\)\")",
+      "Bash(python -c \"import pandas as pd; df = pd.read_excel\\(r'c:\\\\Users\\\\Romeu\\\\OneDrive\\\\Documentos\\\\GitHub\\\\Computational-Design-of-Graphene-Biosensors\\\\BeatrizMasterThesis_ProbesData_IPLEXMED_ENERGIAS_CAPS.xlsx'\\); print\\('Sheets/columns:'\\); print\\(df.columns.tolist\\(\\)\\); print\\('\\\\nShape:', df.shape\\); print\\('\\\\nFirst row:'\\); print\\(df.iloc[0]\\)\")",
+      "Bash(pip install *)",
+      "Bash(python -c \"import pandas as pd; df = pd.read_excel\\(r'c:\\\\Users\\\\Romeu\\\\OneDrive\\\\Documentos\\\\GitHub\\\\Computational-Design-of-Graphene-Biosensors\\\\BeatrizMasterThesis_ProbesData_IPLEXMED_ENERGIAS_CAPS.xlsx', sheet_name=None\\); print\\('Sheets:', list\\(df.keys\\(\\)\\)\\); ws = list\\(df.values\\(\\)\\)[0]; print\\('Cols:', ws.columns.tolist\\(\\)\\); print\\('Shape:', ws.shape\\); print\\(ws.head\\(2\\).to_string\\(\\)\\)\")",
+      "Bash(python -m pip install openpyxl -q)",
+      "Bash(python -c \"import pandas as pd; df = pd.read_excel\\(r'c:\\\\Users\\\\Romeu\\\\OneDrive\\\\Documentos\\\\GitHub\\\\Computational-Design-of-Graphene-Biosensors\\\\BeatrizMasterThesis_ProbesData_IPLEXMED_ENERGIAS_CAPS.xlsx', sheet_name=None\\); print\\('Sheets:', list\\(df.keys\\(\\)\\)\\); ws = list\\(df.values\\(\\)\\)[0]; print\\('Cols:', ws.columns.tolist\\(\\)\\); print\\('Shape:', ws.shape\\); print\\(ws.head\\(3\\).to_string\\(\\)\\)\")",
+      "Bash(python -c ' *)",
+      "Bash(python -c \"import ast; ast.parse\\(open\\(r'c:\\\\Users\\\\Romeu\\\\OneDrive\\\\Documentos\\\\GitHub\\\\Computational-Design-of-Graphene-Biosensors\\\\gfet_probe_pipeline_v4.py'\\).read\\(\\)\\); print\\('v4: OK'\\)\")",
+      "Bash(python -c \"import ast; ast.parse\\(open\\(r'c:\\\\Users\\\\Romeu\\\\OneDrive\\\\Documentos\\\\GitHub\\\\Computational-Design-of-Graphene-Biosensors\\\\nucleofold_predict.py'\\).read\\(\\)\\); print\\('nucleofold: OK'\\)\")",
+      "Bash(python -c \"import ast; ast.parse\\(open\\(r'c:\\\\Users\\\\Romeu\\\\OneDrive\\\\Documentos\\\\GitHub\\\\Computational-Design-of-Graphene-Biosensors\\\\boltz2_predict.py'\\).read\\(\\)\\); print\\('boltz2: OK'\\)\")",
+      "Bash(python -c \"import ast; ast.parse\\(open\\(r'c:\\\\Users\\\\Romeu\\\\OneDrive\\\\Documentos\\\\GitHub\\\\Computational-Design-of-Graphene-Biosensors\\\\gfet_probe_pipeline_v4.py', encoding='utf-8'\\).read\\(\\)\\); print\\('v4: OK'\\)\")",
+      "Bash(python -c \"import ast; ast.parse\\(open\\(r'c:\\\\Users\\\\Romeu\\\\OneDrive\\\\Documentos\\\\GitHub\\\\Computational-Design-of-Graphene-Biosensors\\\\nucleofold_predict.py', encoding='utf-8'\\).read\\(\\)\\); print\\('nucleofold: OK'\\)\")",
+      "Bash(python -c \"import ast; ast.parse\\(open\\(r'c:\\\\Users\\\\Romeu\\\\OneDrive\\\\Documentos\\\\GitHub\\\\Computational-Design-of-Graphene-Biosensors\\\\boltz2_predict.py', encoding='utf-8'\\).read\\(\\)\\); print\\('boltz2: OK'\\)\")"
+    ]
+  }
+}

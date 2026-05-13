@@ -18,12 +18,13 @@ Referências dos limiares:
 ─────────────────────────────────────────────────────────────────────────────
 """
 
-import os, sys, re, csv, json, yaml, shutil, subprocess, tempfile, textwrap, itertools
+import os, sys, re, csv, json, yaml, shutil, subprocess, tempfile, textwrap, itertools, time
 from pathlib import Path
 from dataclasses import dataclass, field, asdict
 from typing import Optional
 
 import requests
+import pandas as pd
 from Bio import Entrez, SeqIO, AlignIO
 from Bio.PDB import PDBParser, Superimposer, MMCIFIO
 from Bio.SeqRecord import SeqRecord
@@ -33,15 +34,21 @@ import primer3
 # ─── Entrez ────────────────────────────────────────────────────────────────
 Entrez.email = "pg45861@uminho.pt"
 
+# ─── Thermodynamic parameters (primer3) ────────────────────────────────────
+# SantaLucia & Hicks 2004 — nearest-neighbour, condições fisiológicas/GFET
+P3_MV_CONC  = 50.0     # [Na+] mM
+P3_DV_CONC  = 0.0      # [Mg2+] mM
+P3_DNTP     = 0.0      # [dNTP] mM
+P3_DNA_CONC = 250.0    # [oligo] nM
+P3_TEMP_C   = 37.0     # temperatura de referência
+
 # ─── Paths ─────────────────────────────────────────────────────────────────
-BASE_DIR    = Path(__file__).parent
-ALIGN_DIR   = BASE_DIR / "alignments"
-NUPACK_DIR  = BASE_DIR / "nupack_out"
-STRUCT_DIR  = BASE_DIR / "structures"
-BEATRIZ_CSV = BASE_DIR / "BeatrizMasterThesis_ProbesData_IPLEXMED_ENERGIAS_CAPS.csv"
-MAFFT_BIN   = BASE_DIR / "MAFFT" / "mafft-7.526-win64-signed" / "mafft-win" / "mafft.bat"
-NUPACK_BIN  = shutil.which("nupack") or "nupack"
-BOLTZ_BIN   = shutil.which("boltz") or "boltz"
+BASE_DIR     = Path(__file__).parent
+ALIGN_DIR    = BASE_DIR / "alignments"
+NUPACK_DIR   = BASE_DIR / "nupack_out"
+STRUCT_DIR   = BASE_DIR / "structures"
+BEATRIZ_XLSX = BASE_DIR / "BeatrizMasterThesis_ProbesData_IPLEXMED_ENERGIAS_CAPS.xlsx"
+MAFFT_BIN    = BASE_DIR / "MAFFT" / "mafft-7.526-win64-signed" / "mafft-win" / "mafft.bat"
 
 for d in [ALIGN_DIR, NUPACK_DIR, STRUCT_DIR]:
     d.mkdir(parents=True, exist_ok=True)
@@ -52,44 +59,71 @@ for d in [ALIGN_DIR, NUPACK_DIR, STRUCT_DIR]:
 #   probe_len_min, probe_len_max, nupack_dg_max, nupack_defect_max
 TARGETS = {
     "nuc": {
-        "organism": "Staphylococcus aureus",
-        "group": "A",
-        "ncbi_query": 'nuc[Gene] AND "Staphylococcus aureus"[Organism]',
-        "refseq_fallback": "NC_002951",
-        "tm_min": 52.0,   # gene AT-rico — SantaLucia & Hicks 2004
-        "gc_min": 0.38,
+        "organism":          "Staphylococcus aureus",
+        "group":             "A",
+        "ncbi_query":        'nuc[Gene Name] AND "Staphylococcus aureus"[Organism] AND 200:3000[Sequence Length]',
+        "ncbi_query_alt":    '"Staphylococcus aureus"[Organism] AND nuc[Title] AND 200:2000[Sequence Length]',
+        "refseq_fallback":   "NC_002951",
+        "min_len":           200,
+        "max_len":           3000,
+        "tm_min":            52.0,  # gene AT-rico — SantaLucia & Hicks 2004
+        "gc_min":            0.38,  # AT-rico, abaixo do padrão 40% — IDT OligoAnalyzer
+        "gc_max":            0.60,  # AT-rico, limitar máximo — IDT OligoAnalyzer
     },
     "rmpM": {
-        "organism": "Neisseria meningitidis",
-        "group": "A",
-        "ncbi_query": 'rmpM[Gene] AND "Neisseria meningitidis"[Organism]',
-        "refseq_fallback": "NC_003112",
+        "organism":          "Neisseria meningitidis",
+        "group":             "A",
+        "ncbi_query":        'rmpM[Gene Name] AND "Neisseria meningitidis"[Organism] AND 100:1200[Sequence Length]',
+        "ncbi_query_alt":    '("Neisseria meningitidis"[Organism]) AND (rmpM[Title] OR "class 4 outer membrane protein"[Title]) AND 100:1200[Sequence Length]',
+        "ncbi_query_fallback": '"Neisseria meningitidis"[Organism] AND "outer membrane protein"[Title] AND 100:1200[Sequence Length]',
+        "refseq_fallback":   "NC_003112",
+        "min_len":           100,
+        "max_len":           1200,
+        "gc_max":            0.65,  # IDT OligoAnalyzer guidelines
+        "cons_min":          0.80,  # limiar permissivo — poucos homólogos NCBI
+        "allow_single_seq":  True,  # fallback para sequência única se <2 homólogos
     },
     "lytA": {
-        "organism": "Streptococcus pneumoniae",
-        "group": "B",
-        "ncbi_query": 'lytA[Gene] AND "Streptococcus pneumoniae"[Organism]',
-        "refseq_fallback": "NC_003028",
-        "cons_min": 0.70,
-        "gap_max": 0.40,
+        "organism":          "Streptococcus pneumoniae",
+        "group":             "B",
+        "ncbi_query":        'lytA[Gene Name] AND "Streptococcus pneumoniae"[Organism] AND 700:1300[Sequence Length]',
+        "ncbi_query_alt":    '"Streptococcus pneumoniae"[Organism] AND lytA[Title] AND 700:1300[Sequence Length]',
+        "refseq_fallback":   "NC_003028",
+        "min_len":           700,
+        "max_len":           1300,
+        "cons_min":          0.70,  # lytA tem diversidade alélica — Whatmore et al. 2000
+        "gap_max":           0.40,
     },
     "oprL": {
-        "organism": "Pseudomonas aeruginosa",
-        "group": "B",
-        "ncbi_query": 'oprL[Gene] AND "Pseudomonas aeruginosa"[Organism]',
-        "refseq_fallback": "NC_002516",
+        "organism":          "Pseudomonas aeruginosa",
+        "group":             "B",
+        "ncbi_query":        'oprL[Gene Name] AND "Pseudomonas aeruginosa"[Organism] AND 300:2000[Sequence Length]',
+        "ncbi_query_alt":    '"Pseudomonas aeruginosa"[Organism] AND oprL[Title] AND 300:2000[Sequence Length]',
+        "refseq_fallback":   "NC_002516",
+        "min_len":           300,
+        "max_len":           2000,
+        "gc_max":            0.70,  # P. aeruginosa ~67% GC genómico — Stover et al. 2000
     },
     "algD": {
-        "organism": "Pseudomonas aeruginosa",
-        "group": "B",
-        "ncbi_query": 'algD[Gene] AND "Pseudomonas aeruginosa"[Organism]',
-        "refseq_fallback": "NC_002516",
+        "organism":          "Pseudomonas aeruginosa",
+        "group":             "B",
+        "ncbi_query":        'algD[Gene Name] AND "Pseudomonas aeruginosa"[Organism] AND 500:2500[Sequence Length]',
+        "ncbi_query_alt":    '"Pseudomonas aeruginosa"[Organism] AND algD[Title] AND 500:2500[Sequence Length]',
+        "refseq_fallback":   "NC_002516",
+        "min_len":           500,
+        "max_len":           2500,
+        "gc_max":            0.70,  # P. aeruginosa ~67% GC genómico — Stover et al. 2000
     },
     "frdB": {
-        "organism": "Haemophilus influenzae",
-        "group": "B",
-        "ncbi_query": 'frdB[Gene] AND "Haemophilus influenzae"[Organism]',
-        "refseq_fallback": "NC_000907",
+        "organism":          "Haemophilus influenzae",
+        "group":             "B",
+        "ncbi_query":        'frdB[Gene Name] AND "Haemophilus influenzae"[Organism] AND 200:2000[Sequence Length]',
+        "ncbi_query_alt":    '"Haemophilus influenzae"[Organism] AND frdB[Title] AND 200:2000[Sequence Length]',
+        "refseq_fallback":   "NC_000907",
+        "min_len":           200,
+        "max_len":           2000,
+        "gc_min":            0.38,  # H. influenzae AT-rico — IDT OligoAnalyzer
+        "gc_max":            0.60,
     },
 }
 
@@ -99,14 +133,16 @@ DEFAULTS = {
     "tm_max":             72.0,   # °C
     "gc_min":             0.40,   # IDT OligoAnalyzer guidelines
     "gc_max":             0.65,
-    "hp_min":            -2.0,    # kcal/mol — hairpin ΔG mínimo
-    "dimer_min":         -5.0,    # kcal/mol — homodimer ΔG mínimo
-    "cons_min":           0.85,   # conservação mínima
+    "hp_min":            -2.0,    # kcal/mol — hairpin ΔG mínimo (ssDNA, Wetmur 1991)
+    "dimer_min":         -5.0,    # kcal/mol — homodimer ΔG mínimo (IDT OligoAnalyzer)
+    "cons_min":           0.85,   # conservação mínima — Zadeh et al. 2011
     "gap_max":            0.20,   # gap máximo no alinhamento
     "probe_len_min":      18,     # nt — Wetmur 1991
     "probe_len_max":      28,     # nt
     "window_step":         3,     # passo da janela deslizante
     "max_seqs":           20,     # seqs a descarregar do NCBI
+    "min_len":           100,     # bp — comprimento mínimo da sequência alvo
+    "max_len":          5000,     # bp
     "nupack_dg_max":    -12.0,    # kcal/mol — Zadeh et al. 2011
     "nupack_defect_max":  0.10,   # defect normalizado — Zadeh et al. 2011
     "rmsd_max":           2.0,    # Å — threshold de qualidade estrutural
@@ -162,28 +198,61 @@ def build_probe_id(probe: Probe, index: int) -> str:
 
 # ─── 2. NCBI download ────────────────────────────────────────────────────────
 def fetch_sequences(gene_key: str) -> list[SeqRecord]:
-    t   = TARGETS[gene_key]
-    q   = t["ncbi_query"]
+    t     = TARGETS[gene_key]
     max_s = DEFAULTS["max_seqs"]
+    min_l = t.get("min_len", DEFAULTS["min_len"])
+    max_l = t.get("max_len", DEFAULTS["max_len"])
     print(f"  [1/6] Descarregando sequências do NCBI...")
-    try:
-        handle  = Entrez.esearch(db="nucleotide", term=q, retmax=max_s)
-        ids     = Entrez.read(handle)["IdList"]
-        if not ids:
-            raise ValueError("Sem resultados")
-        handle  = Entrez.efetch(db="nucleotide", id=ids, rettype="fasta", retmode="text")
-        records = list(SeqIO.parse(handle, "fasta"))
-        print(f"    ✔ {len(records)} sequências  |  modo: alinhamento múltiplo")
+
+    def _run_query(query: str) -> list[SeqRecord]:
+        for attempt in range(3):
+            try:
+                time.sleep(0.5)
+                h    = Entrez.esearch(db="nucleotide", term=query, retmax=max_s)
+                ids  = Entrez.read(h)["IdList"]; h.close()
+                if not ids:
+                    return []
+                time.sleep(0.5)
+                h    = Entrez.efetch(db="nucleotide", id=ids, rettype="fasta", retmode="text")
+                recs = list(SeqIO.parse(h, "fasta")); h.close()
+                return [r for r in recs if min_l <= len(r.seq) <= max_l]
+            except Exception as e:
+                print(f"    ⚠ Tentativa {attempt+1}/3: {e}")
+                time.sleep(2 * (attempt + 1))
+        return []
+
+    records = _run_query(t["ncbi_query"])
+
+    if len(records) < 2 and "ncbi_query_alt" in t:
+        print("    ⚠ Query principal insuficiente — a tentar alternativa...")
+        records = _run_query(t["ncbi_query_alt"])
+
+    if len(records) < 2 and "ncbi_query_fallback" in t:
+        print("    ⚠ Query alternativa insuficiente — a tentar fallback...")
+        records = _run_query(t["ncbi_query_fallback"])
+
+    # allow_single_seq: genes com poucos homólogos (ex: rmpM)
+    if len(records) < 2 and t.get("allow_single_seq") and len(records) == 1:
+        print(f"    ⚠ Apenas 1 seq — modo sequência única ({gene_key}).")
+        print(f"    ✔ 1 sequência  |  modo: sequência única")
         return records
-    except Exception as e:
+
+    if not records:
         fb = t.get("refseq_fallback")
-        if not fb:
-            raise
-        print(f"    ⚠ {e} — a usar fallback {fb}")
-        handle  = Entrez.efetch(db="nucleotide", id=fb, rettype="fasta", retmode="text")
-        records = list(SeqIO.parse(handle, "fasta"))
-        print(f"    ✔ Referência {fb} descarregada.")
-        return records
+        if fb:
+            print(f"    ⚠ Sem resultados — a usar referência {fb}")
+            try:
+                time.sleep(0.5)
+                h    = Entrez.efetch(db="nucleotide", id=fb, rettype="fasta", retmode="text")
+                records = list(SeqIO.parse(h, "fasta")); h.close()
+                print(f"    ✔ Referência {fb} descarregada.")
+            except Exception as e:
+                raise RuntimeError(f"Sem dados para {gene_key}: {e}")
+        else:
+            raise RuntimeError(f"Sem dados para {gene_key}")
+
+    print(f"    ✔ {len(records)} sequências  |  modo: alinhamento múltiplo")
+    return records
 
 # ─── 3. MAFFT ────────────────────────────────────────────────────────────────
 def align_mafft(records: list[SeqRecord], gene_key: str) -> AlignIO.MultipleSeqAlignment:
@@ -242,17 +311,25 @@ def candidate_windows(aln: AlignIO.MultipleSeqAlignment, gene_key: str) -> list[
 
 # ─── 5. Scoring básico (Tm, GC, hairpin, homodimer) ──────────────────────────
 def score_probe(seq: str) -> dict:
-    tm  = primer3.calc_tm(seq)
+    kw  = dict(mv_conc=P3_MV_CONC, dv_conc=P3_DV_CONC,
+               dntp_conc=P3_DNTP, dna_conc=P3_DNA_CONC)
+    tm  = primer3.calc_tm(seq, **kw)
     gc  = (seq.count("G") + seq.count("C")) / len(seq)
     try:
-        hp = primer3.calc_hairpin(seq).dg / 1000  # kcal/mol
+        hp_res = primer3.calc_hairpin(seq, **kw, temp_c=P3_TEMP_C)
+        hp = round(hp_res.dg / 1000, 2) if hp_res.structure_found else None
+        if hp is not None and not (-50.0 < hp < 50.0):
+            hp = None
     except Exception:
         hp = None
     try:
-        dm = primer3.calc_homodimer(seq).dg / 1000
+        dm_res = primer3.calc_homodimer(seq, **kw, temp_c=P3_TEMP_C)
+        dm = round(dm_res.dg / 1000, 2) if dm_res.structure_found else None
+        if dm is not None and not (-50.0 < dm < 50.0):
+            dm = None
     except Exception:
         dm = None
-    return {"tm": tm, "gc": gc, "hairpin_dg": hp, "homodimer_dg": dm}
+    return {"tm": round(tm, 1), "gc": round(gc, 3), "hairpin_dg": hp, "homodimer_dg": dm}
 
 def passes_basic(probe: Probe, gene_key: str) -> bool:
     ok = (
@@ -271,7 +348,7 @@ def run_nupack_probe(probe: Probe, gene_key: str) -> Probe:
     Requer NUPACK 4+ instalado e acessível via PATH.
     Ref: Zadeh et al. 2011, J. Comput. Chem.
     """
-    if shutil.which(NUPACK_BIN) is None:
+    if shutil.which("nupack") is None:
         probe.notes += "[NUPACK não encontrado] "
         return probe
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -279,7 +356,7 @@ def run_nupack_probe(probe: Probe, gene_key: str) -> Probe:
         inp.write_text(f"1\n{probe.sequence}\n")
         try:
             result = subprocess.run(
-                [NUPACK_BIN, "pfunc", str(inp)],
+                ["nupack", "pfunc", str(inp)],
                 capture_output=True, text=True, timeout=60
             )
             # parse ΔG ensemble
@@ -342,7 +419,7 @@ def run_boltz2(probe: Probe, n_samples: int = 3) -> list[Path]:
     Usa o CLI: boltz predict <yaml> --out_dir <dir> --diffusion_samples n
     Ref: Wohlwend et al. 2024 (Boltz-2 paper)
     """
-    if shutil.which(BOLTZ_BIN) is None:
+    if shutil.which("boltz") is None:
         probe.notes += "[Boltz-2 não encontrado] "
         return []
     out_dir = STRUCT_DIR / probe.probe_id / "boltz"
@@ -354,7 +431,7 @@ def run_boltz2(probe: Probe, n_samples: int = 3) -> list[Path]:
     }))
     try:
         subprocess.run([
-            BOLTZ_BIN, "predict", str(yaml_path),
+            "boltz", "predict", str(yaml_path),
             "--out_dir", str(out_dir),
             "--recycling_steps", "3",
             "--sampling_steps", "200",
@@ -438,42 +515,154 @@ def write_gene_outputs(probes: list[Probe], gene_key: str):
     print(f"    ✔ {tsv.name}  ✔ {fasta.name}")
 
 # ─── 10. CSV consolidado (Romeu + Beatriz) ────────────────────────────────────
-def _parse_beatriz_csv(path: Path) -> list[dict]:
+def _parse_beatriz_xlsx(path: Path) -> list[dict]:
     """
-    Lê o CSV da Beatriz (formato variável) e normaliza para o schema do pipeline.
-    Colunas esperadas (case-insensitive): sequence/probe, tm, gc, gene/target, organism
+    Lê o XLSX da Beatriz e normaliza para o schema do pipeline.
+    Sheet 1 "Nossas sequencias": cabeçalho na linha 2 (0-indexed), dados a partir da linha 3.
+      Colunas-chave: Column1, species, Sequence, Gene/STRAIN, Tm, GC content,
+                     Lowest folding energy kcal/mole at 25C, notes
+    Sheet 2 "New probes (papers)": cabeçalho na linha 0.
+      Colunas-chave: species, Published probes (5'-3'), gene, notes, Source
+    Sequências de literatura: Tm/GC/hairpin calculados via primer3 in-situ.
     """
-    rows = []
+    rows: list[dict] = []
     if not path.exists():
         print(f"  ⚠ Ficheiro Beatriz não encontrado: {path}")
         return rows
-    with open(path, newline="", encoding="utf-8-sig") as f:
-        reader = csv.DictReader(f)
-        for i, row in enumerate(reader, 1):
-            norm = {k.lower().strip(): v for k, v in row.items()}
-            seq  = norm.get("sequence") or norm.get("probe") or norm.get("seq", "")
-            rows.append({
-                "probe_id":      norm.get("probe_id") or f"bea{i:03d}",
-                "gene":          norm.get("gene") or norm.get("target", ""),
-                "organism":      norm.get("organism") or norm.get("species", ""),
-                "group":         norm.get("group", ""),
-                "sequence":      seq.strip().upper(),
-                "pos_start":     norm.get("pos_start", ""),
-                "pos_end":       norm.get("pos_end", ""),
-                "tm":            norm.get("tm", ""),
-                "gc":            norm.get("gc", ""),
-                "hairpin_dg":    norm.get("hairpin_dg") or norm.get("hairpin", ""),
-                "homodimer_dg":  norm.get("homodimer_dg") or norm.get("homodimer", ""),
-                "nupack_dg":     norm.get("nupack_dg", ""),
-                "nupack_defect": norm.get("nupack_defect", ""),
-                "structure_cif": "",
-                "rmsd":          "",
-                "pass_basic":    norm.get("pass_basic") or norm.get("pass", ""),
-                "pass_nupack":   "",
-                "pass_3d":       "",
-                "fonte":         "beatriz",
-                "notes":         norm.get("notes", ""),
-            })
+
+    _NORM_ORG = {
+        "Strepptocuccus": "Streptococcus",
+        "Strepptococcus": "Streptococcus",
+    }
+    _GROUP_A  = ["Staphylococcus aureus", "Neisseria meningitidis"]
+
+    def _clean_seq(s) -> str:
+        if pd.isna(s):
+            return ""
+        s = str(s).upper()
+        s = re.sub(r"^[A-Z0-9]+-C\d+-", "", s)   # strip NH2-C6-, etc.
+        return re.sub(r"[^ATGCUN]", "", s)
+
+    def _parse_float_unit(s) -> Optional[float]:
+        if pd.isna(s):
+            return None
+        m = re.search(r"[-\d.]+", str(s))
+        return float(m.group()) if m else None
+
+    def _parse_gc_pct(s) -> Optional[float]:
+        v = _parse_float_unit(s)
+        return round(v / 100, 3) if v is not None else None
+
+    def _norm_org(s) -> str:
+        if pd.isna(s):
+            return ""
+        s = str(s).strip()
+        for wrong, right in _NORM_ORG.items():
+            s = s.replace(wrong, right)
+        return s
+
+    def _extract_gene(s) -> str:
+        if pd.isna(s):
+            return ""
+        s = str(s).strip()
+        return s.split(":")[0].strip() if ":" in s else s.split()[0]
+
+    def _group(org: str) -> str:
+        return "A" if any(g in org for g in _GROUP_A) else "B"
+
+    def _thresh(gene: str, param: str):
+        gk = gene.lower() if gene.lower() in TARGETS else None
+        return TARGETS[gk].get(param, DEFAULTS[param]) if gk else DEFAULTS[param]
+
+    def _pass_basic(tm, gc, hp, gene: str) -> Optional[bool]:
+        if tm is None or gc is None:
+            return None
+        return bool(
+            _thresh(gene, "tm_min") <= tm <= _thresh(gene, "tm_max") and
+            _thresh(gene, "gc_min") <= gc <= _thresh(gene, "gc_max") and
+            (hp is None or hp >= _thresh(gene, "hp_min"))
+        )
+
+    xl = pd.ExcelFile(path)
+
+    # ── Sheet 1: "Nossas sequencias" ─────────────────────────────────────────
+    df1 = pd.read_excel(xl, sheet_name="Nossas sequencias", header=2)
+    for _, row in df1.iterrows():
+        seq = _clean_seq(row.get("Sequence"))
+        if len(seq) < 10:
+            continue
+        organism = _norm_org(row.get("species"))
+        gene     = _extract_gene(row.get("Gene/STRAIN"))
+        tm       = _parse_float_unit(row.get("Tm"))
+        gc       = _parse_gc_pct(row.get("GC content"))
+        hp       = row.get("Lowest folding energy kcal/mole at 25C")
+        hp       = float(hp) if pd.notna(hp) else None
+        pid_raw  = row.get("Column1")
+        pid      = str(pid_raw).strip() if pd.notna(pid_raw) else f"bea{len(rows)+1:03d}"
+        rows.append({
+            "probe_id":      pid,
+            "gene":          gene,
+            "organism":      organism,
+            "group":         _group(organism),
+            "sequence":      seq,
+            "pos_start":     "",
+            "pos_end":       "",
+            "tm":            tm if tm is not None else "",
+            "gc":            gc if gc is not None else "",
+            "hairpin_dg":    hp,
+            "homodimer_dg":  "",
+            "nupack_dg":     "",
+            "nupack_defect": "",
+            "structure_cif": "",
+            "rmsd":          "",
+            "pass_basic":    _pass_basic(tm, gc, hp, gene),
+            "pass_nupack":   "",
+            "pass_3d":       "",
+            "fonte":         "beatriz",
+            "notes":         str(row.get("notes", "") or "").strip(),
+        })
+
+    # ── Sheet 2: "New probes (papers)" ───────────────────────────────────────
+    df2 = pd.read_excel(xl, sheet_name="New probes (papers)", header=0)
+    for _, row in df2.iterrows():
+        raw  = str(row.get("Published probes (5'-3')", "") or "")
+        seq  = re.sub(r"[^ATGCUN]", "", raw.upper())
+        if len(seq) < 10:
+            continue
+        organism = _norm_org(row.get("species"))
+        gene     = str(row.get("gene", "") or "").strip()
+        source   = str(row.get("Source", "") or "").strip()
+        notes    = str(row.get("notes", "") or "").strip()
+        if source:
+            notes = f"{notes} [Source: {source}]".strip("[ ]")
+        sc   = score_probe(seq)
+        pid  = (f"lit{len(rows)+1:03d}_"
+                f"{_ORG_ABBR.get(organism, organism[:4].capitalize())}_"
+                f"{gene}")
+        rows.append({
+            "probe_id":      pid,
+            "gene":          gene,
+            "organism":      organism,
+            "group":         _group(organism),
+            "sequence":      seq,
+            "pos_start":     "",
+            "pos_end":       "",
+            "tm":            sc["tm"],
+            "gc":            sc["gc"],
+            "hairpin_dg":    sc["hairpin_dg"],
+            "homodimer_dg":  sc["homodimer_dg"],
+            "nupack_dg":     "",
+            "nupack_defect": "",
+            "structure_cif": "",
+            "rmsd":          "",
+            "pass_basic":    _pass_basic(sc["tm"], sc["gc"], sc["hairpin_dg"], gene),
+            "pass_nupack":   "",
+            "pass_3d":       "",
+            "fonte":         "literatura",
+            "notes":         notes,
+        })
+
+    print(f"  ✔ Beatriz: {len(rows)} probes lidas do XLSX")
     return rows
 
 def write_consolidated_csv(all_probes: list[Probe]):
@@ -483,7 +672,7 @@ def write_consolidated_csv(all_probes: list[Probe]):
     """
     out_path = ALIGN_DIR / "FINAL_PROBES_ALL.csv"
     romeu_rows   = [asdict(p) for p in all_probes]
-    beatriz_rows = _parse_beatriz_csv(BEATRIZ_CSV)
+    beatriz_rows = _parse_beatriz_xlsx(BEATRIZ_XLSX)
     all_rows     = romeu_rows + beatriz_rows
     all_rows.sort(key=lambda r: (r["gene"], not r["pass_basic"]))
     fields = list(asdict(Probe("","","")).keys())
