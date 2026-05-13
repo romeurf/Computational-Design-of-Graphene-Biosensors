@@ -373,7 +373,8 @@ def run_seqfold_probe(probe: Probe, gene_key: str) -> Probe:
     try:
         dg      = sf.dg(seq, temp=37.0)
         structs = sf.fold(seq, temp=37.0)
-        paired  = {pos for s in structs for pos in s.ij if pos >= 0}
+        # s.ij é lista de tuplas (i, j) — cada par representa uma ligação de bases
+        paired  = {idx for s in structs for pair in s.ij for idx in pair if idx >= 0}
         paired_frac = len(paired) / len(seq) if seq else 0.0
         probe.nupack_dg     = round(dg, 2)
         probe.nupack_defect = round(paired_frac, 3)
