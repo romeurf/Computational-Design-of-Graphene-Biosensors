@@ -40,7 +40,16 @@
       "Bash(python -m pip install biopython)",
       "Bash(python -c \"import yaml, Bio, primer3, pandas, requests, seqfold, openpyxl; print\\('Todos os modulos OK'\\); import shutil; print\\('boltz CLI:', shutil.which\\('boltz'\\) or 'NAO encontrado'\\)\")",
       "Bash(python -m pip install requests)",
-      "Bash(python -c \"import yaml, Bio, primer3, pandas, requests, seqfold, openpyxl; import shutil; b=shutil.which\\('boltz'\\); print\\('Modulos: OK'\\); print\\('boltz CLI:', b if b else 'NAO em PATH \\(normal, conda usa python -m boltz\\)'\\)\")"
+      "Bash(python -c \"import yaml, Bio, primer3, pandas, requests, seqfold, openpyxl; import shutil; b=shutil.which\\('boltz'\\); print\\('Modulos: OK'\\); print\\('boltz CLI:', b if b else 'NAO em PATH \\(normal, conda usa python -m boltz\\)'\\)\")",
+      "Bash(find \"c:/Users/Romeu\" -name \"mafft.bat\" 2>/dev/null | head -5)",
+      "Read(//c/Users/Romeu/**)",
+      "Bash(C:/Users/Romeu/AppData/Local/Programs/Python/Python312/python.exe -c \"import shutil; print\\(shutil.which\\('mafft'\\)\\); print\\(shutil.which\\('mafft.bat'\\)\\)\")",
+      "Bash(C:/Users/Romeu/AppData/Local/Programs/Python/Python312/python.exe -c ' *)",
+      "Bash(python -c \"import ast; ast.parse\\(open\\('c:/Users/Romeu/OneDrive/Documentos/GitHub/Computational-Design-of-Graphene-Biosensors/pipeline.py', encoding='utf-8'\\).read\\(\\)\\); print\\('pipeline.py: OK'\\)\")",
+      "Bash(xargs ls -la)",
+      "Bash(sort -k5 -rn)",
+      "Bash(git checkout *)",
+      "Bash(python -c \"import ast; ast.parse\\(open\\('c:/Users/Romeu/OneDrive/Documentos/GitHub/Computational-Design-of-Graphene-Biosensors/pipeline.py', encoding='utf-8'\\).read\\(\\)\\); print\\('OK'\\)\")"
     ]
   }
 }

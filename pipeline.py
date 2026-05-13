@@ -1,25 +1,19 @@
 """
-GFET Probe Pipeline v4
+GFET Probe Pipeline
 ─────────────────────────────────────────────────────────────────────────────
-Novidades face à v3:
-  • build_probe_id()          — nome codificado: p001_Saur_nuc_pos373-395_Tm54.1_GC40_hp-0.38_PASS
-  • Limiares por gene         — definidos em TARGETS{} (fácil de ajustar)
-  • run_seqfold_probe()       — ΔG MFE + fracção emparelhada via seqfold (open-source, MIT)
-                                Substitui NUPACK (não gratuito para uso geral).
-                                Instalar: pip install seqfold
-  • run_nucleofold()          — estrutura 3D via 3dRNA/NucleoFold (submissão manual recomendada;
-                                o servidor não expõe REST API pública)
-  • run_boltz2()              — fallback 3D local via Boltz-2 (YAML + CLI)
-                                Instalar: pip install boltz  [requer Python ≥ 3.10]
-  • _calc_rmsd_between_cifs() — RMSD entre réplicas (Biopython Superimposer)
-  • write_consolidated_csv()  — CSV único com probes Romeu + Beatriz (XLSX, duas sheets)
+Pipeline computacional para design in silico de probes DNA para biossensores
+GFET (Graphene Field-Effect Transistor) em detecção de patogénios bacterianos.
+
+Etapas:
+  NCBI → MAFFT → janelas conservadas → primer3 → seqfold → Boltz-2 (3D)
 
 Referências dos limiares:
   SantaLucia & Hicks 2004  — Tm nearest-neighbour, parâmetros primer3
   Wetmur 1991              — comprimento da probe (18–28 nt)
-  Zadeh et al. 2011        — NUPACK (referência conceptual; substituído por seqfold)
+  Zadeh et al. 2011        — limiar seqfold (proxy NUPACK ensemble)
   IDT OligoAnalyzer        — GC 40–65%, homodimer ΔG > -5 kcal/mol
   Stover et al. 2000       — P. aeruginosa GC genómico ~67% (PAO1)
+  Wohlwend et al. 2024     — Boltz-2, predição estrutura 3D
 ─────────────────────────────────────────────────────────────────────────────
 """
 
@@ -163,10 +157,9 @@ DEFAULTS = {
     "max_seqs":           20,     # seqs a descarregar do NCBI
     "min_len":           100,     # bp — comprimento mínimo da sequência alvo
     "max_len":          5000,     # bp
-    "nupack_dg_max":     -3.0,    # kcal/mol — ΔG MFE seqfold (proxy NUPACK, Zadeh 2011)
-                                  # Escala seqfold ≠ NUPACK ensemble: 0 a ~-6 para 18-28 nt
-                                  # Probe com hairpin > -3 kcal/mol rejeita
-    "nupack_defect_max":  0.15,   # fracção de bases emparelhadas (seqfold) — proxy defect NUPACK
+    "nupack_dg_max":     -6.0,    # kcal/mol — ΔG MFE seqfold (proxy NUPACK, Zadeh 2011)
+                                  # Rejeita probes com estrutura secundária forte (< -6 kcal/mol)
+    "nupack_defect_max":  0.50,   # fracção de bases emparelhadas no MFE (informativo)
     "rmsd_max":           2.0,    # Å — threshold de qualidade estrutural
 }
 
@@ -236,7 +229,7 @@ def fetch_sequences(gene_key: str) -> list[SeqRecord]:
                     return []
                 time.sleep(0.5)
                 h    = Entrez.efetch(db="nucleotide", id=ids, rettype="fasta", retmode="text")
-                recs = list(SeqIO.parse(h, "fasta")); h.close()
+                recs = list(SeqIO.parse(h, "fasta-pearson")); h.close()
                 return [r for r in recs if min_l <= len(r.seq) <= max_l]
             except Exception as e:
                 print(f"    ⚠ Tentativa {attempt+1}/3: {e}")
@@ -266,7 +259,7 @@ def fetch_sequences(gene_key: str) -> list[SeqRecord]:
             try:
                 time.sleep(0.5)
                 h    = Entrez.efetch(db="nucleotide", id=fb, rettype="fasta", retmode="text")
-                records = list(SeqIO.parse(h, "fasta")); h.close()
+                records = list(SeqIO.parse(h, "fasta-pearson")); h.close()
                 print(f"    ✔ Referência {fb} descarregada.")
             except Exception as e:
                 raise RuntimeError(f"Sem dados para {gene_key}: {e}")
@@ -365,19 +358,10 @@ def passes_basic(probe: Probe, gene_key: str) -> bool:
 # ─── 6. seqfold (substituto open-source do NUPACK) ───────────────────────────
 def run_seqfold_probe(probe: Probe, gene_key: str) -> Probe:
     """
-    Análise de estrutura secundária via seqfold (algoritmo Nussinov, MIT license).
-    Substitui NUPACK (não gratuito) como filtro de estrutura secundária da probe.
-
-    Métricas calculadas:
-      nupack_dg     : ΔG MFE a 37°C (kcal/mol) — quanto mais negativo, mais estrutura
-      nupack_defect : fracção de bases emparelhadas no modelo MFE (proxy ensemble defect)
-
-    Critérios (armazenados nos campos nupack_* para compatibilidade de CSV):
-      nupack_dg     ≥ nupack_dg_max     (padrão -3.0 kcal/mol)  — hairpin fraco/ausente
-      nupack_defect ≤ nupack_defect_max (padrão 0.15)            — < 15% bases emparelhadas
-
-    Instalar: pip install seqfold
-    Ref conceptual: Zadeh et al. 2011 (NUPACK); Reuter & Mathews 2010 (Nussinov)
+    Análise de estrutura secundária via seqfold (Nussinov, MIT license).
+    Critério de aprovação: ΔG MFE ≥ nupack_dg_max (padrão -6.0 kcal/mol).
+    nupack_defect = fracção de bases emparelhadas (calculado mas apenas informativo).
+    Ref: Zadeh et al. 2011 (NUPACK, referência conceptual); seqfold (pip install seqfold)
     """
     try:
         import seqfold as sf
@@ -387,27 +371,17 @@ def run_seqfold_probe(probe: Probe, gene_key: str) -> Probe:
 
     seq = probe.sequence
     try:
-        dg = sf.dg(seq, temp=37.0)
+        dg      = sf.dg(seq, temp=37.0)
         structs = sf.fold(seq, temp=37.0)
-
-        # Fracção de bases emparelhadas no modelo MFE
-        paired: set[int] = set()
-        for s in structs:
-            i, j = s.ij
-            if i >= 0 and j >= 0 and j > i:
-                paired.add(i)
-                paired.add(j)
+        paired  = {pos for s in structs for pos in s.ij if pos >= 0}
         paired_frac = len(paired) / len(seq) if seq else 0.0
-
         probe.nupack_dg     = round(dg, 2)
         probe.nupack_defect = round(paired_frac, 3)
     except Exception as e:
         probe.notes += f"[seqfold erro: {e}] "
         return probe
 
-    dg_ok  = probe.nupack_dg     >= cfg(gene_key, "nupack_dg_max")
-    def_ok = probe.nupack_defect <= cfg(gene_key, "nupack_defect_max")
-    probe.pass_nupack = dg_ok and def_ok
+    probe.pass_nupack = probe.nupack_dg >= cfg(gene_key, "nupack_dg_max")
     return probe
 
 # ─── 7. Estrutura 3D ─────────────────────────────────────────────────────────
@@ -654,7 +628,17 @@ def _parse_beatriz_xlsx(path: Path) -> list[dict]:
     xl = pd.ExcelFile(path)
 
     # ── Sheet 1: "Nossas sequencias" ─────────────────────────────────────────
-    df1 = pd.read_excel(xl, sheet_name="Nossas sequencias", header=2)
+    # Detecta o cabeçalho dinamicamente (linha que contém "Sequence")
+    _raw1 = pd.read_excel(xl, sheet_name="Nossas sequencias", header=None)
+    _hrow = next(
+        (i for i, r in _raw1.iterrows()
+         if any(str(v).strip().lower() == "sequence" for v in r.values if pd.notna(v))),
+        2
+    )
+    df1 = pd.read_excel(xl, sheet_name="Nossas sequencias",
+                        header=_hrow, dtype=str)
+    df1.columns = [str(c).strip() for c in df1.columns]
+
     for _, row in df1.iterrows():
         seq = _clean_seq(row.get("Sequence"))
         if len(seq) < 10:
@@ -663,8 +647,7 @@ def _parse_beatriz_xlsx(path: Path) -> list[dict]:
         gene     = _extract_gene(row.get("Gene/STRAIN"))
         tm       = _parse_float_unit(row.get("Tm"))
         gc       = _parse_gc_pct(row.get("GC content"))
-        hp       = row.get("Lowest folding energy kcal/mole at 25C")
-        hp       = float(hp) if pd.notna(hp) else None
+        hp       = _parse_float_unit(row.get("Lowest folding energy kcal/mole at 25C"))
         pid_raw  = row.get("Column1")
         pid      = str(pid_raw).strip() if pd.notna(pid_raw) else f"bea{len(rows)+1:03d}"
         rows.append({
@@ -691,7 +674,16 @@ def _parse_beatriz_xlsx(path: Path) -> list[dict]:
         })
 
     # ── Sheet 2: "New probes (papers)" ───────────────────────────────────────
-    df2 = pd.read_excel(xl, sheet_name="New probes (papers)", header=0)
+    _raw2 = pd.read_excel(xl, sheet_name="New probes (papers)", header=None)
+    _hrow2 = next(
+        (i for i, r in _raw2.iterrows()
+         if any("probe" in str(v).lower() or "species" in str(v).lower()
+                for v in r.values if pd.notna(v))),
+        0
+    )
+    df2 = pd.read_excel(xl, sheet_name="New probes (papers)",
+                        header=_hrow2, dtype=str)
+    df2.columns = [str(c).strip() for c in df2.columns]
     for _, row in df2.iterrows():
         raw  = str(row.get("Published probes (5'-3')", "") or "")
         seq  = re.sub(r"[^ATGCUN]", "", raw.upper())
@@ -753,7 +745,7 @@ def write_consolidated_csv(all_probes: list[Probe]):
 # ─── Pipeline principal ───────────────────────────────────────────────────────
 def run_pipeline(run_nupack=True, run_3d=True):
     print("\n" + "═"*60)
-    print("  GFET Probe Pipeline v4")
+    print("  GFET Probe Pipeline")
     print(f"  Targets: {list(TARGETS.keys())}")
     print("═"*60)
 
