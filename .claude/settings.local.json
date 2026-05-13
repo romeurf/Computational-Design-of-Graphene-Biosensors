@@ -26,7 +26,21 @@
       "Bash(mv \"The_GFET_Computational_Blueprint.pdf\" docs/)",
       "Bash(python -c \"import ast; ast.parse\\(open\\('pipeline.py', encoding='utf-8'\\).read\\(\\)\\); print\\('pipeline.py: OK'\\)\")",
       "Bash(python -c \"import ast; ast.parse\\(open\\('scripts/boltz2_predict.py', encoding='utf-8'\\).read\\(\\)\\); print\\('boltz2_predict.py: OK'\\)\")",
-      "Bash(python -c \"import ast; ast.parse\\(open\\('scripts/nucleofold_predict.py', encoding='utf-8'\\).read\\(\\)\\); print\\('nucleofold_predict.py: OK'\\)\")"
+      "Bash(python -c \"import ast; ast.parse\\(open\\('scripts/nucleofold_predict.py', encoding='utf-8'\\).read\\(\\)\\); print\\('nucleofold_predict.py: OK'\\)\")",
+      "Bash(C:/Users/Romeu/AppData/Local/Programs/Python/Python312/python.exe -m pip install pyyaml biopython primer3-py pandas requests seqfold openpyxl)",
+      "Bash(C:/Users/Romeu/AppData/Local/Programs/Python/Python312/python.exe -m pip install pandas openpyxl)",
+      "Bash(C:/Users/Romeu/AppData/Local/Programs/Python/Python312/python.exe -c \"import yaml, Bio, primer3, pandas, requests, seqfold, openpyxl; print\\('Todos os módulos OK'\\)\")",
+      "Bash(C:/Users/Romeu/AppData/Local/Programs/Python/Python312/python.exe -c \"import boltz; print\\('boltz version:', boltz.__version__\\)\")",
+      "Bash(C:/Users/Romeu/AppData/Local/Programs/Python/Python312/python.exe -m pip show boltz)",
+      "Bash(python -m pip show boltz)",
+      "Bash(python -c \"import yaml, Bio, primer3, pandas, requests, seqfold, openpyxl; print\\('OK'\\)\")",
+      "Bash(python -m pip install pyyaml primer3-py seqfold openpyxl)",
+      "Bash(python -c \"import yaml, Bio, primer3, pandas, requests, seqfold, openpyxl, boltz; print\\('Todos os modulos OK'\\)\")",
+      "Bash(python -m pip show biopython)",
+      "Bash(python -m pip install biopython)",
+      "Bash(python -c \"import yaml, Bio, primer3, pandas, requests, seqfold, openpyxl; print\\('Todos os modulos OK'\\); import shutil; print\\('boltz CLI:', shutil.which\\('boltz'\\) or 'NAO encontrado'\\)\")",
+      "Bash(python -m pip install requests)",
+      "Bash(python -c \"import yaml, Bio, primer3, pandas, requests, seqfold, openpyxl; import shutil; b=shutil.which\\('boltz'\\); print\\('Modulos: OK'\\); print\\('boltz CLI:', b if b else 'NAO em PATH \\(normal, conda usa python -m boltz\\)'\\)\")"
     ]
   }
 }

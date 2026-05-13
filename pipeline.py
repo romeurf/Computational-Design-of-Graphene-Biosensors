@@ -453,14 +453,31 @@ def run_nucleofold(probe: Probe) -> Optional[Path]:
         return dest
     return None
 
+def _boltz_cmd() -> list[str] | None:
+    """
+    Devolve o comando para invocar o Boltz-2.
+    Tenta 'boltz' no PATH primeiro; se não existir, usa 'python -m boltz'
+    (instalação via pip sem entry-point no PATH).
+    """
+    if shutil.which("boltz"):
+        return ["boltz"]
+    try:
+        import importlib.util
+        if importlib.util.find_spec("boltz") is not None:
+            return [sys.executable, "-m", "boltz"]
+    except Exception:
+        pass
+    return None
+
 def run_boltz2(probe: Probe, n_samples: int = 3) -> list[Path]:
     """
     Corre o Boltz-2 localmente para gerar n_samples estruturas CIF.
     Usa o CLI: boltz predict <yaml> --out_dir <dir> --diffusion_samples n
     Ref: Wohlwend et al. 2024 (Boltz-2 paper)
     """
-    if shutil.which("boltz") is None:
-        probe.notes += "[Boltz-2 não encontrado] "
+    cmd_base = _boltz_cmd()
+    if cmd_base is None:
+        probe.notes += "[Boltz-2 não encontrado: pip install boltz] "
         return []
     out_dir = STRUCT_DIR / probe.probe_id / "boltz"
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -470,14 +487,17 @@ def run_boltz2(probe: Probe, n_samples: int = 3) -> list[Path]:
         "sequences": [{"dna": {"id": ["A"], "sequence": probe.sequence}}]
     }))
     try:
-        subprocess.run([
-            "boltz", "predict", str(yaml_path),
-            "--out_dir", str(out_dir),
-            "--recycling_steps", "3",
-            "--sampling_steps", "200",
-            "--diffusion_samples", str(n_samples),
-            "--device", "cpu",
-        ], check=True, capture_output=True, timeout=600)
+        subprocess.run(
+            cmd_base + [
+                "predict", str(yaml_path),
+                "--out_dir", str(out_dir),
+                "--recycling_steps", "3",
+                "--sampling_steps", "200",
+                "--diffusion_samples", str(n_samples),
+                "--device", "cpu",
+            ],
+            check=True, capture_output=True, timeout=600
+        )
     except Exception as e:
         probe.notes += f"[Boltz erro: {e}] "
         return []

@@ -82,13 +82,25 @@ def calc_rmsd(cif_paths: list[Path]) -> Optional[float]:
     return round(sum(rmsds) / len(rmsds), 3) if rmsds else None
 
 
+def _boltz_cmd() -> list[str] | None:
+    if shutil.which("boltz"):
+        return ["boltz"]
+    try:
+        import importlib.util
+        if importlib.util.find_spec("boltz") is not None:
+            return [sys.executable, "-m", "boltz"]
+    except Exception:
+        pass
+    return None
+
 def run_boltz(seq: str, probe_id: str, samples: int, device: str) -> list[Path]:
     """
     Cria o YAML de input e invoca `boltz predict`.
     Devolve lista de CIFs gerados (pode ser vazia se boltz falhar).
     """
-    if shutil.which("boltz") is None:
-        print("    ✘ boltz não encontrado no PATH. Instale via: pip install boltz")
+    cmd_base = _boltz_cmd()
+    if cmd_base is None:
+        print("    boltz nao encontrado. Instalar: pip install boltz")
         return []
 
     out_dir = STRUCT_DIR / probe_id / "boltz"
@@ -99,8 +111,8 @@ def run_boltz(seq: str, probe_id: str, samples: int, device: str) -> list[Path]:
         "sequences": [{"dna": {"id": ["A"], "sequence": seq}}],
     }))
 
-    cmd = [
-        "boltz", "predict", str(yaml_path),
+    cmd = cmd_base + [
+        "predict", str(yaml_path),
         "--out_dir",          str(out_dir),
         "--recycling_steps",  "3",
         "--sampling_steps",   "200",
