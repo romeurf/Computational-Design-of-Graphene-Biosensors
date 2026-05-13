@@ -752,7 +752,7 @@ def write_consolidated_csv(all_probes: list[Probe]):
     print(f"\n  ✔ CSV consolidado: {out_path}  ({len(all_rows)} probes total)")
 
 # ─── Pipeline principal ───────────────────────────────────────────────────────
-def run_pipeline(run_nupack=True, run_3d=True):
+def run_pipeline(run_nupack=True, run_3d=True, top_3d_per_gene=5):
     print("\n" + "═"*60)
     print("  GFET Probe Pipeline")
     print(f"  Targets: {list(TARGETS.keys())}")
@@ -831,9 +831,22 @@ def run_pipeline(run_nupack=True, run_3d=True):
         gate_probes = [p for p in all_probes
                        if p.pass_basic and (p.pass_nupack if run_nupack else True)]
 
+        # Limitar ao top N por gene, ordenado por Tm (desc) como proxy de qualidade
+        if top_3d_per_gene > 0:
+            selected: list[Probe] = []
+            for gk in TARGETS:
+                gene_cands = sorted(
+                    [p for p in gate_probes if p.gene == gk],
+                    key=lambda p: p.tm, reverse=True
+                )[:top_3d_per_gene]
+                selected.extend(gene_cands)
+            gate_probes = selected
+
         print(f"\n{'═'*60}")
         print(f"  PREDIÇÃO 3D — Boltz-2")
-        print(f"  {len(gate_probes)} probes qualificadas (todos os critérios PASS)")
+        print(f"  {len(gate_probes)} probes seleccionadas para 3D")
+        if top_3d_per_gene > 0:
+            print(f"  (top {top_3d_per_gene} por gene, ordenadas por Tm)")
         print(f"{'═'*60}")
 
         if not _boltz_cmd():
@@ -863,7 +876,10 @@ def run_pipeline(run_nupack=True, run_3d=True):
 if __name__ == "__main__":
     import argparse
     ap = argparse.ArgumentParser(description="GFET Probe Pipeline")
-    ap.add_argument("--no-nupack", action="store_true", help="Saltar seqfold (estrutura secundária)")
-    ap.add_argument("--no-3d",    action="store_true", help="Saltar modelação 3D")
+    ap.add_argument("--no-nupack",      action="store_true", help="Saltar seqfold")
+    ap.add_argument("--no-3d",          action="store_true", help="Saltar modelação 3D")
+    ap.add_argument("--top-3d",         type=int, default=5,
+                    help="Top N probes por gene para Boltz-2 (0=todas, padrão: 5)")
     args = ap.parse_args()
-    run_pipeline(run_nupack=not args.no_nupack, run_3d=not args.no_3d)
+    run_pipeline(run_nupack=not args.no_nupack, run_3d=not args.no_3d,
+                 top_3d_per_gene=args.top_3d)
