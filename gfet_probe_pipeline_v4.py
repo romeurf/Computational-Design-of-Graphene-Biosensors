@@ -396,39 +396,58 @@ def run_seqfold_probe(probe: Probe, gene_key: str) -> Probe:
     return probe
 
 # ─── 7. Estrutura 3D ─────────────────────────────────────────────────────────
+
+# Path para NucleoFold3D.py — actualizar se estiver noutro sítio
+NUCLEOFOLD3D_SCRIPT = (
+    Path.home() / "OneDrive" / "Ambiente de Trabalho" / "Tese"
+    / "NucleoFold" / "NucleoFold3D.py"
+)
+
 def run_nucleofold(probe: Probe) -> Optional[Path]:
     """
-    Submete a sequência à API pública do NucleoFold (3dRNA/NucleoFold).
-    Devolve o path do CIF gerado ou None se falhar.
+    Corre o pipeline local NucleoFold3D.py para uma probe.
+    Requer: nsp binary, RNAfold (ViennaRNA), AmberTools (tleap/sander/ambpdb).
+    RNAfold e AmberTools funcionam em Windows via conda.
+    O binário nsp é normalmente Linux — usar WSL se necessário.
+
+    Devolve o path do PDB de menor energia ou None se falhar/não instalado.
+    Ref: NucleoFold3D pipeline (Beatriz et al.) — RNAfold → NSP → AMBER OL15
     """
-    url = "http://biophy.hust.edu.cn/new/3dRNA/api/submit"   # endpoint público
-    try:
-        resp = requests.post(url,
-                             json={"sequence": probe.sequence, "type": "DNA"},
-                             timeout=120)
-        resp.raise_for_status()
-        data    = resp.json()
-        job_id  = data.get("job_id") or data.get("id")
-        if not job_id:
-            return None
-        # poll até terminar (máx 5 min)
-        import time
-        for _ in range(60):
-            time.sleep(5)
-            r2 = requests.get(f"{url.replace('submit','result')}/{job_id}", timeout=30)
-            r2.raise_for_status()
-            d2 = r2.json()
-            if d2.get("status") == "done":
-                cif_url = d2.get("cif_url") or d2.get("structure_url")
-                if cif_url:
-                    cif_data = requests.get(cif_url, timeout=30).text
-                    out_cif  = STRUCT_DIR / f"{probe.probe_id}_nucleofold.cif"
-                    out_cif.write_text(cif_data)
-                    return out_cif
-            elif d2.get("status") == "error":
-                return None
-    except Exception:
+    if not NUCLEOFOLD3D_SCRIPT.exists():
+        probe.notes += "[NucleoFold3D.py não encontrado] "
         return None
+
+    # Criar CSV de input no formato esperado pelo NucleoFold3D.py
+    tmp_csv = STRUCT_DIR / f"{probe.probe_id}_nf3d_input.csv"
+    tmp_csv.write_text(f"job_name,sequence\n{probe.probe_id},{probe.sequence}\n",
+                       encoding="utf-8")
+    try:
+        subprocess.run(
+            [sys.executable, str(NUCLEOFOLD3D_SCRIPT), "--csv", str(tmp_csv)],
+            check=True, capture_output=True, timeout=3600
+        )
+    except FileNotFoundError:
+        probe.notes += "[NucleoFold3D: python não encontrado] "
+        return None
+    except subprocess.CalledProcessError as e:
+        probe.notes += f"[NucleoFold3D erro: {e.returncode}] "
+        return None
+    except subprocess.TimeoutExpired:
+        probe.notes += "[NucleoFold3D timeout] "
+        return None
+    finally:
+        tmp_csv.unlink(missing_ok=True)
+
+    # NucleoFold3D guarda em ~/scripts/results_<input_stem>/<job_name>/
+    results_base = Path.home() / "scripts" / f"results_{tmp_csv.stem}"
+    min_pdb = next(results_base.glob(f"{probe.probe_id}*/*_minenerg.pdb"), None)
+    if min_pdb is None:
+        # fallback: qualquer minenerg
+        min_pdb = next(results_base.glob("**/*_minenerg.pdb"), None)
+    if min_pdb:
+        dest = STRUCT_DIR / f"{probe.probe_id}_nucleofold_minenerg.pdb"
+        shutil.copy(min_pdb, dest)
+        return dest
     return None
 
 def run_boltz2(probe: Probe, n_samples: int = 3) -> list[Path]:
@@ -490,17 +509,19 @@ def _calc_rmsd_between_cifs(cif_paths: list[Path]) -> Optional[float]:
 
 def run_3d_pipeline(probe: Probe) -> Probe:
     """
-    Tenta NucleoFold primeiro; se falhar, tenta Boltz-2.
-    Se Boltz-2 gerar ≥2 réplicas, calcula RMSD.
-    Pass_3d = True se RMSD < rmsd_max.
+    Tenta NucleoFold3D.py (local) primeiro; se falhar, tenta Boltz-2.
+    NucleoFold3D gera 5 PDB minimizados — usa o de menor energia AMBER.
+    Boltz-2 gera n réplicas CIF — calcula RMSD entre elas.
+    Pass_3d = True se NucleoFold3D produziu resultado OU RMSD Boltz < rmsd_max.
     """
-    print(f"      3D: NucleoFold... ", end="", flush=True)
-    cif = run_nucleofold(probe)
-    if cif:
-        probe.structure_cif = str(cif)
+    print(f"      3D: NucleoFold3D... ", end="", flush=True)
+    pdb = run_nucleofold(probe)
+    if pdb:
+        probe.structure_cif = str(pdb)   # campo reutilizado para PDB também
         probe.pass_3d       = True
-        print("✔ NucleoFold")
+        print(f"✔ ({pdb.name})")
         return probe
+
     print("falhou → Boltz-2... ", end="", flush=True)
     cifs = run_boltz2(probe, n_samples=3)
     if not cifs:
@@ -508,7 +529,7 @@ def run_3d_pipeline(probe: Probe) -> Probe:
         return probe
     probe.structure_cif = str(cifs[0])
     rmsd = _calc_rmsd_between_cifs(cifs)
-    probe.rmsd = rmsd
+    probe.rmsd  = rmsd
     rmsd_thresh = DEFAULTS["rmsd_max"]
     probe.pass_3d = (rmsd is not None and rmsd < rmsd_thresh)
     rmsd_str = f"{rmsd:.2f} Å" if rmsd is not None else "N/A"
@@ -755,7 +776,7 @@ def run_pipeline(run_nupack=True, run_3d=True):
                 if p.pass_basic:
                     p = run_seqfold_probe(p, gene_key)
             n_nup = sum(p.pass_nupack for p in probes if p.pass_basic)
-            print(f"    ✔ {n_nup}/{n_pass} probes passam NUPACK")
+            print(f"    ✔ {n_nup}/{n_pass} probes passam seqfold")
 
         # 6. Estrutura 3D + RMSD (só PASS básico + NUPACK)
         if run_3d:
