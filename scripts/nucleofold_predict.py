@@ -45,8 +45,8 @@ import argparse, csv, itertools, subprocess, sys
 from pathlib import Path
 from typing import Optional
 
-BASE_DIR   = Path(__file__).parent
-STRUCT_DIR = BASE_DIR / "structures"
+BASE_DIR   = Path(__file__).parent.parent          # raiz do repo
+STRUCT_DIR = BASE_DIR / "output" / "structures"
 STRUCT_DIR.mkdir(parents=True, exist_ok=True)
 
 _RMSD_MAX_DEFAULT    = 2.0
@@ -214,7 +214,7 @@ def run(input_csv: Path, filter_mode: str, nucleofold_script: Path,
     print(f"{'═'*60}")
 
     # CSV input para NucleoFold3D.py
-    input_for_nf3d = BASE_DIR / "nucleofold_input.csv"
+    input_for_nf3d = BASE_DIR / "output" / "nucleofold_input.csv"
 
     if not collect:
         prepare_input_csv(probes, input_for_nf3d)
@@ -260,14 +260,14 @@ def run(input_csv: Path, filter_mode: str, nucleofold_script: Path,
 
 if __name__ == "__main__":
     ap = argparse.ArgumentParser(description="NucleoFold3D wrapper + RMSD intra-réplicas")
-    ap.add_argument("--input",       default="alignments/FINAL_PROBES_ALL.csv")
+    ap.add_argument("--input",       default="output/FINAL_PROBES_ALL.csv")
     ap.add_argument("--filter",      default="nupack", choices=["basic", "nupack", "all"])
     ap.add_argument("--nucleofold",  default=str(_NUCLEOFOLD3D_DEFAULT),
                     help="Path para NucleoFold3D.py")
     ap.add_argument("--results-dir", default=str(Path.home() / "scripts" / "results_nucleofold_input"),
                     help="Directório de resultados do NucleoFold3D.py")
     ap.add_argument("--rmsd-max",    type=float, default=_RMSD_MAX_DEFAULT)
-    ap.add_argument("--out-csv",     default="nucleofold_results.csv")
+    ap.add_argument("--out-csv",     default="output/nucleofold_results.csv")
     ap.add_argument("--prepare-only", action="store_true",
                     help="Só criar CSV de input, não correr NucleoFold3D")
     ap.add_argument("--run",         action="store_true",

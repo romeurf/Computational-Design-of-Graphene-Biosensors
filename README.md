@@ -1,176 +1,160 @@
-# 🧬 Computational Design of Graphene Biosensors
+# Computational Design of Graphene Biosensors
 
-![Python](https://img.shields.io/badge/Python-3.9%2B-blue?logo=python&logoColor=white)
-![License](https://img.shields.io/badge/License-Academic%20Use%20Only-lightgrey)
+![Python](https://img.shields.io/badge/Python-3.10%2B-blue?logo=python&logoColor=white)
 ![Status](https://img.shields.io/badge/Status-In%20Development-yellow)
-![University](https://img.shields.io/badge/University-Minho-darkgreen?logo=academia&logoColor=white)
-![Thesis](https://img.shields.io/badge/Thesis-Bioinformatics%20%2F%20CompBio-blueviolet)
-![MAFFT](https://img.shields.io/badge/Alignment-MAFFT%207.526-orange)
-![primer3](https://img.shields.io/badge/Thermodynamics-primer3--py-red)
-![NCBI](https://img.shields.io/badge/Data-NCBI%20Entrez-0070c0?logo=databricks&logoColor=white)
+![University](https://img.shields.io/badge/University-Minho-darkgreen)
 
-> **Master's Thesis — Bioinformatics / Computational Biology**  
+> Master's Thesis — Bioinformatics / Computational Biology  
 > University of Minho · PG45861  
 > Computational pipeline for the *in silico* design of DNA probes for **Graphene Field-Effect Transistor (GFET) biosensors** targeting bacterial pathogens.
 
 ---
 
-## 🔬 Overview
+## Bacterial Targets
 
-This project implements a full computational workflow to design and score oligonucleotide probes for GFET biosensors capable of detecting clinically relevant bacterial pathogens. The pipeline integrates sequence acquisition, multiple sequence alignment, conservation analysis, and thermodynamic scoring — all in Python.
-
-The work is structured in two main phases:
-
-| Phase | Description |
-|-------|-------------|
-| **Phase 0** | Sequence acquisition (NCBI) → MAFFT alignment → conservation analysis → probe candidate extraction → ViruScope-style thermodynamic scoring |
-| **Phase 1** | 3D DNA modelling (3dDNA) → molecular dynamics (AMBER) → molecular docking |
-
----
-
-## 🦠 Bacterial Targets
-
-Six clinically validated gene markers across two groups:
-
-| Gene | Organism | Group | Clinical Relevance |
-|------|----------|-------|-------------------|
-| `nuc` | *Staphylococcus aureus* | A | Thermostable nuclease — GFET benchmark (Purwidyantri 2021) |
-| `rmpM` | *Neisseria meningitidis* | A | Class 4 OMP — electrochemical benchmark (Appaturi 2013) |
-| `lytA` | *Streptococcus pneumoniae* | B | Autolysin LytA — gold-standard clinical marker |
-| `oprL` | *Pseudomonas aeruginosa* | B | Lipoprotein OprL — gold-standard |
-| `algD` | *Pseudomonas aeruginosa* | B | Mucoidal/biofilm phenotype marker |
-| `frdB` | *Haemophilus influenzae* | B | Fumarate reductase — major literature gap |
+| Gene | Organism | Group |
+|------|----------|-------|
+| `nuc` | *Staphylococcus aureus* | A |
+| `rmpM` | *Neisseria meningitidis* | A |
+| `lytA` | *Streptococcus pneumoniae* | B |
+| `oprL` | *Pseudomonas aeruginosa* | B |
+| `algD` | *Pseudomonas aeruginosa* | B |
+| `frdB` | *Haemophilus influenzae* | B |
 
 ---
 
-## ⚙️ Pipeline Architecture
+## Pipeline
 
 ```
-NCBI Entrez API
-      │
-      ▼
- fetch_and_align.py          ← Phase 0 entry (sequence acquisition + alignment)
-      │
-      ├─── MAFFT (local)     ← Multiple sequence alignment
-      │
-      ├─── Conservation Analysis
-      │         └── Sliding window (20–25 nt)
-      │             Criteria: conservation ≥ 85%, gap ≤ 20%
-      │
-      ▼
- gfet_probe_pipeline.py      ← Phase 0 full pipeline (v3, ViruScope integrated)
-      │
-      ├─── ViruScope Scoring (primer3-py)
-      │         ├── Melting Temperature (NN method, SantaLucia 1998)
-      │         ├── GC Content
-      │         ├── Hairpin ΔG (no-fold criterion)
-      │         └── Homodimer ΔG
-      │
-      └─── Outputs per target:
-                ├── conserved_report.txt
-                ├── <gene>_probes_scored.tsv
-                ├── <gene>_viroscope_probes.fasta  ← ViruScope input
-                └── aligned.fasta                  ← Geneious / AliView
+NCBI Entrez
+    │
+    ▼
+MAFFT (múltiplo alinhamento)
+    │
+    ▼
+Janelas candidatas (conservação ≥ 85%, gap ≤ 20%, 18–28 nt)
+    │
+    ▼
+Scoring básico — primer3-py (Tm, GC, hairpin ΔG, homodimer ΔG)
+    │
+    ▼
+seqfold — estrutura secundária MFE (substituto open-source do NUPACK)
+    │
+    ▼
+Boltz-2 — predição estrutura 3D + RMSD entre réplicas
+    │
+    ▼
+output/FINAL_PROBES_ALL.csv   ← probes Romeu + Beatriz consolidadas
 ```
 
 ---
 
-## 📐 Probe Design Criteria
+## Critérios por gene
 
-| Parameter | Threshold |
-|-----------|-----------|
-| Probe length | 20–25 nt |
-| GC content | 40–60% |
-| Melting temperature (Tm) | 55–72 °C |
-| Hairpin ΔG | > −2.0 kcal/mol (no significant fold) |
-| Homodimer ΔG | > −6.0 kcal/mol |
-| Conservation (alignment) | ≥ 85% per position |
-| Gap frequency | ≤ 20% |
+| Parâmetro | Global | nuc/frdB (AT-rico) | oprL/algD (GC-rico) |
+|-----------|--------|--------------------|---------------------|
+| Tm mín | 53 °C | 52 °C | 53 °C |
+| GC | 40–65% | 38–60% | 40–70% |
+| Hairpin ΔG | > −2 kcal/mol | = | = |
+| Homodimer ΔG | > −5 kcal/mol | = | = |
+| seqfold MFE | > −3 kcal/mol | = | = |
+| Bases emparelhadas | < 15% | = | = |
 
-Thermodynamic parameters use **Nearest-Neighbour method** (SantaLucia 1998) at 37 °C, 50 mM Na⁺, 250 nM oligo concentration — conditions representative of GFET biosensor operation.
+Ref: SantaLucia & Hicks 2004 · Wetmur 1991 · IDT OligoAnalyzer · Stover 2000
 
 ---
 
-## 🗂️ Repository Structure
+## Estrutura do repositório
 
 ```
-.
-├── fetch_and_align.py                   # Phase 0 — acquisition + alignment only
-├── gfet_probe_pipeline.py               # Phase 0 — full pipeline with ViruScope scoring (v3)
-├── tabela_targets_probes_updated.xlsx   # Targets and probe summary table
-├── The_GFET_Computational_Blueprint.pdf # Full thesis document
-├── Thesis_Plan_PG45861.pdf              # Thesis plan
-├── Protocolo_Fase0_Alinhamento.docx     # Phase 0 lab protocol (PT)
-└── documentacao_tecnica_fetch_and_align.docx  # Technical documentation (PT)
-```
-
-Output files (generated at runtime, not committed):
-```
-alignments/
-└── <gene>/
-    ├── raw_sequences.fasta
-    ├── aligned.fasta
-    ├── conserved_report.txt
-    ├── <gene>_probes_scored.tsv
-    └── <gene>_viroscope_probes.fasta
+/
+├── pipeline.py              ← entrada principal
+├── scripts/
+│   ├── boltz2_predict.py    ← predição 3D Boltz-2 (standalone)
+│   └── nucleofold_predict.py← wrapper NucleoFold3D (requer WSL/Linux)
+├── data/
+│   ├── BeatrizMasterThesis_ProbesData_IPLEXMED_ENERGIAS_CAPS.xlsx
+│   └── tabela_targets_probes_updated.xlsx
+├── docs/
+│   ├── Protocolo_Fase0_Alinhamento.docx
+│   ├── The_GFET_Computational_Blueprint.pdf
+│   ├── Thesis_Plan_PG45861.pdf
+│   └── documentacao_tecnica_fetch_and_align.docx
+└── output/                  ← gerado em runtime (gitignored)
+    ├── alignments/
+    ├── structures/
+    └── FINAL_PROBES_ALL.csv
 ```
 
 ---
 
-## 🚀 Getting Started
-
-### Prerequisites
-
-- Python ≥ 3.9
-- [MAFFT](https://mafft.cbrc.jp/alignment/software/) (Windows: place at `MAFFT\mafft-7.526-win64-signed\mafft-win\mafft.bat`)
-- Python packages:
+## Instalação
 
 ```bash
-pip install biopython primer3-py pandas
+pip install biopython primer3-py pandas requests pyyaml seqfold openpyxl
 ```
 
-### Run the full pipeline
+MAFFT em PATH (instalar de https://mafft.cbrc.jp/alignment/software/).
+
+Boltz-2 (opcional, para predição 3D):
+```bash
+pip install boltz
+```
+
+---
+
+## Correr o pipeline
 
 ```bash
-# All 6 targets
-python gfet_probe_pipeline.py
+# Pipeline completo (todos os targets)
+python pipeline.py
 
-# Specific target(s)
-python gfet_probe_pipeline.py nuc lytA
+# Sem predição 3D (mais rápido)
+python pipeline.py --no-3d
 
-# Skip NCBI fetch (use existing FASTA files)
-python gfet_probe_pipeline.py --skip-fetch
+# Sem seqfold (só critérios básicos)
+python pipeline.py --no-nupack --no-3d
+
+# Target específico
+# editar TARGETS em pipeline.py para comentar os que não interessam
 ```
 
-### Output
+### Outputs gerados
 
-A consolidated summary of the top 5 probes per target is saved to:
-```
-alignments/FINAL_PROBES_SUMMARY.tsv
+| Ficheiro | Descrição |
+|---------|-----------|
+| `output/FINAL_PROBES_ALL.csv` | Todas as probes (Romeu + Beatriz) com scores |
+| `output/alignments/<gene>/<gene>_probes_scored.tsv` | Probes por gene com todas as métricas |
+| `output/alignments/<gene>/<gene>_viroscope_probes.fasta` | FASTA das probes PASS |
+| `output/alignments/<gene>/aligned.fasta` | Alinhamento múltiplo (Geneious/AliView) |
+| `output/structures/` | Estruturas 3D (PDB/CIF) |
+
+### Predição 3D standalone (após pipeline)
+
+```bash
+# Boltz-2 (Windows nativo)
+python scripts/boltz2_predict.py --filter nupack --samples 3
+
+# NucleoFold3D (requer WSL/Linux com nsp + AmberTools)
+python scripts/nucleofold_predict.py --prepare-only   # prepara CSV
+# depois em WSL: python NucleoFold3D.py --csv output/nucleofold_input.csv
+python scripts/nucleofold_predict.py --collect        # recolhe resultados
 ```
 
 ---
 
-## 🔁 Downstream Workflow (Phase 1)
+## Referências dos limiares
 
-After probe selection, the recommended validation pipeline is:
-
-1. **Visual alignment review** — Geneious or AliView (`aligned.fasta`)
-2. **ViruScope** — import `<gene>_viroscope_probes.fasta` for in-silico primer scoring
-3. **NUPACK** ([nupack.org](https://www.nupack.org)) — secondary structure: ΔG < −12 kcal/mol, ensemble defect < 0.10
-4. **BLAST** ([ncbi.nlm.nih.gov/blast](https://blast.ncbi.nlm.nih.gov/Blast.cgi)) — cross-reactivity check (exclude target organism)
-5. **3dDNA → AMBER → docking** — 3D modelling and molecular dynamics
-
----
-
-## 📚 Key References
-
-- Purwidyantri, A. et al. (2021). GFET biosensor for *S. aureus nuc* gene detection.
-- Appaturi, J.N. et al. (2013). Electrochemical biosensor for *N. meningitidis rmpM*.
-- SantaLucia, J. (1998). A unified view of polymer, dumbbell, and oligonucleotide DNA nearest-neighbor thermodynamics. *PNAS*, 95(4), 1460–1465.
+| Critério | Fonte |
+|---------|-------|
+| Tm nearest-neighbour | SantaLucia & Hicks 2004 |
+| Comprimento probe 18–28 nt | Wetmur 1991 |
+| seqfold MFE (proxy NUPACK) | Zadeh et al. 2011 (NUPACK) |
+| GC 40–65%, homodimer > −5 | IDT OligoAnalyzer |
+| GC P. aeruginosa até 70% | Stover et al. 2000 (PAO1) |
+| Boltz-2 estrutura 3D | Wohlwend et al. 2024 |
+| RMSD Biopython | Hamelryck & Manderick 2003 |
 
 ---
 
-## 📄 License
-
-Academic use only. All rights reserved — University of Minho, 2025–2026.
+*Academic use only — University of Minho 2025–2026*

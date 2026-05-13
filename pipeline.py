@@ -49,13 +49,22 @@ P3_TEMP_C   = 37.0     # temperatura de referência
 
 # ─── Paths ─────────────────────────────────────────────────────────────────
 BASE_DIR     = Path(__file__).parent
-ALIGN_DIR    = BASE_DIR / "alignments"
-NUPACK_DIR   = BASE_DIR / "nupack_out"
-STRUCT_DIR   = BASE_DIR / "structures"
-BEATRIZ_XLSX = BASE_DIR / "BeatrizMasterThesis_ProbesData_IPLEXMED_ENERGIAS_CAPS.xlsx"
-MAFFT_BIN    = BASE_DIR / "MAFFT" / "mafft-7.526-win64-signed" / "mafft-win" / "mafft.bat"
+ALIGN_DIR    = BASE_DIR / "output" / "alignments"
+STRUCT_DIR   = BASE_DIR / "output" / "structures"
+BEATRIZ_XLSX = BASE_DIR / "data" / "BeatrizMasterThesis_ProbesData_IPLEXMED_ENERGIAS_CAPS.xlsx"
 
-for d in [ALIGN_DIR, NUPACK_DIR, STRUCT_DIR]:
+# MAFFT: procura no PATH do sistema primeiro, depois tenta localização local
+_mafft_path  = shutil.which("mafft") or shutil.which("mafft.bat")
+MAFFT_BIN    = Path(_mafft_path) if _mafft_path else \
+               BASE_DIR / "tools" / "MAFFT" / "mafft-7.526-win64-signed" / "mafft-win" / "mafft.bat"
+
+# NucleoFold3D: actualizar se o script estiver noutro sítio
+NUCLEOFOLD3D_SCRIPT = (
+    Path.home() / "OneDrive" / "Ambiente de Trabalho" / "Tese"
+    / "NucleoFold" / "NucleoFold3D.py"
+)
+
+for d in [ALIGN_DIR, STRUCT_DIR]:
     d.mkdir(parents=True, exist_ok=True)
 
 # ─── Targets ───────────────────────────────────────────────────────────────
@@ -397,12 +406,6 @@ def run_seqfold_probe(probe: Probe, gene_key: str) -> Probe:
 
 # ─── 7. Estrutura 3D ─────────────────────────────────────────────────────────
 
-# Path para NucleoFold3D.py — actualizar se estiver noutro sítio
-NUCLEOFOLD3D_SCRIPT = (
-    Path.home() / "OneDrive" / "Ambiente de Trabalho" / "Tese"
-    / "NucleoFold" / "NucleoFold3D.py"
-)
-
 def run_nucleofold(probe: Probe) -> Optional[Path]:
     """
     Corre o pipeline local NucleoFold3D.py para uma probe.
@@ -709,7 +712,7 @@ def write_consolidated_csv(all_probes: list[Probe]):
     Gera FINAL_PROBES_ALL.csv com probes do Romeu + Beatriz,
     ordenado por gene e por pass_basic desc.
     """
-    out_path = ALIGN_DIR / "FINAL_PROBES_ALL.csv"
+    out_path = BASE_DIR / "output" / "FINAL_PROBES_ALL.csv"
     romeu_rows   = [asdict(p) for p in all_probes]
     beatriz_rows = _parse_beatriz_xlsx(BEATRIZ_XLSX)
     all_rows     = romeu_rows + beatriz_rows

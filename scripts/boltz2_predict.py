@@ -41,8 +41,8 @@ from typing import Optional
 
 import yaml
 
-BASE_DIR   = Path(__file__).parent
-STRUCT_DIR = BASE_DIR / "structures"
+BASE_DIR   = Path(__file__).parent.parent          # raiz do repo
+STRUCT_DIR = BASE_DIR / "output" / "structures"
 STRUCT_DIR.mkdir(parents=True, exist_ok=True)
 
 _RMSD_MAX_DEFAULT = 2.0  # Å
@@ -213,12 +213,12 @@ def run(input_csv: Path, filter_mode: str, samples: int,
 
 if __name__ == "__main__":
     ap = argparse.ArgumentParser(description="Boltz-2 standalone prediction + RMSD filter")
-    ap.add_argument("--input",    default="alignments/FINAL_PROBES_ALL.csv")
+    ap.add_argument("--input",    default="output/FINAL_PROBES_ALL.csv")
     ap.add_argument("--filter",   default="basic", choices=["basic", "nupack", "all"])
     ap.add_argument("--samples",  type=int, default=3,
                     help="Número de réplicas Boltz-2 (padrão: 3)")
     ap.add_argument("--device",   default="cpu", choices=["cpu", "cuda"])
-    ap.add_argument("--out-csv",  default="boltz2_results.csv")
+    ap.add_argument("--out-csv",  default="output/boltz2_results.csv")
     ap.add_argument("--rmsd-max", type=float, default=_RMSD_MAX_DEFAULT,
                     help=f"RMSD máximo para pass_3d (padrão: {_RMSD_MAX_DEFAULT} Å)")
     args = ap.parse_args()
