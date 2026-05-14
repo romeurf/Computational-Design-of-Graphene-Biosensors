@@ -1,9 +1,4 @@
 """
-GFET Probe Pipeline
-─────────────────────────────────────────────────────────────────────────────
-Pipeline computacional para design in silico de probes DNA para biossensores
-GFET (Graphene Field-Effect Transistor) em detecção de patogénios bacterianos.
-
 Etapas:
   NCBI → MAFFT → janelas conservadas → primer3 → seqfold → Boltz-2 (3D)
 
