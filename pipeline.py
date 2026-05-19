@@ -621,14 +621,58 @@ def run_pipeline(run_seqfold: bool = True, colab_top: int = 0):
 
     write_consolidated_csv(all_probes)
 
+    # ── Resumo por gene ───────────────────────────────────────────────────────
     print("\n" + "═"*60)
-    print("  RESUMO")
+    print("  RESUMO POR GENE")
     print("═"*60)
+    print(f"  {'Gene':<8} {'Janelas':>8} {'Pass Tm':>8} {'Pass GC':>8} {'Pass HP':>8} {'Pass Dim':>9} {'Pass Básico':>11} {'Pass Seqfold':>12}")
+    print(f"  {'─'*8} {'─'*8} {'─'*8} {'─'*8} {'─'*8} {'─'*9} {'─'*11} {'─'*12}")
+
+    totals = [0] * 7
     for gk in TARGETS:
         ps = [p for p in all_probes if p.gene == gk]
-        nb = sum(p.pass_basic   for p in ps)
-        ns = sum(p.pass_seqfold for p in ps)
-        print(f"  {gk:<8} basic={nb:<5} seqfold={ns}")
+        if not ps:
+            continue
+        n_tot = len(ps)
+        tm_min = cfg(gk,"tm_min"); tm_max = cfg(gk,"tm_max")
+        gc_min = cfg(gk,"gc_min"); gc_max = cfg(gk,"gc_max")
+        hp_min = cfg(gk,"hp_min"); dm_min = cfg(gk,"dimer_min")
+        n_tm  = sum(1 for p in ps if tm_min <= p.tm  <= tm_max)
+        n_gc  = sum(1 for p in ps if gc_min <= p.gc  <= gc_max and tm_min <= p.tm <= tm_max)
+        n_hp  = sum(1 for p in ps if gc_min <= p.gc  <= gc_max and tm_min <= p.tm <= tm_max
+                    and (p.hairpin_dg is None or p.hairpin_dg >= hp_min))
+        n_bas = sum(p.pass_basic   for p in ps)
+        n_sf  = sum(p.pass_seqfold for p in ps)
+        for i, v in enumerate([n_tot, n_tm, n_gc, n_hp, n_bas, n_bas, n_sf]):
+            totals[i] += v
+        print(f"  {gk:<8} {n_tot:>8} {n_tm:>8} {n_gc:>8} {n_hp:>8} {n_bas:>9} {n_bas:>11} {n_sf:>12}")
+
+    print(f"  {'─'*8} {'─'*8} {'─'*8} {'─'*8} {'─'*8} {'─'*9} {'─'*11} {'─'*12}")
+    print(f"  {'TOTAL':<8} {totals[0]:>8} {totals[1]:>8} {totals[2]:>8} {totals[3]:>8} {totals[4]:>9} {totals[4]:>11} {totals[6]:>12}")
+
+    # ── Funil global ──────────────────────────────────────────────────────────
+    print(f"\n  FUNIL GLOBAL (todos os genes)")
+    print(f"  {'─'*50}")
+    total = len(all_probes)
+    remaining = all_probes[:]
+    steps_global = [
+        ("Janelas candidatas totais", None),
+        ("Pass Tm",       lambda p: cfg(p.gene,"tm_min")  <= p.tm <= cfg(p.gene,"tm_max")),
+        ("Pass GC",       lambda p: cfg(p.gene,"gc_min")  <= p.gc <= cfg(p.gene,"gc_max")),
+        ("Pass Hairpin",  lambda p: p.hairpin_dg  is None or p.hairpin_dg  >= cfg(p.gene,"hp_min")),
+        ("Pass Homodimer",lambda p: p.homodimer_dg is None or p.homodimer_dg >= cfg(p.gene,"dimer_min")),
+    ]
+    current = total
+    print(f"  {'Janelas candidatas totais':<30} {total:>6}")
+    for label, test in steps_global[1:]:
+        ok   = [p for p in remaining if test(p)]
+        fail = len(remaining) - len(ok)
+        print(f"  ↳ {label:<28} {len(ok):>6}  [-{fail}]")
+        remaining = ok
+    n_sf_total = sum(p.pass_seqfold for p in all_probes)
+    print(f"  ↳ {'Pass seqfold':<28} {n_sf_total:>6}  [-{len(remaining)-n_sf_total}]")
+    print(f"  {'─'*50}")
+    print(f"  {'Aprovadas para Colab/Boltz-2':<30} {n_sf_total:>6}")
 
     if colab_top > 0:
         export_colab_inputs(all_probes, top_n=colab_top)
