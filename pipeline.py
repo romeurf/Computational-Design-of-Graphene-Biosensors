@@ -98,6 +98,7 @@ TARGETS = {
         "refseq_fallback": "NC_002516",
         "min_len": 500, "max_len": 2500,
         "gc_max": 0.70,           # P. aeruginosa ~67% GC — Stover et al. 2000
+        "max_seqs": 200,         # poucas seqs no NCBI — usar todas as disponíveis (instável a 100)
     },
     "frdB": {
         "organism": "Haemophilus influenzae", "group": "B",
@@ -730,10 +731,10 @@ def _parse_beatriz_xlsx(path: Path) -> list[dict]:
     print(f"  ✔ Beatriz: {len(rows)} probes lidas do XLSX")
     return rows
 
-def write_consolidated_csv(all_probes: list[Probe]):
+def write_consolidated_csv(all_probes: list[Probe], include_beatriz: bool = False):
     out_path     = BASE_DIR / "output" / "FINAL_PROBES_ALL.csv"
     romeu_rows   = [asdict(p) for p in all_probes]
-    beatriz_rows = _parse_beatriz_xlsx(BEATRIZ_XLSX)
+    beatriz_rows = _parse_beatriz_xlsx(BEATRIZ_XLSX) if include_beatriz else []
     all_rows     = romeu_rows + beatriz_rows
     all_rows.sort(key=lambda r: (r["gene"], not r["pass_basic"]))
     fields = list(asdict(Probe("", "", "")).keys())
@@ -744,7 +745,7 @@ def write_consolidated_csv(all_probes: list[Probe]):
     print(f"\n  ✔ CSV consolidado: {out_path}  ({len(all_rows)} probes total)")
 
 # ── Pipeline principal ────────────────────────────────────────────────────────
-def run_pipeline(run_seqfold: bool = True, colab_top: int = 0):
+def run_pipeline(run_seqfold: bool = True, colab_top: int = 0, with_beatriz: bool = False):
     print("\n" + "═"*60)
     print("  GFET Probe Pipeline")
     print(f"  Targets: {list(TARGETS.keys())}")
@@ -807,7 +808,7 @@ def run_pipeline(run_seqfold: bool = True, colab_top: int = 0):
         write_gene_outputs(probes, gene_key)
         all_probes.extend(probes)
 
-    write_consolidated_csv(all_probes)
+    write_consolidated_csv(all_probes, include_beatriz=with_beatriz)
 
     # ── Resumo por gene ───────────────────────────────────────────────────────
     print("\n" + "═"*60)
@@ -885,6 +886,9 @@ if __name__ == "__main__":
     ap.add_argument("--export-colab", type=int, default=0, metavar="N",
                     help="Gerar inputs Colab (top N/gene) a partir do FINAL_PROBES_ALL.csv "
                          "existente, SEM re-correr o pipeline. Produz boltz2_inputs.zip.")
+    ap.add_argument("--with-beatriz", action="store_true",
+                    help="Incluir as probes da Beatriz (data/...xlsx) no CSV consolidado "
+                         "(requer openpyxl). Por defeito o CSV tem só as probes próprias.")
     args = ap.parse_args()
     if args.export_colab > 0:                       # atalho: só (re)gerar inputs Colab
         export_colab_from_csv(args.export_colab)
@@ -897,4 +901,5 @@ if __name__ == "__main__":
         DEFAULTS["len_cluster"] = False
     if args.cluster_tol is not None:
         DEFAULTS["len_cluster_tol"] = args.cluster_tol
-    run_pipeline(run_seqfold=not args.no_seqfold, colab_top=args.colab)
+    run_pipeline(run_seqfold=not args.no_seqfold, colab_top=args.colab,
+                 with_beatriz=args.with_beatriz)
