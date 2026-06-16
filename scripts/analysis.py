@@ -96,16 +96,21 @@ def analyze_seqfold(df: pd.DataFrame):
     dg = pop["seqfold_dg"].to_numpy()
     if dg.size == 0:
         md("_Sem dados de seqfold._"); return
-    md(f"- Probes consideradas (próprias, pass_basic, ΔG definido): **{dg.size}**")
-    md(f"- ΔG MFE: min **{dg.min():.2f}**, mediana **{np.median(dg):.2f}**, "
-       f"média **{dg.mean():.2f}**, máx **{dg.max():.2f}** kcal/mol")
-    pcts = {p: float(np.percentile(dg, p)) for p in (1, 5, 10, 25, 50)}
+    # seqfold devolve por vezes ΔG positivo enorme (artefacto p/ certas seqs); excluído
+    # das estatísticas/figuras. Não afeta o limiar (baseado na cauda negativa / P5).
+    n_art = int((np.abs(dg) >= 50).sum())
+    dgp = dg[np.abs(dg) < 50]
+    md(f"- Probes consideradas (próprias, pass_basic, ΔG definido): **{dg.size}**"
+       + (f"  ({n_art} com ΔG implausível >+50 kcal/mol = artefacto seqfold, "
+          f"excluídos das figuras/estatísticas)" if n_art else ""))
+    md(f"- ΔG MFE (plausível): min **{dgp.min():.2f}**, mediana **{np.median(dgp):.2f}** kcal/mol")
+    pcts = {p: float(np.percentile(dgp, p)) for p in (1, 5, 10, 25, 50)}
     md("- Percentis de ΔG (cauda mais estável = mais negativa): "
        + ", ".join(f"P{p}={v:.2f}" for p, v in pcts.items()))
 
     # Histograma global + por gene
     fig, axes = plt.subplots(1, 2, figsize=(12, 4.2))
-    axes[0].hist(dg, bins=40, color="#2E75B6", edgecolor="white")
+    axes[0].hist(dgp, bins=40, color="#2E75B6", edgecolor="white")
     axes[0].axvline(SEQFOLD_DEFAULT, color="red", ls="--",
                     label=f"limiar atual {SEQFOLD_DEFAULT}")
     axes[0].set(title="Distribuição ΔG MFE (todas as probes pass_basic)",
@@ -113,6 +118,7 @@ def analyze_seqfold(df: pd.DataFrame):
     axes[0].legend()
     for g in GENES:
         gd = pop[pop["gene"] == g]["seqfold_dg"].to_numpy()
+        gd = gd[np.abs(gd) < 50]
         if gd.size > 5:
             axes[1].hist(gd, bins=25, histtype="step", lw=1.6, label=f"{g} (n={gd.size})")
     axes[1].axvline(SEQFOLD_DEFAULT, color="red", ls="--")
@@ -121,14 +127,14 @@ def analyze_seqfold(df: pd.DataFrame):
     fig.tight_layout(); fig.savefig(FIGDIR / "seqfold_hist.png", dpi=130); plt.close(fig)
 
     # Curva cumulativa de aprovação ao longo de TODO o intervalo de ΔG
-    grid = np.linspace(dg.min() - 0.5, dg.max() + 0.5, 300)
-    frac_pass = np.array([(dg >= t).mean() for t in grid])  # ΔG >= t → passa
+    grid = np.linspace(dgp.min() - 0.5, dgp.max() + 0.5, 300)   # gama plausível (figura legível)
+    frac_pass = np.array([(dg >= t).mean() for t in grid])  # % de TODAS as probes que passam
     fig, ax = plt.subplots(figsize=(8, 4.6))
     ax.plot(grid, frac_pass * 100, color="#1F3864", lw=2)
     ax.axvline(SEQFOLD_DEFAULT, color="red", ls="--",
                label=f"limiar atual {SEQFOLD_DEFAULT} → {(dg>=SEQFOLD_DEFAULT).mean()*100:.1f}% passam")
     for p in (5, 10, 25):
-        v = np.percentile(dg, p)
+        v = np.percentile(dgp, p)
         ax.axvline(v, color="grey", ls=":", lw=0.9)
         ax.text(v, 5, f"P{p}", rotation=90, fontsize=7, color="grey", va="bottom")
     ax.set(title="Curva cumulativa de aprovação seqfold (% que passa para cada limiar)",
@@ -156,7 +162,7 @@ def analyze_seqfold(df: pd.DataFrame):
            + " | ".join(str(r[f'{g}_pass']) for g in GENES) + " |")
 
     # Recomendação fundamentada
-    rec = float(np.percentile(dg, 5))
+    rec = float(np.percentile(dgp, 5))
     cur_pass = (dg >= SEQFOLD_DEFAULT).mean() * 100
     near = abs(SEQFOLD_DEFAULT - rec) <= 0.7
     verdict = ("o limiar atual está alinhado com o P5 — defensável estatisticamente."
