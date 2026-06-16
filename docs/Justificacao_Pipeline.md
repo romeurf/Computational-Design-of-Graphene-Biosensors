@@ -79,8 +79,8 @@ de qualidade do alinhamento e não um requisito biológico.
 
 Análise de **rarefação** (`scripts/analysis.py`): subamostrando N sequências por gene e
 medindo a diversidade k-mer e a riqueza (k-mers distintos), estas **saturam por volta de
-N≈75** no gene mais exigente (nuc); a maioria satura a 5–20. Logo **N≈100 por gene é
-suficiente** — mais do que isso quase não acrescenta informação nova. O fator limitante
+N≈50–75** no gene mais exigente (nuc); a maioria satura a 5–20. Logo **N≈100 por gene é
+suficiente** (com margem) — mais do que isso quase não acrescenta informação nova. O fator limitante
 real são os genes com poucas sequências no NCBI (algD ~19, oprL ~24), não o limite N.
 *Exceção:* `algD` tem override `max_seqs=200` (usar todas as disponíveis; instável a 100).
 
