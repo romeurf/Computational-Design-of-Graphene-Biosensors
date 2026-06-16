@@ -115,7 +115,7 @@ DEFAULTS = {
     "tm_min":          53.0,   # °C — SantaLucia & Hicks 2004
     "tm_max":          72.0,
     "gc_min":          0.40,   # IDT OligoAnalyzer
-    "gc_max":          0.65,
+    "gc_max":          0.60,   # janela ótima 40–60% (PremierBiosoft/UNLV); override 0.70 P. aeruginosa
     "hp_min":         -2.0,    # kcal/mol — hairpin ΔG mínimo
     "dimer_min":      -5.0,    # kcal/mol — homodimer ΔG mínimo
     "cons_min":        0.85,   # conservação mínima no alinhamento
@@ -128,7 +128,7 @@ DEFAULTS = {
     "max_len":       5000,
     "len_cluster":     True,   # selecionar automaticamente o cluster de comprimento
     "len_cluster_tol": 0.25,   # ±25% em torno do comprimento dominante
-    "seqfold_dg_max": -6.0,   # kcal/mol — ΔG MFE máximo aceite (Zadeh et al. 2011)
+    "seqfold_dg_max": -3.0,   # kcal/mol — recalibrado (distribuição P5 + guia hairpin -3); era -6.0
 }
 
 def cfg(gene_key: str, param: str):

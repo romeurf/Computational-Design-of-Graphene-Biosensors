@@ -46,7 +46,7 @@ FIGDIR.mkdir(parents=True, exist_ok=True)
 ANADIR.mkdir(parents=True, exist_ok=True)
 
 GENES = ["nuc", "rmpM", "lytA", "oprL", "algD", "frdB"]
-SEQFOLD_DEFAULT = -6.0           # limiar atual no pipeline (Zadeh et al. 2011)
+SEQFOLD_DEFAULT = -3.0           # limiar no pipeline (recalibrado de -6.0)
 KMER_K = 4
 
 _md_lines: list[str] = []
@@ -157,11 +157,15 @@ def analyze_seqfold(df: pd.DataFrame):
 
     # Recomendação fundamentada
     rec = float(np.percentile(dg, 5))
-    md(f"\n**Recomendação (para discussão):** o limiar atual {SEQFOLD_DEFAULT} kcal/mol é "
-       f"muito permissivo — deixa passar {(dg>=SEQFOLD_DEFAULT).mean()*100:.1f}% das probes. "
-       f"Para remover apenas as ~5% com estrutura secundária mais estável (cauda mais negativa), "
-       f"um limiar ≈ **{rec:.1f} kcal/mol** (P5 da distribuição) é defensável estatisticamente. "
-       f"NÃO foi alterado no pipeline — é uma recomendação baseada na distribuição observada.")
+    cur_pass = (dg >= SEQFOLD_DEFAULT).mean() * 100
+    near = abs(SEQFOLD_DEFAULT - rec) <= 0.7
+    verdict = ("o limiar atual está alinhado com o P5 — defensável estatisticamente."
+               if near else
+               f"para filtrar essa cauda, aproximar o limiar de {rec:.1f} kcal/mol.")
+    md(f"\n**Recomendação (para discussão):** limiar atual {SEQFOLD_DEFAULT} kcal/mol → "
+       f"{cur_pass:.1f}% passam (população pass_basic, que já tende a ter pouca estrutura). "
+       f"O P5 da distribuição ≈ **{rec:.1f} kcal/mol** marca as ~5% mais estruturadas; "
+       f"{verdict} Ajustar conforme discussão com o orientador.")
 
 # ── 2. tamanhos & hits por gene + normalidade ──────────────────────────────────
 def analyze_sizes(df: pd.DataFrame):
