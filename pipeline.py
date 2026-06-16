@@ -124,8 +124,10 @@ DEFAULTS = {
     "probe_len_max":   28,
     "window_step":      3,
     "max_seqs":        20,     # sequências a descarregar do NCBI
-    "min_len":        100,     # bp — comprimento mínimo da sequência alvo
+    "min_len":        100,     # bp — pré-filtro grosseiro (sanidade) do comprimento
     "max_len":       5000,
+    "len_cluster":     True,   # selecionar automaticamente o cluster de comprimento
+    "len_cluster_tol": 0.25,   # ±25% em torno do comprimento dominante
     "seqfold_dg_max": -6.0,   # kcal/mol — ΔG MFE máximo aceite (Zadeh et al. 2011)
 }
 
@@ -241,6 +243,30 @@ def fetch_sequences(gene_key: str) -> list[SeqRecord]:
 
     print(f"    ✔ {len(records)} sequências  |  modo: alinhamento múltiplo")
     return records
+
+def select_length_cluster(records: list[SeqRecord], tol: float):
+    """Mantém só o cluster de comprimento dominante (banda ±tol em torno do
+    comprimento mais denso). Remove automaticamente fragmentos parciais e registos
+    sobredimensionados que tornariam o alinhamento gappy — substitui o ajuste manual
+    de min_len/max_len por gene, por isso funciona out-of-the-box em genes novos.
+
+    Devolve (records_filtrados, (lo, hi, n_removidas)) ou (records, None) se não aplicado.
+    """
+    if tol <= 0 or len(records) < 4:
+        return records, None
+    lens = [len(r.seq) for r in records]
+    # centro = comprimento com mais vizinhos dentro de ±tol (robusto a bimodalidade)
+    best_c, best_n = lens[0], -1
+    for c in set(lens):
+        lo, hi = c * (1 - tol), c * (1 + tol)
+        n = sum(lo <= L <= hi for L in lens)
+        if n > best_n:
+            best_c, best_n = c, n
+    lo, hi = best_c * (1 - tol), best_c * (1 + tol)
+    kept = [r for r in records if lo <= len(r.seq) <= hi]
+    if len(kept) < 2:                       # salvaguarda: não reduzir abaixo do alinhável
+        return records, None
+    return kept, (int(lo), int(hi), len(records) - len(kept))
 
 # ── 2. MAFFT ─────────────────────────────────────────────────────────────────
 def align_mafft(records: list[SeqRecord], gene_key: str) -> AlignIO.MultipleSeqAlignment:
@@ -675,6 +701,12 @@ def run_pipeline(run_seqfold: bool = True, colab_top: int = 0):
         print(f"{'━'*60}")
 
         records = fetch_sequences(gene_key)
+        if cfg(gene_key, "len_cluster"):
+            records, info = select_length_cluster(records, cfg(gene_key, "len_cluster_tol"))
+            if info:
+                lo, hi, dropped = info
+                print(f"  [1b] Cluster de comprimento dominante: {lo}–{hi} bp "
+                      f"→ {len(records)} seqs (removidas {dropped} fora do cluster)")
         aln     = align_mafft(records, gene_key)
         windows = candidate_windows(aln, gene_key)
 
@@ -778,7 +810,15 @@ if __name__ == "__main__":
     ap.add_argument("--max-seqs", type=int, default=None, metavar="N",
                     help=f"Sequências NCBI a descarregar por gene (default {DEFAULTS['max_seqs']}). "
                          f"Escalar com rigor — ver scripts/analysis.py (rarefação).")
+    ap.add_argument("--no-cluster", action="store_true",
+                    help="Desativar a seleção automática do cluster de comprimento dominante")
+    ap.add_argument("--cluster-tol", type=float, default=None, metavar="T",
+                    help=f"Tolerância do cluster de comprimento, ±T (default {DEFAULTS['len_cluster_tol']})")
     args = ap.parse_args()
     if args.max_seqs is not None:
         DEFAULTS["max_seqs"] = args.max_seqs
+    if args.no_cluster:
+        DEFAULTS["len_cluster"] = False
+    if args.cluster_tol is not None:
+        DEFAULTS["len_cluster_tol"] = args.cluster_tol
     run_pipeline(run_seqfold=not args.no_seqfold, colab_top=args.colab)

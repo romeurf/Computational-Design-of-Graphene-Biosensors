@@ -361,6 +361,33 @@ def compute_descriptors(df: pd.DataFrame):
        f"16 dinucleótidos).")
     md("- _Descritores de estruturas 3D: adiados (sem estruturas em disco) — ficam como próximo passo._")
 
+# ── 6. parâmetros por gene (revisão / transparência) ───────────────────────────
+def analyze_parameters(df: pd.DataFrame):
+    md("\n## 6. Parâmetros por gene (revisão / transparência)")
+    import sys
+    sys.path.insert(0, str(BASE))
+    try:
+        import pipeline as pl
+    except Exception as e:
+        md(f"_Não foi possível importar pipeline.py: {e}_"); return
+    md(f"- **Auto por gene:** o comprimento é selecionado automaticamente (cluster "
+       f"dominante ±{pl.DEFAULTS['len_cluster_tol']*100:.0f}% pós-fetch) → genes novos "
+       f"não precisam de afinar min_len/max_len à mão.")
+    md("- **Fixos (decisões biológicas, override por gene em TARGETS):** cons_min, GC, Tm.")
+    md("\n| gene | n seqs | comp. usado | filtro min–max | tol | cons_min | GC | Tm_min |")
+    md("|---|---|---|---|---|---|---|---|")
+    for g in GENES:
+        L = sorted(len(s) for s in gene_input_seqs(g))
+        rng = f"{L[0]}–{L[-1]}" if L else "—"
+        mnl = pl.TARGETS[g].get("min_len", pl.DEFAULTS["min_len"])
+        mxl = pl.TARGETS[g].get("max_len", pl.DEFAULTS["max_len"])
+        md(f"| {g} | {len(L)} | {rng} | {mnl}–{mxl} | ±{pl.cfg(g,'len_cluster_tol')} | "
+           f"{pl.cfg(g,'cons_min')} | {pl.cfg(g,'gc_min'):.2f}–{pl.cfg(g,'gc_max'):.2f} | "
+           f"{pl.cfg(g,'tm_min')} |")
+    md("\n_O comprimento usado é o cluster dominante já filtrado pelo pipeline. "
+       "cons_min/GC/Tm permanecem defaults informados (ex.: lytA cons 0.70 por diversidade "
+       "alélica — Whatmore 2000; oprL/algD GC≤0.70 — Stover 2000)._")
+
 # ── main ────────────────────────────────────────────────────────────────────────
 def main():
     if not FINAL.exists():
@@ -371,7 +398,7 @@ def main():
        f"{int((df['fonte']=='romeu').sum())} próprias, "
        f"{int((df['fonte']!='romeu').sum())} Beatriz/literatura).")
     for fn in (analyze_seqfold, analyze_sizes, analyze_diversity,
-               analyze_rarefaction, compute_descriptors):
+               analyze_rarefaction, compute_descriptors, analyze_parameters):
         try:
             fn(df)
         except Exception as e:
