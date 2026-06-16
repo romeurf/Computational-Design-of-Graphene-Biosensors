@@ -112,8 +112,11 @@ TARGETS = {
 
 # ── Limiares globais ─────────────────────────────────────────────────────────
 DEFAULTS = {
-    "tm_min":          53.0,   # °C — SantaLucia & Hicks 2004
+    "tm_min":          53.0,   # °C — SantaLucia & Hicks 2004 (default; ver assay_temp_c)
     "tm_max":          72.0,
+    "assay_temp_c":    None,   # se definida (°C), deriva a janela Tm automaticamente
+    "tm_offset_min":   15.0,   # Tm_min = T_ensaio + 15  (duplex estável acima da T do ensaio)
+    "tm_offset_max":   35.0,   # Tm_max = T_ensaio + 35  (a 37°C → 52–72, ~janela atual)
     "gc_min":          0.40,   # IDT OligoAnalyzer
     "gc_max":          0.60,   # janela ótima 40–60% (PremierBiosoft/UNLV); override 0.70 P. aeruginosa
     "hp_min":         -2.0,    # kcal/mol — hairpin ΔG mínimo
@@ -128,7 +131,7 @@ DEFAULTS = {
     "max_len":       5000,
     "len_cluster":     True,   # selecionar automaticamente o cluster de comprimento
     "len_cluster_tol": 0.25,   # ±25% em torno do comprimento dominante
-    "seqfold_dg_max": -3.0,   # kcal/mol — recalibrado (distribuição P5 + guia hairpin -3); era -6.0
+    "seqfold_dg_max": -2.6,   # kcal/mol — P5 da distribuição observada (fixo/reprodutível); era -6.0
 }
 
 def cfg(gene_key: str, param: str):
@@ -690,6 +693,13 @@ def run_pipeline(run_seqfold: bool = True, colab_top: int = 0):
     print("\n" + "═"*60)
     print("  GFET Probe Pipeline")
     print(f"  Targets: {list(TARGETS.keys())}")
+    # Janela Tm derivada da temperatura do ensaio, se definida
+    if DEFAULTS.get("assay_temp_c") is not None:
+        at = DEFAULTS["assay_temp_c"]
+        DEFAULTS["tm_min"] = round(at + DEFAULTS["tm_offset_min"], 1)
+        DEFAULTS["tm_max"] = round(at + DEFAULTS["tm_offset_max"], 1)
+        print(f"  Ensaio @ {at}°C → janela Tm derivada: {DEFAULTS['tm_min']}–{DEFAULTS['tm_max']}°C "
+              f"(overrides AT-rich por gene mantêm-se)")
     print("═"*60)
 
     all_probes: list[Probe] = []
@@ -814,9 +824,14 @@ if __name__ == "__main__":
                     help="Desativar a seleção automática do cluster de comprimento dominante")
     ap.add_argument("--cluster-tol", type=float, default=None, metavar="T",
                     help=f"Tolerância do cluster de comprimento, ±T (default {DEFAULTS['len_cluster_tol']})")
+    ap.add_argument("--assay-temp", type=float, default=None, metavar="C",
+                    help="Temperatura do ensaio de hibridação (°C) → deriva a janela Tm "
+                         "automaticamente (T+15 a T+35). Omitir = manter janela default 53–72.")
     args = ap.parse_args()
     if args.max_seqs is not None:
         DEFAULTS["max_seqs"] = args.max_seqs
+    if args.assay_temp is not None:
+        DEFAULTS["assay_temp_c"] = args.assay_temp
     if args.no_cluster:
         DEFAULTS["len_cluster"] = False
     if args.cluster_tol is not None:

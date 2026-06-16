@@ -46,7 +46,7 @@ FIGDIR.mkdir(parents=True, exist_ok=True)
 ANADIR.mkdir(parents=True, exist_ok=True)
 
 GENES = ["nuc", "rmpM", "lytA", "oprL", "algD", "frdB"]
-SEQFOLD_DEFAULT = -3.0           # limiar no pipeline (recalibrado de -6.0)
+SEQFOLD_DEFAULT = -2.6           # limiar no pipeline (P5 fixo; recalibrado de -6.0)
 KMER_K = 4
 
 _md_lines: list[str] = []
