@@ -177,6 +177,16 @@ def build_probe_id(probe: Probe, index: int) -> str:
             f"_Tm{probe.tm:.1f}_GC{int(round(probe.gc*100))}_hp{hp}_{stat}")
 
 # ── 1. NCBI ──────────────────────────────────────────────────────────────────
+def _parse_efetch_fasta(raw: str) -> list[SeqRecord]:
+    """Parse robusto do FASTA do efetch, independente da versão do Biopython:
+    descarta tudo antes do primeiro '>' (o efetch devolve frequentemente uma linha
+    em branco inicial que o parser 'fasta' estrito rejeitaria) e usa o formato
+    'fasta' universal — evita 'fasta-pearson', que não existe em Biopython < 1.85."""
+    i = raw.find(">")
+    if i < 0:
+        return []
+    return list(SeqIO.parse(StringIO(raw[i:]), "fasta"))
+
 def fetch_sequences(gene_key: str) -> list[SeqRecord]:
     t     = TARGETS[gene_key]
     max_s = cfg(gene_key, "max_seqs")          # configurável (CLI/por gene)
@@ -194,10 +204,7 @@ def fetch_sequences(gene_key: str) -> list[SeqRecord]:
                                 rettype="fasta", retmode="text")
             raw = h.read()
             h.close()
-            # 'fasta-pearson' tolera linhas em branco/comentário no início que o
-            # parser 'fasta' estrito do Biopython 1.87 rejeitaria (efetch devolve
-            # frequentemente uma linha em branco inicial).
-            recs.extend(SeqIO.parse(StringIO(raw), "fasta-pearson"))
+            recs.extend(_parse_efetch_fasta(raw))
         return recs
 
     def _run_query(query: str) -> list[SeqRecord]:
@@ -238,7 +245,7 @@ def fetch_sequences(gene_key: str) -> list[SeqRecord]:
                 h   = Entrez.efetch(db="nucleotide", id=fb, rettype="fasta", retmode="text")
                 raw = h.read()
                 h.close()
-                records = list(SeqIO.parse(StringIO(raw), "fasta-pearson"))
+                records = _parse_efetch_fasta(raw)
             except Exception as e:
                 raise RuntimeError(f"Sem dados para {gene_key}: {e}")
         else:
