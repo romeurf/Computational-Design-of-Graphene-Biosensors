@@ -490,6 +490,8 @@ def export_colab_inputs(probes: list, top_n: int) -> Path:
     """
     yaml_dir = COLAB_DIR / "yamls"
     yaml_dir.mkdir(exist_ok=True)
+    for _old in yaml_dir.glob("*.yaml"):     # limpar YAMLs de corridas anteriores
+        _old.unlink()                         # (evita acumular probes desatualizadas no zip)
 
     selected: list[Probe] = []
     for gk in TARGETS:
@@ -544,6 +546,38 @@ def export_colab_inputs(probes: list, top_n: int) -> Path:
     print(f"    5. Extrair os CIF para output/structures/")
     print(f"{'═'*60}")
     return zip_path
+
+def export_colab_from_csv(top_n: int) -> Path:
+    """Gera os inputs do Colab a partir do FINAL_PROBES_ALL.csv já existente
+    (sem re-correr NCBI/MAFFT) — determinístico e consistente com o CSV commitado.
+    Reutiliza export_colab_inputs(). Produz output/colab_boltz2/boltz2_inputs.zip
+    pronto para upload direto no notebook colab_boltz2_batch.ipynb."""
+    csv_path = BASE_DIR / "output" / "FINAL_PROBES_ALL.csv"
+    df = pd.read_csv(csv_path)
+    df = df[df["fonte"] == "romeu"]
+
+    def _f(v):
+        try:
+            return float(v)
+        except (TypeError, ValueError):
+            return None
+
+    def _b(v):
+        return str(v).strip().lower() in ("true", "1", "1.0")
+
+    probes = [
+        Probe(
+            gene=r["gene"], organism=r["organism"], group=str(r.get("group", "")),
+            probe_id=r["probe_id"], sequence=str(r["sequence"]),
+            tm=_f(r["tm"]) or 0.0, gc=_f(r["gc"]) or 0.0,
+            hairpin_dg=_f(r["hairpin_dg"]), homodimer_dg=_f(r["homodimer_dg"]),
+            seqfold_dg=_f(r["seqfold_dg"]),
+            pass_basic=_b(r["pass_basic"]), pass_seqfold=_b(r["pass_seqfold"]),
+        )
+        for _, r in df.iterrows()
+    ]
+    print(f"  {len(probes)} probes próprias lidas de {csv_path.name}")
+    return export_colab_inputs(probes, top_n=top_n)
 
 # ── 7. Outputs por gene ──────────────────────────────────────────────────────
 def write_gene_outputs(probes: list[Probe], gene_key: str):
@@ -827,7 +861,13 @@ if __name__ == "__main__":
     ap.add_argument("--assay-temp", type=float, default=None, metavar="C",
                     help="Temperatura do ensaio de hibridação (°C) → deriva a janela Tm "
                          "automaticamente (T+15 a T+35). Omitir = manter janela default 53–72.")
+    ap.add_argument("--export-colab", type=int, default=0, metavar="N",
+                    help="Gerar inputs Colab (top N/gene) a partir do FINAL_PROBES_ALL.csv "
+                         "existente, SEM re-correr o pipeline. Produz boltz2_inputs.zip.")
     args = ap.parse_args()
+    if args.export_colab > 0:                       # atalho: só (re)gerar inputs Colab
+        export_colab_from_csv(args.export_colab)
+        raise SystemExit(0)
     if args.max_seqs is not None:
         DEFAULTS["max_seqs"] = args.max_seqs
     if args.assay_temp is not None:
