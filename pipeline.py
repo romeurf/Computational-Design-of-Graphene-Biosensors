@@ -663,7 +663,12 @@ def _parse_beatriz_xlsx(path: Path) -> list[dict]:
             (hp is None or hp >= _thresh(gene, "hp_min"))
         )
 
-    xl = pd.ExcelFile(path)
+    try:
+        xl = pd.ExcelFile(path)
+    except ImportError as e:
+        print(f"  ⚠ openpyxl em falta — probes da Beatriz ignoradas "
+              f"(instala com: pip install openpyxl). [{e}]")
+        return rows
 
     _raw1 = pd.read_excel(xl, sheet_name="Nossas sequencias", header=None)
     _hrow = next(
