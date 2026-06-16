@@ -422,6 +422,14 @@ def nofold_score(probe: "Probe") -> Optional[float]:
     scores = [s for s in scores if s is not None]
     return round(sum(scores) / len(scores), 2) if scores else None
 
+def probe_quality(probe: "Probe") -> float:
+    """Score de qualidade 0–1 (conservação PPI + No-fold, peso igual) para priorizar
+    quais probes vão ao Boltz — gasta o tempo de GPU nas melhores, não nas de Tm mais alto.
+    Tm/GC/estrutura já foram filtrados pelos passes; isto ordena os sobreviventes."""
+    cons = probe.conservation if probe.conservation is not None else 0.0
+    nof  = (probe.nofold_score / 100.0) if probe.nofold_score is not None else 0.0
+    return (cons + nof) / 2
+
 def passes_basic(probe: Probe, gene_key: str) -> bool:
     return (
         cfg(gene_key, "tm_min")    <= probe.tm <= cfg(gene_key, "tm_max") and
@@ -497,7 +505,7 @@ def export_colab_inputs(probes: list, top_n: int) -> Path:
     for gk in TARGETS:
         cands = sorted(
             [p for p in probes if p.gene == gk and p.pass_basic and p.pass_seqfold],
-            key=lambda p: p.tm, reverse=True
+            key=probe_quality, reverse=True            # melhores por qualidade (PPI + No-fold)
         )[:top_n]
         selected.extend(cands)
 
@@ -516,8 +524,8 @@ def export_colab_inputs(probes: list, top_n: int) -> Path:
         for p in selected:
             f.write(f">{p.probe_id}\n{p.sequence}\n")
 
-    meta_fields = ["probe_id", "gene", "organism", "sequence",
-                   "tm", "gc", "hairpin_dg", "homodimer_dg", "seqfold_dg"]
+    meta_fields = ["probe_id", "gene", "organism", "sequence", "tm", "gc",
+                   "conservation", "hairpin_dg", "homodimer_dg", "seqfold_dg", "nofold_score"]
     with open(COLAB_DIR / "probes_metadata.csv", "w", newline="", encoding="utf-8") as f:
         w = csv.DictWriter(f, fieldnames=meta_fields, extrasaction="ignore")
         w.writeheader()
@@ -530,7 +538,7 @@ def export_colab_inputs(probes: list, top_n: int) -> Path:
 
     print(f"\n{'═'*60}")
     print(f"  EXPORT COLAB — Boltz-2")
-    print(f"  {len(selected)} probes seleccionadas (top {top_n} por gene, por Tm)")
+    print(f"  {len(selected)} probes seleccionadas (top {top_n}/gene por qualidade: PPI + No-fold)")
     print(f"{'═'*60}")
     print(f"  Ficheiros em: {COLAB_DIR}")
     print(f"    boltz2_inputs.zip         ← upload para o Colab batch")
@@ -570,6 +578,7 @@ def export_colab_from_csv(top_n: int) -> Path:
             gene=r["gene"], organism=r["organism"], group=str(r.get("group", "")),
             probe_id=r["probe_id"], sequence=str(r["sequence"]),
             tm=_f(r["tm"]) or 0.0, gc=_f(r["gc"]) or 0.0,
+            conservation=_f(r.get("conservation")), nofold_score=_f(r.get("nofold_score")),
             hairpin_dg=_f(r["hairpin_dg"]), homodimer_dg=_f(r["homodimer_dg"]),
             seqfold_dg=_f(r["seqfold_dg"]),
             pass_basic=_b(r["pass_basic"]), pass_seqfold=_b(r["pass_seqfold"]),
