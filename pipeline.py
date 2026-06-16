@@ -597,6 +597,36 @@ def export_colab_from_csv(top_n: int) -> Path:
     print(f"  {len(probes)} probes próprias lidas de {csv_path.name}")
     return export_colab_inputs(probes, top_n=top_n)
 
+def merge_boltz_results(results_csv: str) -> Path:
+    """Junta os resultados Boltz (confidence/pTM/pLDDT/quality) aos metadados das
+    probes selecionadas → output/colab_boltz2/boltz2_shortlist_ranked.csv, ordenado
+    por confidence 3D. É a shortlist final e o input para a comparação com o HADDOCK."""
+    res  = pd.read_csv(results_csv)
+    meta = pd.read_csv(COLAB_DIR / "probes_metadata.csv")
+    keep = [c for c in ("probe_id", "confidence", "ptm", "plddt", "quality") if c in res.columns]
+    m = meta.merge(res[keep], on="probe_id", how="left")
+
+    cons = m["conservation"].fillna(0) if "conservation" in m else 0
+    nof  = m["nofold_score"].fillna(0) if "nofold_score" in m else 0
+    m["seq_quality"] = ((cons + nof / 100) / 2).round(3)   # qualidade de sequência (PPI+No-fold)
+
+    sort_cols = [c for c in ("confidence", "plddt") if c in m.columns] or ["seq_quality"]
+    m = m.sort_values(sort_cols, ascending=False)
+    cols = [c for c in ["probe_id", "gene", "organism", "tm", "gc", "conservation",
+                        "nofold_score", "seqfold_dg", "seq_quality", "confidence", "ptm",
+                        "plddt", "quality", "sequence"] if c in m.columns]
+    out = COLAB_DIR / "boltz2_shortlist_ranked.csv"
+    m[cols].to_csv(out, index=False)
+
+    print(f"\n  ✔ Shortlist final ranqueada: {out}  ({len(m)} probes)")
+    if "quality" in m.columns:
+        print(f"  Qualidade 3D (Boltz): {m['quality'].value_counts().to_dict()}")
+    print(f"  Top 5 por confidence:")
+    for _, r in m.head(5).iterrows():
+        print(f"    {str(r['probe_id'])[:42]:42}  conf={r.get('confidence')}  "
+              f"pLDDT={r.get('plddt')}  PPI={r.get('conservation')}  {r.get('quality')}")
+    return out
+
 # ── 7. Outputs por gene ──────────────────────────────────────────────────────
 def write_gene_outputs(probes: list[Probe], gene_key: str):
     out_dir = ALIGN_DIR / gene_key
@@ -890,7 +920,13 @@ if __name__ == "__main__":
     ap.add_argument("--with-beatriz", action="store_true",
                     help="Incluir as probes da Beatriz (data/...xlsx) no CSV consolidado "
                          "(requer openpyxl). Por defeito o CSV tem só as probes próprias.")
+    ap.add_argument("--merge-boltz", type=str, default=None, metavar="CSV",
+                    help="Juntar resultados Boltz (boltz2_results_summary.csv) aos metadados "
+                         "→ boltz2_shortlist_ranked.csv. Não corre o pipeline.")
     args = ap.parse_args()
+    if args.merge_boltz:                            # atalho: só fundir resultados Boltz
+        merge_boltz_results(args.merge_boltz)
+        raise SystemExit(0)
     if args.export_colab > 0:                       # atalho: só (re)gerar inputs Colab
         export_colab_from_csv(args.export_colab)
         raise SystemExit(0)
