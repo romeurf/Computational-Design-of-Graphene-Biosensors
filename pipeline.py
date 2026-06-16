@@ -11,7 +11,7 @@ Referências:
 ─────────────────────────────────────────────────────────────────────────────
 """
 
-import csv, itertools, re, shutil, subprocess, time, yaml, zipfile
+import csv, itertools, math, re, shutil, subprocess, time, yaml, zipfile
 from dataclasses import dataclass, asdict
 from io import StringIO
 from pathlib import Path
@@ -144,10 +144,12 @@ class Probe:
     pos_end:            int   = 0
     tm:                 float = 0.0
     gc:                 float = 0.0
+    conservation:       Optional[float] = None   # PPI (ViruScope), fração 0–1
     hairpin_dg:         Optional[float] = None
     homodimer_dg:       Optional[float] = None
     seqfold_dg:         Optional[float] = None
     seqfold_paired_frac: Optional[float] = None
+    nofold_score:       Optional[float] = None   # No-fold score (ViruScope), 0–100
     pass_basic:         bool  = False
     pass_seqfold:       bool  = False
     fonte:              str   = "romeu"
@@ -172,10 +174,26 @@ def build_probe_id(probe: Probe, index: int) -> str:
 # ── 1. NCBI ──────────────────────────────────────────────────────────────────
 def fetch_sequences(gene_key: str) -> list[SeqRecord]:
     t     = TARGETS[gene_key]
-    max_s = DEFAULTS["max_seqs"]
+    max_s = cfg(gene_key, "max_seqs")          # configurável (CLI/por gene)
     min_l = t.get("min_len", DEFAULTS["min_len"])
     max_l = t.get("max_len", DEFAULTS["max_len"])
-    print(f"  [1/5] Descarregando sequências do NCBI...")
+    print(f"  [1/5] Descarregando sequências do NCBI (até {max_s})...")
+
+    def _fetch_in_batches(ids: list[str], batch: int = 200) -> list[SeqRecord]:
+        """efetch em lotes — necessário para centenas de IDs (evita URLs longos)."""
+        recs: list[SeqRecord] = []
+        for i in range(0, len(ids), batch):
+            chunk = ids[i:i + batch]
+            time.sleep(0.4)                     # respeitar limite NCBI (3 req/s sem api_key)
+            h   = Entrez.efetch(db="nucleotide", id=",".join(chunk),
+                                rettype="fasta", retmode="text")
+            raw = h.read()
+            h.close()
+            # 'fasta-pearson' tolera linhas em branco/comentário no início que o
+            # parser 'fasta' estrito do Biopython 1.87 rejeitaria (efetch devolve
+            # frequentemente uma linha em branco inicial).
+            recs.extend(SeqIO.parse(StringIO(raw), "fasta-pearson"))
+        return recs
 
     def _run_query(query: str) -> list[SeqRecord]:
         for attempt in range(3):
@@ -185,12 +203,7 @@ def fetch_sequences(gene_key: str) -> list[SeqRecord]:
                 ids = Entrez.read(h)["IdList"]; h.close()
                 if not ids:
                     return []
-                time.sleep(0.5)
-                h   = Entrez.efetch(db="nucleotide", id=ids, rettype="fasta", retmode="text")
-                raw = "\n".join(l for l in h.read().splitlines()
-                                if not l.startswith(("!", "#", ";")))
-                h.close()
-                recs = list(SeqIO.parse(StringIO(raw), "fasta"))
+                recs = _fetch_in_batches(ids)
                 return [r for r in recs if min_l <= len(r.seq) <= max_l]
             except Exception as e:
                 print(f"    ⚠ Tentativa {attempt+1}/3: {e}")
@@ -218,10 +231,9 @@ def fetch_sequences(gene_key: str) -> list[SeqRecord]:
             try:
                 time.sleep(0.5)
                 h   = Entrez.efetch(db="nucleotide", id=fb, rettype="fasta", retmode="text")
-                raw = "\n".join(l for l in h.read().splitlines()
-                                if not l.startswith(("!", "#", ";")))
+                raw = h.read()
                 h.close()
-                records = list(SeqIO.parse(StringIO(raw), "fasta"))
+                records = list(SeqIO.parse(StringIO(raw), "fasta-pearson"))
             except Exception as e:
                 raise RuntimeError(f"Sem dados para {gene_key}: {e}")
         else:
@@ -244,20 +256,63 @@ def align_mafft(records: list[SeqRecord], gene_key: str) -> AlignIO.MultipleSeqA
     print(f"  [2/5] Alinhamento MAFFT ({len(records)} sequências)...")
     result = subprocess.run([str(MAFFT_BIN), "--auto", str(fa_in)],
                             capture_output=True, text=True)
-    fa_out.write_text(result.stdout)
+    fa_out.write_text(result.stdout, encoding="utf-8")
     aln = AlignIO.read(fa_out, "fasta")
     print(f"    ✔ {len(aln)} seqs × {aln.get_alignment_length()} posições")
     return aln
 
 # ── 3. Janelas candidatas ────────────────────────────────────────────────────
-def _conservation(col: list[str]) -> float:
-    bases = [b for b in col if b not in ("-", "N", "n")]
-    if not bases:
-        return 0.0
-    return max(bases.count(b) for b in set(bases)) / len(bases)
+# Conservação = PPI (Percentage of Pairwise Identity) — portado do ViruScope
+# (Lima et al., anasfplima/ViruScope, viruscopeCLI.py). Em vez da frequência da
+# base mais comum por coluna, usa-se a identidade par-a-par média (mais rigorosa),
+# com pesos IUPAC para bases ambíguas. Decisão do utilizador: só PPI (sem PPI3).
+_AMBIGUITY_MAP = {
+    "A": {"A": 1.0, "R": 0.5, "W": 0.5, "M": 0.5, "D": 0.33, "H": 0.33, "V": 0.33, "N": 0.25},
+    "C": {"C": 1.0, "Y": 0.5, "M": 0.5, "S": 0.5, "B": 0.33, "H": 0.33, "V": 0.33, "N": 0.25},
+    "G": {"G": 1.0, "R": 0.5, "K": 0.5, "S": 0.5, "B": 0.33, "D": 0.33, "V": 0.33, "N": 0.25},
+    "T": {"T": 1.0, "Y": 0.5, "K": 0.5, "W": 0.5, "B": 0.33, "D": 0.33, "H": 0.33, "N": 0.25},
+    "R": {"A": 0.5, "G": 0.5, "R": 1.0, "N": 0.25},
+    "Y": {"C": 0.5, "T": 0.5, "Y": 1.0, "N": 0.25},
+    "S": {"C": 0.5, "G": 0.5, "S": 1.0, "N": 0.25},
+    "W": {"A": 0.5, "T": 0.5, "W": 1.0, "N": 0.25},
+    "K": {"G": 0.5, "T": 0.5, "K": 1.0, "N": 0.25},
+    "M": {"A": 0.5, "C": 0.5, "M": 1.0, "N": 0.25},
+    "B": {"C": 0.33, "G": 0.33, "T": 0.33, "B": 1.0, "N": 0.25},
+    "D": {"A": 0.33, "G": 0.33, "T": 0.33, "D": 1.0, "N": 0.25},
+    "H": {"A": 0.33, "C": 0.33, "T": 0.33, "H": 1.0, "N": 0.25},
+    "V": {"A": 0.33, "C": 0.33, "G": 0.33, "V": 1.0, "N": 0.25},
+    "N": {"A": 0.25, "C": 0.25, "G": 0.25, "T": 0.25, "N": 1.0},
+}
 
-def _gap_freq(col: list[str]) -> float:
-    return col.count("-") / len(col)
+def _pairwise_identity(col: list[str]) -> float:
+    """Identidade par-a-par de uma coluna do alinhamento (ViruScope). Fração 0–1.
+
+    Colunas com <30% de bases não-gap devolvem 0.0; pares de bases ambíguas
+    contribuem com peso parcial via _AMBIGUITY_MAP.
+    """
+    column = [b.upper() for b in col]
+    nogaps = [b for b in column if b != "-"]
+    if len(nogaps) < 0.3 * len(column):
+        return 0.0
+    counts: dict[str, int] = {}
+    for b in nogaps:
+        counts[b] = counts.get(b, 0) + 1
+    n = len(nogaps)
+    total_pairs = n * (n - 1) / 2
+    if total_pairs <= 0:
+        return 0.0
+    identical = sum(c * (c - 1) / 2 for c in counts.values())
+    bases = list(counts)
+    for i in range(len(bases)):
+        for j in range(i + 1, len(bases)):
+            b1, b2 = bases[i], bases[j]
+            w = _AMBIGUITY_MAP.get(b1, {}).get(b2)
+            if w:
+                identical += counts[b1] * counts[b2] * w
+    return identical / total_pairs
+
+# Nota: a PPI por coluna é independente da janela, por isso é pré-calculada uma
+# única vez por alinhamento em candidate_windows (essencial para centenas de seqs).
 
 def candidate_windows(aln: AlignIO.MultipleSeqAlignment, gene_key: str) -> list[dict]:
     cons_min = cfg(gene_key, "cons_min")
@@ -266,23 +321,31 @@ def candidate_windows(aln: AlignIO.MultipleSeqAlignment, gene_key: str) -> list[
     plen_max = cfg(gene_key, "probe_len_max")
     step     = cfg(gene_key, "window_step")
     aln_len  = aln.get_alignment_length()
-    cols     = [[str(rec.seq[i]) for rec in aln] for i in range(aln_len)]
-    windows  = []
+    n_seqs   = len(aln)
+    cols     = [[str(rec.seq[i]).upper() for rec in aln] for i in range(aln_len)]
+
+    # Pré-cálculo por coluna (uma vez): gap, validade, PPI e consenso
+    col_gap   = [c.count("-") / n_seqs for c in cols]
+    col_valid = [sum(1 for b in c if b != "-") >= 2 for c in cols]
+    col_ppi   = [(_pairwise_identity(c) if v else 0.0) for c, v in zip(cols, col_valid)]
+    col_cons  = [max(set(c) - {"-"}, key=c.count, default="N") for c in cols]
+
+    windows = []
     for start in range(0, aln_len - plen_min + 1, step):
         for plen in range(plen_min, plen_max + 1):
             end = start + plen
             if end > aln_len:
                 break
-            w_cols = cols[start:end]
-            if any(_gap_freq(c) > gap_max for c in w_cols):
+            if any(col_gap[i] > gap_max for i in range(start, end)):
                 continue
-            cons = sum(_conservation(c) for c in w_cols) / plen
+            if n_seqs < 2:                       # seq única → PPI indefinida, cons=1.0
+                cons = 1.0
+            else:
+                vals = [col_ppi[i] for i in range(start, end) if col_valid[i]]
+                cons = (sum(vals) / len(vals)) if vals else 0.0
             if cons < cons_min:
                 continue
-            consensus = "".join(
-                max(set(c) - {"-"}, key=lambda b: c.count(b), default="N")
-                for c in w_cols
-            ).upper()
+            consensus = "".join(col_cons[i] for i in range(start, end))
             windows.append({"start": start, "end": end, "cons": cons, "seq": consensus})
     print(f"  [3/5] ✔ {len(windows)} janelas candidatas (cons ≥ {cons_min}, gap ≤ {gap_max*100:.0f}%)")
     return windows
@@ -308,6 +371,27 @@ def score_probe(seq: str) -> dict:
     except Exception:
         dm = None
     return {"tm": round(tm, 1), "gc": round(gc, 3), "hairpin_dg": hp, "homodimer_dg": dm}
+
+# No-fold score (ViruScope): converte ΔG (kcal/mol) num score 0–100 via penalidade
+# logística — alternativa contínua ao pass/fail rígido. Score alto = pouca estrutura
+# secundária indesejada. Mantemos também os flags pass/fail para compatibilidade.
+def fold_score(delta_g_kcal: float, dg_threshold_cal: float = -7000.0,
+               slope: float = 1.0, T: float = 310.0) -> Optional[float]:
+    if delta_g_kcal is None or math.isnan(delta_g_kcal):
+        return None
+    R = 1.987  # cal/(mol·K)
+    delta_g_cal = delta_g_kcal * 1000.0  # ViruScope trabalha em cal/mol
+    x = (delta_g_cal - (dg_threshold_cal / 2)) / (slope * R * T)
+    x = max(-700.0, min(700.0, x))       # clamp → evita OverflowError (ΔG enorme/±inf)
+    penalty = 1.0 / (1.0 + math.exp(x))
+    return round((1.0 - penalty) * 100.0, 2)
+
+def nofold_score(probe: "Probe") -> Optional[float]:
+    """Média dos fold_scores de hairpin, homodímero e seqfold ΔG (os disponíveis)."""
+    scores = [fold_score(dg) for dg in (probe.hairpin_dg, probe.homodimer_dg,
+                                        probe.seqfold_dg) if dg is not None]
+    scores = [s for s in scores if s is not None]
+    return round(sum(scores) / len(scores), 2) if scores else None
 
 def passes_basic(probe: Probe, gene_key: str) -> bool:
     return (
@@ -353,7 +437,10 @@ def run_seqfold_probe(probe: Probe, gene_key: str) -> Probe:
         return probe
     seq = probe.sequence
     try:
-        dg      = sf.dg(seq, temp=37.0)
+        dg = sf.dg(seq, temp=37.0)
+        if not math.isfinite(dg):        # seqfold pode devolver +-inf p/ certas seqs
+            probe.notes += "[seqfold dg nao-finito (ignorado)] "
+            return probe                  # seqfold_dg fica None
         structs = sf.fold(seq, temp=37.0)
         paired  = {idx for s in structs for pair in s.ij for idx in pair if idx >= 0}
         probe.seqfold_dg          = round(dg, 2)
@@ -434,17 +521,17 @@ def write_gene_outputs(probes: list[Probe], gene_key: str):
     out_dir = ALIGN_DIR / gene_key
     tsv   = out_dir / f"{gene_key}_probes_scored.tsv"
     fasta = out_dir / f"{gene_key}_viroscope_probes.fasta"
-    fields = list(asdict(probes[0]).keys())
-    with open(tsv, "w", newline="") as f:
+    fields = list(asdict(Probe("", "", "")).keys())   # robusto a lista vazia
+    with open(tsv, "w", newline="", encoding="utf-8") as f:
         w = csv.DictWriter(f, fieldnames=fields, delimiter="\t")
         w.writeheader()
         for p in probes:
             w.writerow(asdict(p))
-    with open(fasta, "w") as f:
+    with open(fasta, "w", encoding="utf-8") as f:
         for p in probes:
             if p.pass_basic:
                 f.write(f">{p.probe_id}\n{p.sequence}\n")
-    print(f"    ✔ {tsv.name}  ✔ {fasta.name}")
+    print(f"    ✔ {tsv.name}  ✔ {fasta.name}  ({len(probes)} probes)")
 
 # ── 8. CSV consolidado (Romeu + Beatriz) ─────────────────────────────────────
 def _parse_beatriz_xlsx(path: Path) -> list[dict]:
@@ -598,7 +685,7 @@ def run_pipeline(run_seqfold: bool = True, colab_top: int = 0):
             p  = Probe(
                 gene=gene_key, organism=t["organism"], group=t["group"],
                 sequence=w["seq"], pos_start=w["start"], pos_end=w["end"],
-                tm=sc["tm"], gc=sc["gc"],
+                tm=sc["tm"], gc=sc["gc"], conservation=round(w["cons"], 3),
                 hairpin_dg=sc["hairpin_dg"], homodimer_dg=sc["homodimer_dg"],
             )
             p.pass_basic = passes_basic(p, gene_key)
@@ -615,6 +702,10 @@ def run_pipeline(run_seqfold: bool = True, colab_top: int = 0):
                     p = run_seqfold_probe(p, gene_key)
             n_sf = sum(p.pass_seqfold for p in probes if p.pass_basic)
             print(f"    ✔ {n_sf}/{n_pass} passam seqfold  [{n_pass - n_sf} rejeitadas]")
+
+        # No-fold score (ViruScope) — depende de seqfold_dg, por isso após o seqfold
+        for p in probes:
+            p.nofold_score = nofold_score(p)
 
         write_gene_outputs(probes, gene_key)
         all_probes.extend(probes)
@@ -684,5 +775,10 @@ if __name__ == "__main__":
                     help="Saltar análise de estrutura secundária (seqfold)")
     ap.add_argument("--colab", type=int, default=0, metavar="N",
                     help="Gerar YAMLs + ZIP para Boltz-2 Colab (top N por gene, ex: --colab 5)")
+    ap.add_argument("--max-seqs", type=int, default=None, metavar="N",
+                    help=f"Sequências NCBI a descarregar por gene (default {DEFAULTS['max_seqs']}). "
+                         f"Escalar com rigor — ver scripts/analysis.py (rarefação).")
     args = ap.parse_args()
+    if args.max_seqs is not None:
+        DEFAULTS["max_seqs"] = args.max_seqs
     run_pipeline(run_seqfold=not args.no_seqfold, colab_top=args.colab)
