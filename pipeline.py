@@ -35,7 +35,7 @@ P3_TEMP_C   = 37.0    # temperatura de referência
 BASE_DIR     = Path(__file__).parent
 ALIGN_DIR    = BASE_DIR / "output" / "alignments"
 COLAB_DIR    = BASE_DIR / "output" / "colab_boltz2"
-BEATRIZ_XLSX = BASE_DIR / "data" / "BeatrizMasterThesis_ProbesData_IPLEXMED_ENERGIAS_CAPS.xlsx"
+REFERENCE_XLSX = BASE_DIR / "data" / "reference_probes_IPLEXMED.xlsx"
 
 _MAFFT_CANDIDATES = [
     str(BASE_DIR / "MAFFT" / "mafft-win" / "mafft.bat"),
@@ -627,17 +627,17 @@ def merge_boltz_results(results_csv: str) -> Path:
               f"pLDDT={r.get('plddt')}  PPI={r.get('conservation')}  {r.get('quality')}")
     return out
 
-def export_beatriz_input() -> Path:
-    """Exporta as probes selecionadas no formato de input da pipeline da Beatriz:
-    primeiras colunas job_name, sequence, species (+ métricas extra). Usa as probes
-    de probes_metadata.csv (as mesmas enviadas ao Boltz) → comparação direta."""
+def export_docking_input() -> Path:
+    """Exporta as probes selecionadas no formato de input para uma pipeline de docking
+    externa: primeiras colunas job_name, sequence, species (+ métricas extra). Usa as
+    probes de probes_metadata.csv (as mesmas enviadas ao Boltz) → comparação direta."""
     meta = pd.read_csv(COLAB_DIR / "probes_metadata.csv")
     meta = meta.rename(columns={"probe_id": "job_name", "organism": "species"})
     cols = [c for c in ["job_name", "sequence", "species", "gene", "tm", "gc",
                         "conservation", "nofold_score", "seqfold_dg"] if c in meta.columns]
-    out = BASE_DIR / "output" / "beatriz_input.csv"
+    out = BASE_DIR / "output" / "probes_for_docking.csv"
     meta[cols].to_csv(out, index=False, encoding="utf-8")
-    print(f"  ✔ Input p/ pipeline da Beatriz: {out}  ({len(meta)} probes)")
+    print(f"  ✔ Input p/ pipeline de docking: {out}  ({len(meta)} probes)")
     print(f"    colunas: {', '.join(cols)}  (job_name, sequence, species primeiro)")
     return out
 
@@ -658,11 +658,11 @@ def write_gene_outputs(probes: list[Probe], gene_key: str):
                 f.write(f">{p.probe_id}\n{p.sequence}\n")
     print(f"    ✔ {tsv.name}  ✔ {fasta.name}  ({len(probes)} probes)")
 
-# ── 8. CSV consolidado (Romeu + Beatriz) ─────────────────────────────────────
-def _parse_beatriz_xlsx(path: Path) -> list[dict]:
+# ── 8. CSV consolidado (próprias + probes de referência, opcional) ────────────
+def _parse_reference_xlsx(path: Path) -> list[dict]:
     rows: list[dict] = []
     if not path.exists():
-        print(f"  ⚠ Ficheiro Beatriz não encontrado: {path}")
+        print(f"  ⚠ Ficheiro de referência não encontrado: {path}")
         return rows
 
     _NORM_ORG = {"Strepptocuccus": "Streptococcus", "Strepptococcus": "Streptococcus"}
@@ -712,7 +712,7 @@ def _parse_beatriz_xlsx(path: Path) -> list[dict]:
     try:
         xl = pd.ExcelFile(path)
     except ImportError as e:
-        print(f"  ⚠ openpyxl em falta — probes da Beatriz ignoradas "
+        print(f"  ⚠ openpyxl em falta — probes de referência ignoradas "
               f"(instala com: pip install openpyxl). [{e}]")
         return rows
 
@@ -739,7 +739,7 @@ def _parse_beatriz_xlsx(path: Path) -> list[dict]:
             "hairpin_dg": hp, "homodimer_dg": "",
             "seqfold_dg": "", "seqfold_paired_frac": "",
             "pass_basic": _pass_basic(tm, gc, hp, gene), "pass_seqfold": "",
-            "fonte": "beatriz", "notes": str(row.get("notes", "") or "").strip(),
+            "fonte": "referencia", "notes": str(row.get("notes", "") or "").strip(),
         })
 
     _raw2 = pd.read_excel(xl, sheet_name="New probes (papers)", header=None)
@@ -773,14 +773,14 @@ def _parse_beatriz_xlsx(path: Path) -> list[dict]:
             "fonte": "literatura", "notes": notes,
         })
 
-    print(f"  ✔ Beatriz: {len(rows)} probes lidas do XLSX")
+    print(f"  ✔ Referência: {len(rows)} probes lidas do XLSX")
     return rows
 
-def write_consolidated_csv(all_probes: list[Probe], include_beatriz: bool = False):
+def write_consolidated_csv(all_probes: list[Probe], include_reference: bool = False):
     out_path     = BASE_DIR / "output" / "FINAL_PROBES_ALL.csv"
     romeu_rows   = [asdict(p) for p in all_probes]
-    beatriz_rows = _parse_beatriz_xlsx(BEATRIZ_XLSX) if include_beatriz else []
-    all_rows     = romeu_rows + beatriz_rows
+    reference_rows = _parse_reference_xlsx(REFERENCE_XLSX) if include_reference else []
+    all_rows     = romeu_rows + reference_rows
     all_rows.sort(key=lambda r: (r["gene"], not r["pass_basic"]))
     fields = list(asdict(Probe("", "", "")).keys())
     with open(out_path, "w", newline="", encoding="utf-8") as f:
@@ -790,7 +790,7 @@ def write_consolidated_csv(all_probes: list[Probe], include_beatriz: bool = Fals
     print(f"\n  ✔ CSV consolidado: {out_path}  ({len(all_rows)} probes total)")
 
 # ── Pipeline principal ────────────────────────────────────────────────────────
-def run_pipeline(run_seqfold: bool = True, colab_top: int = 0, with_beatriz: bool = False):
+def run_pipeline(run_seqfold: bool = True, colab_top: int = 0, with_reference: bool = False):
     print("\n" + "═"*60)
     print("  GFET Probe Pipeline")
     print(f"  Targets: {list(TARGETS.keys())}")
@@ -853,7 +853,7 @@ def run_pipeline(run_seqfold: bool = True, colab_top: int = 0, with_beatriz: boo
         write_gene_outputs(probes, gene_key)
         all_probes.extend(probes)
 
-    write_consolidated_csv(all_probes, include_beatriz=with_beatriz)
+    write_consolidated_csv(all_probes, include_reference=with_reference)
 
     # ── Resumo por gene ───────────────────────────────────────────────────────
     print("\n" + "═"*60)
@@ -931,21 +931,21 @@ if __name__ == "__main__":
     ap.add_argument("--export-colab", type=int, default=0, metavar="N",
                     help="Gerar inputs Colab (top N/gene) a partir do FINAL_PROBES_ALL.csv "
                          "existente, SEM re-correr o pipeline. Produz boltz2_inputs.zip.")
-    ap.add_argument("--with-beatriz", action="store_true",
-                    help="Incluir as probes da Beatriz (data/...xlsx) no CSV consolidado "
-                         "(requer openpyxl). Por defeito o CSV tem só as probes próprias.")
+    ap.add_argument("--with-reference", action="store_true",
+                    help="Incluir probes de referência (data/reference_probes_IPLEXMED.xlsx) "
+                         "no CSV consolidado (requer openpyxl). Por defeito só as probes próprias.")
     ap.add_argument("--merge-boltz", type=str, default=None, metavar="CSV",
                     help="Juntar resultados Boltz (boltz2_results_summary.csv) aos metadados "
                          "→ boltz2_shortlist_ranked.csv. Não corre o pipeline.")
-    ap.add_argument("--export-beatriz", action="store_true",
-                    help="Gerar input para a pipeline da Beatriz (job_name, sequence, species) "
-                         "→ output/beatriz_input.csv. Não corre o pipeline.")
+    ap.add_argument("--export-docking", action="store_true",
+                    help="Gerar input p/ pipeline de docking externa (job_name, sequence, species) "
+                         "→ output/probes_for_docking.csv. Não corre o pipeline.")
     args = ap.parse_args()
     if args.merge_boltz:                            # atalho: só fundir resultados Boltz
         merge_boltz_results(args.merge_boltz)
         raise SystemExit(0)
-    if args.export_beatriz:                         # atalho: só gerar input p/ Beatriz
-        export_beatriz_input()
+    if args.export_docking:                         # atalho: só gerar input p/ docking
+        export_docking_input()
         raise SystemExit(0)
     if args.export_colab > 0:                       # atalho: só (re)gerar inputs Colab
         export_colab_from_csv(args.export_colab)
@@ -959,4 +959,4 @@ if __name__ == "__main__":
     if args.cluster_tol is not None:
         DEFAULTS["len_cluster_tol"] = args.cluster_tol
     run_pipeline(run_seqfold=not args.no_seqfold, colab_top=args.colab,
-                 with_beatriz=args.with_beatriz)
+                 with_reference=args.with_reference)

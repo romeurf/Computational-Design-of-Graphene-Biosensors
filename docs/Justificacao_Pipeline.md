@@ -92,7 +92,7 @@ real são os genes com poucas sequências no NCBI (algD ~19, oprL ~24), não o l
   mantidos **fixos** (reprodutíveis) em vez de recalculados a cada corrida.
 - **Janela Tm derivável** da temperatura do ensaio (`--assay-temp`); por defeito 53–72 °C.
 - **Seleção para Boltz por qualidade** (PPI+No-fold), não por Tm.
-- **Merge da Beatriz é opcional** (`--with-beatriz`) — o core corre sobre as probes próprias.
+- **Merge de probes de referência é opcional** (`--with-reference`) — o core corre sobre as probes próprias.
 
 ## 7. Resultados (corrida N=100, 2026-06-16)
 

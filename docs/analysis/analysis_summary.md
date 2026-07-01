@@ -1,5 +1,5 @@
 # Análise exploratória — pipeline GFET
-Fonte: `FINAL_PROBES_ALL.csv` (8455 probes; 8455 próprias, 0 Beatriz/literatura).
+Fonte: `FINAL_PROBES_ALL.csv` (8455 probes; 8455 próprias, 0 referência/literatura).
 
 ## 1. seqfold — distribuição de ΔG MFE e limiar
 - Probes consideradas (próprias, pass_basic, ΔG definido): **3064**  (15 com ΔG implausível >+50 kcal/mol = artefacto seqfold, excluídos das figuras/estatísticas)

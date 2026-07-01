@@ -417,7 +417,7 @@ def main():
     md("# Análise exploratória — pipeline GFET")
     md(f"Fonte: `{FINAL.name}` ({len(df)} probes; "
        f"{int((df['fonte']=='romeu').sum())} próprias, "
-       f"{int((df['fonte']!='romeu').sum())} Beatriz/literatura).")
+       f"{int((df['fonte']!='romeu').sum())} referência/literatura).")
     for fn in (analyze_seqfold, analyze_sizes, analyze_diversity,
                analyze_rarefaction, compute_descriptors, analyze_parameters):
         try:

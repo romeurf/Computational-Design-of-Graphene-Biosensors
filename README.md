@@ -44,7 +44,7 @@ seqfold — estrutura secundária MFE (substituto open-source do NUPACK)
 Boltz-2 — predição estrutura 3D + RMSD entre réplicas
     │
     ▼
-output/FINAL_PROBES_ALL.csv   ← probes Romeu + Beatriz consolidadas
+output/FINAL_PROBES_ALL.csv   ← probes próprias (+ referência opcional) consolidadas
 ```
 
 ---
@@ -73,7 +73,7 @@ Ref: SantaLucia & Hicks 2004 · Wetmur 1991 · IDT OligoAnalyzer · Stover 2000
 │   ├── boltz2_predict.py    ← predição 3D Boltz-2 (standalone)
 │   └── nucleofold_predict.py← wrapper NucleoFold3D (requer WSL/Linux)
 ├── data/
-│   ├── BeatrizMasterThesis_ProbesData_IPLEXMED_ENERGIAS_CAPS.xlsx
+│   ├── reference_probes_IPLEXMED.xlsx
 │   └── tabela_targets_probes_updated.xlsx
 ├── docs/
 │   ├── Protocolo_Fase0_Alinhamento.docx
@@ -123,7 +123,7 @@ python pipeline.py --no-nupack --no-3d
 
 | Ficheiro | Descrição |
 |---------|-----------|
-| `output/FINAL_PROBES_ALL.csv` | Todas as probes (Romeu + Beatriz) com scores |
+| `output/FINAL_PROBES_ALL.csv` | Todas as probes (próprias + referência) com scores |
 | `output/alignments/<gene>/<gene>_probes_scored.tsv` | Probes por gene com todas as métricas |
 | `output/alignments/<gene>/<gene>_viroscope_probes.fasta` | FASTA das probes PASS |
 | `output/alignments/<gene>/aligned.fasta` | Alinhamento múltiplo (Geneious/AliView) |
