@@ -1036,7 +1036,8 @@ def run_pipeline(run_seqfold: bool = True, colab_top: int = 0, with_reference: b
     print(f"  {'Aprovadas para Colab/Boltz-2':<30} {n_sf_total:>6}")
 
     if colab_top > 0:
-        export_colab_inputs(all_probes, top_n=colab_top)
+        # lê o CSV consolidado (acabado de escrever) → inclui as IPLEX se --with-reference
+        export_colab_from_csv(colab_top, include_reference=with_reference)
 
 if __name__ == "__main__":
     import argparse
