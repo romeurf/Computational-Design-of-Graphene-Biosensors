@@ -1,47 +1,53 @@
-# Resumo — Alterações e Conclusões
+# Resumo — Duas adições e resultados
 
 **Romeu Fernandes (PG45861) · Universidade do Minho · 2026-06-16**
 
 ---
 
-## O que alterei
+## 1. Integração de probes externas (IPLEX) no pipeline
 
-- **Conservação → PPI** (Percentage of Pairwise Identity, do ViruScope / Ana Lima):
-  identidade par-a-par IUPAC-aware, em vez da simples "base mais comum".
-- **No-fold score** (ViruScope): converte o ΔG num score contínuo 0–100, em vez de só pass/fail.
-- **Seleção do comprimento automática por gene** (cluster dominante pós-fetch): resolveu o
-  **algD (0 → 403 probes)** e dispensa afinar `min_len`/`max_len` à mão em genes novos.
-- **Limiares recalibrados com base na literatura e nos dados:** `gc_max 0.65 → 0.60`;
-  **`seqfold −6,0 → −2,6 kcal/mol` (= percentil 5 da distribuição observada)**.
-- **Janela de Tm automática** a partir da temperatura do ensaio (`--assay-temp`).
-- **Nº de sequências (N=100) justificado por rarefação** (saturação da diversidade).
-- **Seleção das probes para o Boltz por qualidade** (PPI + No-fold), já não pelo Tm.
-- **Análise exploratória** completa: distribuição do seqfold, tamanhos + normalidade,
-  diversidade sem alinhamento, rarefação e descritores de sequência.
-- **Estrutura 3D (Boltz-2)** com **matriz PAE** (estilo AlphaFold3) + shortlist final ranqueada.
-- **Probes externas (IPLEX)** integradas pelo fluxo normal, pontuadas com as mesmas métricas.
+**O que fiz:** o pipeline passou a aceitar um ficheiro externo (xlsx/csv com as colunas
+`job_name, sequence, species`) e a **pontuar essas probes com as mesmas métricas** das
+minhas (Tm, GC, hairpin, homodímero, seqfold, No-fold), entrando na **mesma tabela
+consolidada** — sem caminho separado (`--with-reference`). A conservação (PPI) fica
+explicitamente **N/A**, porque só é definível para probes desenhadas a partir de um
+alinhamento; probes já feitas não têm região de origem.
 
-## Conclusões
+**Resultado (74 probes IPLEX):**
+- **29 / 74 (39%)** passam a triagem básica com os critérios globais.
+- Comparação (médias) com as minhas probes aprovadas:
 
-- **Funil de triagem:** 8 455 candidatas → **3 078 passam a triagem básica** →
-  **2 943 passam o seqfold** → **30 selecionadas** para previsão 3D.
-- **Validação 3D (Boltz):** **4 probes GOOD**, 11 MODERATE, 15 LOW. As melhores são sólidas
-  **em sequência E em 3D**:
+  | | IPLEX | Minhas |
+  |---|---|---|
+  | Tm (°C) | 56,3 | 59,3 |
+  | GC | 0,50 | 0,52 |
+  | No-fold | 80,2 | 82,9 |
 
-  | probe | gene | PPI | No-fold | confidence | pLDDT |
-  |---|---|---|---|---|---|
-  | p5972 | algD | 0,93 | 98 | **0,731** | 0,901 |
-  | p7716 | frdB | 0,99 | 100 | 0,723 | 0,822 |
-  | p5938 | algD | 0,90 | 96 | 0,721 | 0,887 |
-  | p8448 | frdB | 1,00 | 98 | 0,716 | 0,845 |
+  → as IPLEX ficam ligeiramente abaixo (Tm e No-fold mais baixos), coerente com serem um
+  painel mais antigo/heterogéneo (inclui alvos virais/fúngicos).
 
-- O **limiar de seqfold −2,6 kcal/mol é o percentil 5** da distribuição real das probes →
-  remove os ~5% com estrutura secundária mais estável (decisão fundamentada, não arbitrária).
-- **N ≈ 100 sequências/gene é suficiente** (a diversidade satura por volta de 50–75); o fator
-  limitante real é o número de sequências no NCBI (ex.: algD, oprL), não o limite escolhido.
-- O **algD**, que antes não dava probes, passou a dar 403 e produziu **as duas melhores
-  estruturas 3D** — valida a seleção automática de comprimento.
-- **pTM baixo é esperado** para ssDNA curto (a métrica é calibrada para proteínas); os
-  indicadores úteis aqui são o *confidence* e o *pLDDT*.
+## 2. Novas métricas de diversidade (sem alinhamento)
 
-*Detalhe e referências em [`docs/Justificacao_Pipeline.md`](Justificacao_Pipeline.md); dados e figuras em `docs/analysis/`.*
+**O que fiz:** além da diversidade média por cosseno, acrescentei **desvio-padrão e máximo
+do cosseno**, **distância de Jaccard** (presença/ausência de k-mers) e **% de sequências
+únicas** — todas sem alinhamento.
+
+**Resultado (por gene):**
+
+| gene | nº seqs | cosseno médio | cosseno DP | cosseno máx | Jaccard médio | % únicas |
+|---|---|---|---|---|---|---|
+| nuc  | 77 | 0,059 | 0,074 | 0,425 | 0,163 | 61,0 |
+| rmpM | 76 | 0,079 | 0,076 | 0,247 | 0,069 | 50,0 |
+| lytA | 87 | **0,187** | 0,144 | 0,440 | 0,125 | 93,1 |
+| oprL | 24 | 0,050 | 0,084 | 0,358 | 0,096 | 91,7 |
+| algD | 12 | 0,097 | 0,140 | 0,332 | 0,117 | **100,0** |
+| frdB | 82 | 0,025 | 0,013 | 0,052 | 0,061 | **35,4** |
+
+**Conclusões:**
+- **lytA é o gene mais diverso** (cosseno médio 0,187) — coerente com a sua diversidade alélica.
+- **frdB é o mais conservado e redundante** (cosseno 0,025 e só **35% de sequências únicas**
+  → muitos duplicados no NCBI).
+- **algD** tem 100% de sequências únicas (poucas mas todas distintas), o que explica a sua
+  instabilidade — reforça a necessidade da seleção automática de comprimento.
+- As várias medidas concordam entre si (cosseno ↔ Jaccard), dando uma leitura robusta da
+  diversidade sem precisar de alinhamento.
