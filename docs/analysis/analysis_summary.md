@@ -22,30 +22,31 @@ Fonte: `FINAL_PROBES_ALL.csv` (8455 probes; 8455 próprias, 0 Beatriz/literatura
 
 ## 2. Tamanhos & hits por gene + normalidade
 
-| gene | nº seqs (hits) | comp. min–máx | média±DP | Shapiro p | normal? |
-|---|---|---|---|---|---|
-| nuc | 77 | 203–333 | 245.5±23.3 | 0.0 | não |
-| rmpM | 76 | 870–1185 | 1089.2±110.7 | 0.0 | não |
-| lytA | 87 | 700–1132 | 902.2±113.8 | 0.0003 | não |
-| oprL | 24 | 413–562 | 481.8±31.2 | 0.043 | não |
-| algD | 12 | 526–657 | 563.7±32.0 | 0.0007 | não |
-| frdB | 82 | 489–489 | 489.0±0.0 | n/a | n/a |
+| gene | nº seqs (hits) | comp. min–máx (bp) | range (bp) | média±DP | Shapiro p | normal? |
+|---|---|---|---|---|---|---|
+| nuc | 77 | 203–333 | 130 | 245.5±23.3 | 0.0 | não |
+| rmpM | 76 | 870–1185 | 315 | 1089.2±110.7 | 0.0 | não |
+| lytA | 87 | 700–1132 | 432 | 902.2±113.8 | 0.0003 | não |
+| oprL | 24 | 413–562 | 149 | 481.8±31.2 | 0.043 | não |
+| algD | 12 | 526–657 | 131 | 563.7±32.0 | 0.0007 | não |
+| frdB | 82 | 489–489 | 0 | 489.0±0.0 | n/a | n/a |
 
 _Shapiro-Wilk: p < 0.05 ⇒ rejeita normalidade. n/a quando n<3 ou variância nula._
 
 - Comprimento das probes próprias: n=8455, intervalo 18–28 nt, média 22.9 (discreto/limitado 18–28 nt → não-normal por construção).
 
 ## 3. Diversidade entre sequências recuperadas (sem alinhamento, k-mer)
-- Distância = 1 − similaridade do cosseno entre vetores de frequência de 4-mers.
+- Vetores de frequência de 4-mers por sequência; medidas complementares (todas **sem alinhamento**): **cosseno** (1−similaridade — média/DP/máx), **Jaccard** (presença/ausência de k-mers) e **% de sequências únicas**.
 
-| gene | nº seqs | diversidade média (0=idênticas, →1 diversas) |
-|---|---|---|
-| nuc | 77 | 0.0594 |
-| rmpM | 76 | 0.0793 |
-| lytA | 87 | 0.1868 |
-| oprL | 24 | 0.0503 |
-| algD | 12 | 0.0966 |
-| frdB | 82 | 0.0254 |
+| gene | nº seqs | cosseno médio | cosseno DP | cosseno máx | Jaccard médio | % únicas |
+|---|---|---|---|---|---|---|
+| nuc | 77 | 0.0594 | 0.0735 | 0.4246 | 0.1626 | 61.0 |
+| rmpM | 76 | 0.0793 | 0.0763 | 0.2469 | 0.0693 | 50.0 |
+| lytA | 87 | 0.1868 | 0.1443 | 0.4395 | 0.1254 | 93.1 |
+| oprL | 24 | 0.0503 | 0.0841 | 0.3578 | 0.096 | 91.7 |
+| algD | 12 | 0.0966 | 0.1398 | 0.3318 | 0.1169 | 100.0 |
+| frdB | 82 | 0.0254 | 0.0132 | 0.0517 | 0.061 | 35.4 |
+_0 = idênticas, →1 = diversas. DP/máx mostram a dispersão da diversidade; % únicas indica redundância (duplicados) no conjunto recuperado._
 
 ## 4. Rarefação — quantas sequências usar (escalar com rigor)
 - Para cada gene, subamostram-se N sequências e mede-se a diversidade k-mer média e a riqueza (k-mers distintos). Quando saturam, mais sequências acrescentam pouco.

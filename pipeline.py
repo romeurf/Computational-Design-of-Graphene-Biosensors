@@ -627,6 +627,20 @@ def merge_boltz_results(results_csv: str) -> Path:
               f"pLDDT={r.get('plddt')}  PPI={r.get('conservation')}  {r.get('quality')}")
     return out
 
+def export_beatriz_input() -> Path:
+    """Exporta as probes selecionadas no formato de input da pipeline da Beatriz:
+    primeiras colunas job_name, sequence, species (+ métricas extra). Usa as probes
+    de probes_metadata.csv (as mesmas enviadas ao Boltz) → comparação direta."""
+    meta = pd.read_csv(COLAB_DIR / "probes_metadata.csv")
+    meta = meta.rename(columns={"probe_id": "job_name", "organism": "species"})
+    cols = [c for c in ["job_name", "sequence", "species", "gene", "tm", "gc",
+                        "conservation", "nofold_score", "seqfold_dg"] if c in meta.columns]
+    out = BASE_DIR / "output" / "beatriz_input.csv"
+    meta[cols].to_csv(out, index=False, encoding="utf-8")
+    print(f"  ✔ Input p/ pipeline da Beatriz: {out}  ({len(meta)} probes)")
+    print(f"    colunas: {', '.join(cols)}  (job_name, sequence, species primeiro)")
+    return out
+
 # ── 7. Outputs por gene ──────────────────────────────────────────────────────
 def write_gene_outputs(probes: list[Probe], gene_key: str):
     out_dir = ALIGN_DIR / gene_key
@@ -923,9 +937,15 @@ if __name__ == "__main__":
     ap.add_argument("--merge-boltz", type=str, default=None, metavar="CSV",
                     help="Juntar resultados Boltz (boltz2_results_summary.csv) aos metadados "
                          "→ boltz2_shortlist_ranked.csv. Não corre o pipeline.")
+    ap.add_argument("--export-beatriz", action="store_true",
+                    help="Gerar input para a pipeline da Beatriz (job_name, sequence, species) "
+                         "→ output/beatriz_input.csv. Não corre o pipeline.")
     args = ap.parse_args()
     if args.merge_boltz:                            # atalho: só fundir resultados Boltz
         merge_boltz_results(args.merge_boltz)
+        raise SystemExit(0)
+    if args.export_beatriz:                         # atalho: só gerar input p/ Beatriz
+        export_beatriz_input()
         raise SystemExit(0)
     if args.export_colab > 0:                       # atalho: só (re)gerar inputs Colab
         export_colab_from_csv(args.export_colab)

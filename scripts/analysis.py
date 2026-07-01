@@ -34,6 +34,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from scipy import stats
+from sklearn.metrics import pairwise_distances
 from sklearn.metrics.pairwise import cosine_distances
 
 # ── Paths / config ────────────────────────────────────────────────────────────
@@ -189,6 +190,7 @@ def analyze_sizes(df: pd.DataFrame):
         normal = (sw_p >= 0.05) if not math.isnan(sw_p) else None
         rows.append({"gene": g, "n_seqs": n,
                      "len_min": int(lens.min()), "len_max": int(lens.max()),
+                     "len_range": int(lens.max() - lens.min()),
                      "len_mean": round(float(lens.mean()), 1),
                      "len_sd": round(float(lens.std(ddof=1)) if n > 1 else 0.0, 1),
                      "shapiro_p": round(sw_p, 4) if not math.isnan(sw_p) else "n/a",
@@ -200,12 +202,12 @@ def analyze_sizes(df: pd.DataFrame):
     fig.tight_layout(); fig.savefig(FIGDIR / "sizes_per_gene.png", dpi=130); plt.close(fig)
 
     pd.DataFrame(rows).to_csv(ANADIR / "per_gene_sizes.csv", index=False)
-    md("\n| gene | nº seqs (hits) | comp. min–máx | média±DP | Shapiro p | normal? |")
-    md("|---|---|---|---|---|---|")
+    md("\n| gene | nº seqs (hits) | comp. min–máx (bp) | range (bp) | média±DP | Shapiro p | normal? |")
+    md("|---|---|---|---|---|---|---|")
     for r in rows:
         if r.get("n_seqs", 0) == 0:
-            md(f"| {r['gene']} | 0 | — | — | — | — |"); continue
-        md(f"| {r['gene']} | {r['n_seqs']} | {r['len_min']}–{r['len_max']} | "
+            md(f"| {r['gene']} | 0 | — | — | — | — | — |"); continue
+        md(f"| {r['gene']} | {r['n_seqs']} | {r['len_min']}–{r['len_max']} | {r['len_range']} | "
            f"{r['len_mean']}±{r['len_sd']} | {r['shapiro_p']} | {r['normal_p<0.05']} |")
     md("\n_Shapiro-Wilk: p < 0.05 ⇒ rejeita normalidade. n/a quando n<3 ou variância nula._")
 
@@ -251,21 +253,30 @@ def kmer_matrix(seqs: list[str], k: int = KMER_K):
 
 def analyze_diversity(df: pd.DataFrame):
     md("\n## 3. Diversidade entre sequências recuperadas (sem alinhamento, k-mer)")
-    md(f"- Distância = 1 − similaridade do cosseno entre vetores de frequência de {KMER_K}-mers.")
+    md(f"- Vetores de frequência de {KMER_K}-mers por sequência; medidas complementares "
+       f"(todas **sem alinhamento**): **cosseno** (1−similaridade — média/DP/máx), **Jaccard** "
+       f"(presença/ausência de k-mers) e **% de sequências únicas**.")
     rows, heat = [], {}
     for g in GENES:
         seqs = gene_input_seqs(g)
-        if len(seqs) < 2:
-            rows.append((g, len(seqs), "n/a")); continue
-        M = kmer_matrix(seqs)
-        D = cosine_distances(M)
-        mean_div = float(D[np.triu_indices(len(seqs), 1)].mean())
-        rows.append((g, len(seqs), round(mean_div, 4)))
-        heat[g] = D
-    md("\n| gene | nº seqs | diversidade média (0=idênticas, →1 diversas) |")
-    md("|---|---|---|")
-    for g, n, d in rows:
-        md(f"| {g} | {n} | {d} |")
+        n = len(seqs)
+        if n < 2:
+            rows.append((g, n, "n/a", "n/a", "n/a", "n/a", "n/a")); continue
+        M  = kmer_matrix(seqs)
+        Dc = cosine_distances(M)
+        iu = np.triu_indices(n, 1)
+        cv = Dc[iu]
+        Dj = pairwise_distances((M > 0).astype(int), metric="jaccard")
+        uniq = round(len(set(seqs)) / n * 100, 1)
+        rows.append((g, n, round(float(cv.mean()), 4), round(float(cv.std()), 4),
+                     round(float(cv.max()), 4), round(float(Dj[iu].mean()), 4), uniq))
+        heat[g] = Dc
+    md("\n| gene | nº seqs | cosseno médio | cosseno DP | cosseno máx | Jaccard médio | % únicas |")
+    md("|---|---|---|---|---|---|---|")
+    for r in rows:
+        md("| " + " | ".join(str(x) for x in r) + " |")
+    md("_0 = idênticas, →1 = diversas. DP/máx mostram a dispersão da diversidade; "
+       "% únicas indica redundância (duplicados) no conjunto recuperado._")
 
     # Heatmaps (subamostra até 40 seqs por gene para legibilidade)
     valid = [g for g in GENES if g in heat]
