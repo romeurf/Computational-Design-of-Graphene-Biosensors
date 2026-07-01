@@ -35,7 +35,7 @@ P3_TEMP_C   = 37.0    # temperatura de referência
 BASE_DIR     = Path(__file__).parent
 ALIGN_DIR    = BASE_DIR / "output" / "alignments"
 COLAB_DIR    = BASE_DIR / "output" / "colab_boltz2"
-REFERENCE_XLSX = BASE_DIR / "data" / "reference_probes_IPLEXMED.xlsx"
+REFERENCE_XLSX = BASE_DIR / "data" / "sequencias_iplex.xlsx"
 
 _MAFFT_CANDIDATES = [
     str(BASE_DIR / "MAFFT" / "mafft-win" / "mafft.bat"),
@@ -660,120 +660,84 @@ def write_gene_outputs(probes: list[Probe], gene_key: str):
 
 # ── 8. CSV consolidado (próprias + probes de referência, opcional) ────────────
 def _parse_reference_xlsx(path: Path) -> list[dict]:
+    """Lê probes JÁ FEITAS de um ficheiro externo (xlsx/csv com colunas job_name,
+    sequence, species) e pontua-as com as MESMAS métricas do pipeline (Tm, GC, hairpin,
+    homodímero, seqfold, No-fold) → entram no CSV consolidado como as próprias, sem
+    caminho especial. A conservação (PPI) fica vazia por construção: só é definível
+    para probes desenhadas a partir de um alinhamento — probes dadas não têm região de
+    origem. pass_basic usa os limiares GLOBAIS (não há gene por probe)."""
     rows: list[dict] = []
     if not path.exists():
         print(f"  ⚠ Ficheiro de referência não encontrado: {path}")
         return rows
-
-    _NORM_ORG = {"Strepptocuccus": "Streptococcus", "Strepptococcus": "Streptococcus"}
-    _GROUP_A  = ["Staphylococcus aureus", "Neisseria meningitidis"]
-
-    def _clean_seq(s) -> str:
-        if pd.isna(s): return ""
-        s = re.sub(r"^[A-Z0-9]+-C\d+-", "", str(s).upper())
-        return re.sub(r"[^ATGCUN]", "", s)
-
-    def _parse_float(s) -> Optional[float]:
-        if pd.isna(s): return None
-        m = re.search(r"[-\d.]+", str(s))
-        return float(m.group()) if m else None
-
-    def _parse_gc(s) -> Optional[float]:
-        v = _parse_float(s)
-        return round(v / 100, 3) if v is not None else None
-
-    def _norm_org(s) -> str:
-        if pd.isna(s): return ""
-        s = str(s).strip()
-        for wrong, right in _NORM_ORG.items():
-            s = s.replace(wrong, right)
-        return s
-
-    def _extract_gene(s) -> str:
-        if pd.isna(s): return ""
-        s = str(s).strip()
-        return s.split(":")[0].strip() if ":" in s else s.split()[0]
-
-    def _group(org: str) -> str:
-        return "A" if any(g in org for g in _GROUP_A) else "B"
-
-    def _thresh(gene: str, param: str):
-        gk = gene.lower() if gene.lower() in TARGETS else None
-        return TARGETS[gk].get(param, DEFAULTS[param]) if gk else DEFAULTS[param]
-
-    def _pass_basic(tm, gc, hp, gene: str) -> Optional[bool]:
-        if tm is None or gc is None: return None
-        return bool(
-            _thresh(gene, "tm_min") <= tm <= _thresh(gene, "tm_max") and
-            _thresh(gene, "gc_min") <= gc <= _thresh(gene, "gc_max") and
-            (hp is None or hp >= _thresh(gene, "hp_min"))
-        )
-
     try:
-        xl = pd.ExcelFile(path)
+        df = (pd.read_excel(path) if path.suffix.lower() in (".xlsx", ".xls")
+              else pd.read_csv(path))
     except ImportError as e:
         print(f"  ⚠ openpyxl em falta — probes de referência ignoradas "
               f"(instala com: pip install openpyxl). [{e}]")
         return rows
+    df.columns = [str(c).strip() for c in df.columns]
 
-    _raw1 = pd.read_excel(xl, sheet_name="Nossas sequencias", header=None)
-    _hrow = next(
-        (i for i, r in _raw1.iterrows()
-         if any(str(v).strip().lower() == "sequence" for v in r.values if pd.notna(v))), 2)
-    df1 = pd.read_excel(xl, sheet_name="Nossas sequencias", header=_hrow, dtype=str)
-    df1.columns = [str(c).strip() for c in df1.columns]
-    for _, row in df1.iterrows():
-        seq = _clean_seq(row.get("Sequence"))
-        if len(seq) < 10: continue
-        organism = _norm_org(row.get("species"))
-        gene     = _extract_gene(row.get("Gene/STRAIN"))
-        tm       = _parse_float(row.get("Tm"))
-        gc       = _parse_gc(row.get("GC content"))
-        hp       = _parse_float(row.get("Lowest folding energy kcal/mole at 25C"))
-        pid_raw  = row.get("Column1")
-        pid      = str(pid_raw).strip() if pd.notna(pid_raw) else f"bea{len(rows)+1:03d}"
-        rows.append({
-            "probe_id": pid, "gene": gene, "organism": organism, "group": _group(organism),
-            "sequence": seq, "pos_start": "", "pos_end": "",
-            "tm": tm if tm is not None else "", "gc": gc if gc is not None else "",
-            "hairpin_dg": hp, "homodimer_dg": "",
-            "seqfold_dg": "", "seqfold_paired_frac": "",
-            "pass_basic": _pass_basic(tm, gc, hp, gene), "pass_seqfold": "",
-            "fonte": "referencia", "notes": str(row.get("notes", "") or "").strip(),
-        })
+    def _find(cands):
+        return next((c for c in df.columns if c.strip().lower() in cands), None)
+    c_seq  = _find({"sequence", "seq", "sequencia", "sequência"})
+    c_name = _find({"job_name", "name", "nome", "id"})
+    c_sp   = _find({"species", "especie", "espécie", "organism"})
+    if c_seq is None:
+        print(f"  ⚠ Sem coluna de sequência em {path.name} — referência ignorada.")
+        return rows
 
-    _raw2 = pd.read_excel(xl, sheet_name="New probes (papers)", header=None)
-    _hrow2 = next(
-        (i for i, r in _raw2.iterrows()
-         if any("probe" in str(v).lower() or "species" in str(v).lower()
-                for v in r.values if pd.notna(v))), 0)
-    df2 = pd.read_excel(xl, sheet_name="New probes (papers)", header=_hrow2, dtype=str)
-    df2.columns = [str(c).strip() for c in df2.columns]
-    for _, row in df2.iterrows():
-        seq = re.sub(r"[^ATGCUN]", "",
-                     str(row.get("Published probes (5'-3')", "") or "").upper())
-        if len(seq) < 10: continue
-        organism = _norm_org(row.get("species"))
-        gene     = str(row.get("gene", "") or "").strip()
-        source   = str(row.get("Source", "") or "").strip()
-        notes    = str(row.get("notes", "") or "").strip()
-        if source:
-            notes = f"{notes} [Source: {source}]".strip("[ ]")
+    try:
+        import seqfold as sf
+        have_sf = True
+    except ImportError:
+        have_sf = False
+
+    _GROUP_A = ["Staphylococcus aureus", "Neisseria meningitidis"]
+    for _, row in df.iterrows():
+        raw = row.get(c_seq)
+        if pd.isna(raw):
+            continue
+        seq = re.sub(r"[^ATGC]", "", str(raw).upper().replace("U", "T"))
+        if len(seq) < 10:
+            continue
+        organism = str(row.get(c_sp, "") or "").strip() if c_sp else ""
+        pid = (str(row.get(c_name, "") or "").strip() if c_name else "") or f"ref{len(rows)+1:04d}"
         sc  = score_probe(seq)
-        pid = (f"lit{len(rows)+1:03d}_"
-               f"{_ORG_ABBR.get(organism, organism[:4].capitalize())}_{gene}")
+        dg = paired = None
+        if have_sf:
+            try:
+                d = sf.dg(seq, temp=37.0)
+                if math.isfinite(d):
+                    dg = round(d, 2)
+                    structs = sf.fold(seq, temp=37.0)
+                    prd = {idx for s in structs for pair in s.ij for idx in pair if idx >= 0}
+                    paired = round(len(prd) / len(seq), 3)
+            except Exception:
+                pass
+        obj = Probe("", organism, "", sequence=seq, tm=sc["tm"], gc=sc["gc"],
+                    hairpin_dg=sc["hairpin_dg"], homodimer_dg=sc["homodimer_dg"], seqfold_dg=dg)
+        pass_basic = bool(
+            DEFAULTS["tm_min"] <= sc["tm"] <= DEFAULTS["tm_max"] and
+            DEFAULTS["gc_min"] <= sc["gc"] <= DEFAULTS["gc_max"] and
+            (sc["hairpin_dg"] is None or sc["hairpin_dg"] >= DEFAULTS["hp_min"]) and
+            (sc["homodimer_dg"] is None or sc["homodimer_dg"] >= DEFAULTS["dimer_min"]))
         rows.append({
-            "probe_id": pid, "gene": gene, "organism": organism, "group": _group(organism),
-            "sequence": seq, "pos_start": "", "pos_end": "",
-            "tm": sc["tm"], "gc": sc["gc"],
+            "gene": "", "organism": organism,
+            "group": "A" if any(g in organism for g in _GROUP_A) else "B",
+            "probe_id": pid, "sequence": seq, "pos_start": "", "pos_end": "",
+            "tm": sc["tm"], "gc": sc["gc"], "conservation": "",   # N/A: sem alinhamento de origem
             "hairpin_dg": sc["hairpin_dg"], "homodimer_dg": sc["homodimer_dg"],
-            "seqfold_dg": "", "seqfold_paired_frac": "",
-            "pass_basic": _pass_basic(sc["tm"], sc["gc"], sc["hairpin_dg"], gene),
-            "pass_seqfold": "",
-            "fonte": "literatura", "notes": notes,
+            "seqfold_dg": dg if dg is not None else "",
+            "seqfold_paired_frac": paired if paired is not None else "",
+            "nofold_score": nofold_score(obj),
+            "pass_basic": pass_basic,
+            "pass_seqfold": bool(dg is not None and dg >= DEFAULTS["seqfold_dg_max"]),
+            "fonte": "referencia", "notes": "conservacao N/A (probe externa, sem alinhamento)",
         })
-
-    print(f"  ✔ Referência: {len(rows)} probes lidas do XLSX")
+    print(f"  ✔ Referência: {len(rows)} probes pontuadas de {path.name}"
+          + ("" if have_sf else "  (seqfold indisponível)"))
     return rows
 
 def write_consolidated_csv(all_probes: list[Probe], include_reference: bool = False):
