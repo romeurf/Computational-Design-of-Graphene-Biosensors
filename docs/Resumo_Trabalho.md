@@ -10,8 +10,8 @@
 `job_name, sequence, species`) e a **pontuar essas probes com as mesmas métricas** das
 minhas (Tm, GC, hairpin, homodímero, seqfold, No-fold), entrando na **mesma tabela
 consolidada** — sem caminho separado (`--with-reference`). A conservação (PPI) fica
-explicitamente **N/A**, porque só é definível para probes desenhadas a partir de um
-alinhamento; probes já feitas não têm região de origem.
+explicitamente **não aplicável**, porque só é definível para probes desenhadas a partir de
+um alinhamento; probes já feitas não têm região de origem.
 
 **Resultado (74 probes IPLEX):**
 - **29 / 74 (39%)** passam a triagem básica com os critérios globais.
@@ -38,8 +38,8 @@ robusta que uma média sozinha não daria:
 - **Cosseno** pesa as *frequências* dos k-mers; **Jaccard** usa só *presença/ausência*
   (o "vocabulário" de k-mers). Se as duas concordam, a diversidade é real, não um artefacto
   de uma métrica.
-- **DP** e **máximo** do cosseno mostram a *forma* da distribuição (subgrupos/outliers que
-  a média esconde).
+- **Desvio-padrão** e **máximo** do cosseno mostram a *forma* da distribuição (subgrupos/outliers
+  que a média esconde).
 - **% únicas** deteta o artefacto dos *duplicados* (o NCBI devolve muitas cópias).
 
 Preteri a distância **Euclidiana** (sensível ao comprimento das sequências) e as medidas
@@ -50,15 +50,15 @@ são lentas e falham em conjuntos divergentes).
 
 | Métrica | O que mede | Valor **alto** → | Valor **baixo** → |
 |---|---|---|---|
-| Cosseno médio | distância composicional média (frequências de k-mers) | conjunto **diverso** | conjunto **conservado/semelhante** |
-| Cosseno DP | dispersão da diversidade | **heterogéneo** (há subgrupos/outliers) | diversidade **uniforme** |
-| Cosseno máx | o par de sequências mais divergente | existe ≥1 **outlier**/subgrupo distinto | até o par mais diferente é **próximo** |
-| Jaccard médio | distância por presença/ausência de k-mers | partilham **poucos** k-mers (vocabulário diferente) | partilham **quase todos** os k-mers |
-| % únicas | redundância (duplicados exatos) | sequências **todas distintas** | **muitos duplicados** no conjunto |
+| Distância de cosseno média | distância composicional média (frequências de k-mers) | conjunto **diverso** | conjunto **conservado/semelhante** |
+| Desvio-padrão da distância de cosseno | dispersão da diversidade entre pares | **heterogéneo** (há subgrupos/outliers) | diversidade **uniforme** |
+| Distância de cosseno máxima | o par de sequências mais divergente | existe pelo menos um **outlier**/subgrupo distinto | até o par mais diferente é **próximo** |
+| Distância de Jaccard média | distância por presença/ausência de k-mers | partilham **poucos** k-mers (vocabulário diferente) | partilham **quase todos** os k-mers |
+| Sequências únicas (%) | redundância (duplicados exatos) | sequências **todas distintas** | **muitos duplicados** no conjunto |
 
 ### 2.3 Resultados (por gene)
 
-| gene | nº seqs | cosseno médio | cosseno DP | cosseno máx | Jaccard médio | % únicas |
+| gene | nº seqs | cosseno médio | desvio-padrão | cosseno máximo | Jaccard médio | sequências únicas (%) |
 |---|---|---|---|---|---|---|
 | nuc  | 77 | 0,059 | 0,074 | 0,425 | 0,163 | 61,0 |
 | rmpM | 76 | 0,079 | 0,076 | 0,247 | 0,069 | 50,0 |
