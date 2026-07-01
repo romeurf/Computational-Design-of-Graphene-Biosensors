@@ -13,18 +13,32 @@ consolidada** — sem caminho separado (`--with-reference`). A conservação (PP
 explicitamente **não aplicável**, porque só é definível para probes desenhadas a partir de
 um alinhamento; probes já feitas não têm região de origem.
 
-**Resultado (74 probes IPLEX):**
-- **29 / 74 (39%)** passam a triagem básica com os critérios globais.
-- Comparação (médias) com as minhas probes aprovadas:
+**Resultado — as 74 probes de `data/sequencias_iplex.xlsx` no meu pipeline:**
 
-  | | IPLEX | Minhas |
-  |---|---|---|
-  | Tm (°C) | 56,3 | 59,3 |
-  | GC | 0,50 | 0,52 |
-  | No-fold | 80,2 | 82,9 |
+Funil de triagem (critérios globais):
 
-  → as IPLEX ficam ligeiramente abaixo (Tm e No-fold mais baixos), coerente com serem um
-  painel mais antigo/heterogéneo (inclui alvos virais/fúngicos).
+| Passo | Passam |
+|---|---|
+| Total | 74 |
+| Tm 53–72 °C | 56 |
+| + GC 40–60% | 36 |
+| + hairpin > −2 kcal/mol | 35 |
+| + homodímero > −5 kcal/mol | **29** (passam a triagem básica = 39%) |
+| + seqfold ≥ −2,6 kcal/mol | **29** (passam o crivo completo) |
+
+**29 das 74 (39%)** passam o crivo completo. A maior perda é no **GC** (20 falham a janela
+40–60%). **Nenhuma** é rejeitada pelo seqfold — as que passam já têm pouca estrutura secundária.
+
+Comparação (médias) com as minhas probes aprovadas:
+
+| | IPLEX | Minhas |
+|---|---|---|
+| Tm (°C) | 56,3 | 59,3 |
+| GC | 0,50 | 0,52 |
+| No-fold | 80 | 83 |
+
+→ as IPLEX ficam ligeiramente abaixo (Tm e No-fold mais baixos), coerente com serem um painel
+mais antigo e heterogéneo (inclui alvos virais/fúngicos) que não foi otimizado pelo meu crivo.
 
 ## 2. Novas métricas de diversidade (sem alinhamento)
 
