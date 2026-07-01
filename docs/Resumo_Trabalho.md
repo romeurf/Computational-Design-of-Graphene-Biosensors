@@ -40,6 +40,10 @@ Comparação (médias) com as minhas probes aprovadas:
 → as IPLEX ficam ligeiramente abaixo (Tm e No-fold mais baixos), coerente com serem um painel
 mais antigo e heterogéneo (inclui alvos virais/fúngicos) que não foi otimizado pelo meu crivo.
 
+**Como aparecem no pipeline:** ao correr `python pipeline.py --max-seqs 100 --with-reference`,
+estas 74 probes são pontuadas e entram no `output/FINAL_PROBES_ALL.csv` com **`fonte = referencia`**,
+lado a lado com as minhas e com as mesmas colunas → permite **comparação direta na mesma tabela**.
+
 ## 2. Novas métricas de diversidade (sem alinhamento)
 
 Todas são **baseadas em k-mers, sem alinhamento** (o objetivo era avaliar a diversidade
