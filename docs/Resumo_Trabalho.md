@@ -28,11 +28,35 @@ alinhamento; probes já feitas não têm região de origem.
 
 ## 2. Novas métricas de diversidade (sem alinhamento)
 
-**O que fiz:** além da diversidade média por cosseno, acrescentei **desvio-padrão e máximo
-do cosseno**, **distância de Jaccard** (presença/ausência de k-mers) e **% de sequências
-únicas** — todas sem alinhamento.
+Todas são **baseadas em k-mers, sem alinhamento** (o objetivo era avaliar a diversidade
+*sem alinhar* as sequências), pelo que funcionam mesmo com comprimentos variáveis e
+sequências divergentes.
 
-**Resultado (por gene):**
+### 2.1 Porquê estas métricas (e não outras)
+São **complementares** — cada uma mede um aspeto diferente e, em conjunto, dão uma leitura
+robusta que uma média sozinha não daria:
+- **Cosseno** pesa as *frequências* dos k-mers; **Jaccard** usa só *presença/ausência*
+  (o "vocabulário" de k-mers). Se as duas concordam, a diversidade é real, não um artefacto
+  de uma métrica.
+- **DP** e **máximo** do cosseno mostram a *forma* da distribuição (subgrupos/outliers que
+  a média esconde).
+- **% únicas** deteta o artefacto dos *duplicados* (o NCBI devolve muitas cópias).
+
+Preteri a distância **Euclidiana** (sensível ao comprimento das sequências) e as medidas
+**baseadas em alinhamento** (π, identidade média — violam o requisito "sem alinhamento",
+são lentas e falham em conjuntos divergentes).
+
+### 2.2 Como ler cada métrica
+
+| Métrica | O que mede | Valor **alto** → | Valor **baixo** → |
+|---|---|---|---|
+| Cosseno médio | distância composicional média (frequências de k-mers) | conjunto **diverso** | conjunto **conservado/semelhante** |
+| Cosseno DP | dispersão da diversidade | **heterogéneo** (há subgrupos/outliers) | diversidade **uniforme** |
+| Cosseno máx | o par de sequências mais divergente | existe ≥1 **outlier**/subgrupo distinto | até o par mais diferente é **próximo** |
+| Jaccard médio | distância por presença/ausência de k-mers | partilham **poucos** k-mers (vocabulário diferente) | partilham **quase todos** os k-mers |
+| % únicas | redundância (duplicados exatos) | sequências **todas distintas** | **muitos duplicados** no conjunto |
+
+### 2.3 Resultados (por gene)
 
 | gene | nº seqs | cosseno médio | cosseno DP | cosseno máx | Jaccard médio | % únicas |
 |---|---|---|---|---|---|---|
@@ -44,10 +68,9 @@ do cosseno**, **distância de Jaccard** (presença/ausência de k-mers) e **% de
 | frdB | 82 | 0,025 | 0,013 | 0,052 | 0,061 | **35,4** |
 
 **Conclusões:**
-- **lytA é o gene mais diverso** (cosseno médio 0,187) — coerente com a sua diversidade alélica.
-- **frdB é o mais conservado e redundante** (cosseno 0,025 e só **35% de sequências únicas**
+- **lytA** é o mais diverso (cosseno médio 0,187) — coerente com a sua diversidade alélica.
+- **frdB** é o mais conservado e redundante (cosseno 0,025 e só **35% de sequências únicas**
   → muitos duplicados no NCBI).
-- **algD** tem 100% de sequências únicas (poucas mas todas distintas), o que explica a sua
-  instabilidade — reforça a necessidade da seleção automática de comprimento.
-- As várias medidas concordam entre si (cosseno ↔ Jaccard), dando uma leitura robusta da
-  diversidade sem precisar de alinhamento.
+- **algD** tem 100% de sequências únicas (poucas, mas todas distintas) → explica a sua
+  instabilidade e reforça a necessidade da seleção automática de comprimento.
+- **Cosseno e Jaccard concordam** entre si → leitura robusta da diversidade, sem alinhamento.
