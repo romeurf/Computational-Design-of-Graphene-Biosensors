@@ -11,7 +11,7 @@ Referências:
 ─────────────────────────────────────────────────────────────────────────────
 """
 
-import csv, itertools, math, re, shutil, subprocess, time, yaml, zipfile
+import csv, itertools, math, re, shutil, subprocess, sys, time, yaml, zipfile
 from dataclasses import dataclass, asdict
 from io import StringIO
 from pathlib import Path
@@ -135,8 +135,135 @@ DEFAULTS = {
     "seqfold_dg_max": -2.6,   # kcal/mol — P5 da distribuição observada (fixo/reprodutível); era -6.0
 }
 
+# ── Perfis por TIPO (bacteria/virus/fungus/protozoa/host) ────────────────────
+# As diferenças vêm sobretudo da composição do genoma (GC) e da variabilidade
+# (conservação). `_refs` é ignorado pela resolução (ver docs/parametros_referencias.csv).
+TYPE_DEFAULTS = {
+    "bacteria": {"_refs": ["SantaLucia & Hicks 2004 (Tm)", "Wetmur 1991 (18-28 nt)",
+                           "IDT OligoAnalyzer (GC 40-60%, hairpin/dimer)"]},
+    "virus":    {"gc_min": 0.35, "gc_max": 0.68,   # janela larga: influenza ~43% a HSV ~68%
+                 "cons_min": 0.70, "probe_len_max": 30,
+                 "_refs": ["Viral oligo probe design PMC2248741 (regiões conservadas)",
+                           "BOC Sciences (18-30 nt, GC 40-60%)"]},
+    "fungus":   {"gc_min": 0.40, "gc_max": 0.60, "cons_min": 0.80,
+                 "_refs": ["A. fumigatus ~49.5% GC (Nierman et al. 2005)"]},
+    "protozoa": {"gc_min": 0.15, "gc_max": 0.40, "tm_min": 50.0,   # AT-rico (Plasmodium ~19% GC)
+                 "cons_min": 0.80, "probe_len_max": 30,
+                 "_refs": ["P. falciparum ~80-90% AT (Nucleic Acids Res, PMC5389722)"]},
+    "host":     {"gc_min": 0.35, "gc_max": 0.60,   # humano ~41% GC (probe de controlo)
+                 "_refs": ["Genoma humano ~41% GC"]},
+}
+
+# ── Perfis por ESPÉCIE (sobrepõem o tipo) ────────────────────────────────────
+SPECIES_PARAMS = {
+    "Staphylococcus aureus":    {"type": "bacteria", "tm_min": 52.0, "gc_min": 0.38, "gc_max": 0.60,
+                                 "_refs": ["S. aureus AT-rico — IDT"]},
+    "Haemophilus influenzae":   {"type": "bacteria", "gc_min": 0.38, "gc_max": 0.60,
+                                 "_refs": ["H. influenzae AT-rico — IDT"]},
+    "Pseudomonas aeruginosa":   {"type": "bacteria", "gc_max": 0.70,
+                                 "_refs": ["P. aeruginosa ~67% GC — Stover et al. 2000"]},
+    "Neisseria meningitidis":   {"type": "bacteria", "gc_max": 0.65},
+    "Streptococcus pneumoniae": {"type": "bacteria"},
+    "Klebsiella pneumoniae":    {"type": "bacteria", "gc_max": 0.65, "_refs": ["K. pneumoniae ~57% GC"]},
+    "H1N1":      {"type": "virus", "gc_min": 0.35, "gc_max": 0.52, "_refs": ["Influenza A ~43% GC"]},
+    "STD HSV-1": {"type": "virus", "gc_min": 0.55, "gc_max": 0.78, "_refs": ["HSV-1 68% GC (PMC2606590)"]},
+    "STD HSV-2": {"type": "virus", "gc_min": 0.58, "gc_max": 0.80, "_refs": ["HSV-2 70% GC (PMC2606590)"]},
+    "Aspergillus fumigatus":    {"type": "fungus", "gc_min": 0.42, "gc_max": 0.58,
+                                 "_refs": ["A. fumigatus ~49.5% GC (Nierman 2005)"]},
+    "Plasmodium falciparum":    {"type": "protozoa", "gc_min": 0.15, "gc_max": 0.35, "tm_min": 50.0,
+                                 "_refs": ["P. falciparum ~19% GC (PMC5389722)"]},
+    "Homo sapiens":             {"type": "host", "gc_min": 0.35, "gc_max": 0.58,
+                                 "_refs": ["Genoma humano ~41% GC"]},
+}
+
+_VIRAL_HINTS    = {"virus", "sars", "h1n1", "h3n2", "h5n1", "rsv", "corona", "dengue",
+                   "zika", "hbv", "hcv", "hpv", "hsv", "herpes", "noro", "rota", "adeno"}
+_FUNGAL_HINTS   = {"aspergillus", "candida", "cryptococcus", "fungus", "fumigatus"}
+_PROTOZOA_HINTS = {"plasmodium", "leishmania", "trypanosoma", "toxoplasma", "giardia"}
+_HOST_HINTS     = {"homo sapiens", "human"}
+
+def _infer_type(organism: str) -> str:
+    """Tipo SUGERIDO para um organismo (confirmado pelo utilizador em tempo real, §2)."""
+    if organism in SPECIES_PARAMS:
+        return SPECIES_PARAMS[organism].get("type", "bacteria")
+    o = str(organism).lower()
+    if any(h in o for h in _HOST_HINTS):     return "host"
+    if any(h in o for h in _PROTOZOA_HINTS): return "protozoa"
+    if any(h in o for h in _FUNGAL_HINTS):   return "fungus"
+    if any(h in o for h in _VIRAL_HINTS):    return "virus"
+    return "bacteria"
+
+def cfg_species(organism: str, type_: str, param: str):
+    """Resolve um parâmetro por espécie → tipo → global (para probes sem gene em TARGETS)."""
+    sp = SPECIES_PARAMS.get(organism, {})
+    if param in sp:
+        return sp[param]
+    td = TYPE_DEFAULTS.get(type_, {})
+    if param in td:
+        return td[param]
+    return DEFAULTS[param]
+
 def cfg(gene_key: str, param: str):
-    return TARGETS[gene_key].get(param, DEFAULTS[param])
+    """Resolve por gene → espécie → tipo → global (retrocompatível)."""
+    t = TARGETS[gene_key]
+    if param in t:
+        return t[param]
+    return cfg_species(t["organism"], t.get("type", "bacteria"), param)
+
+# Perfis por espécie definidos pelo utilizador (persistentes, editáveis)
+_SPECIES_YAML = BASE_DIR / "data" / "species_params.yaml"
+_USER_SPECIES: set = set()   # espécies definidas pelo utilizador (guardadas no YAML)
+
+def _load_species_yaml():
+    if not _SPECIES_YAML.exists():
+        return
+    try:
+        data = yaml.safe_load(_SPECIES_YAML.read_text(encoding="utf-8")) or {}
+        for org, params in (data.get("species") or {}).items():
+            SPECIES_PARAMS.setdefault(org, {}).update(params or {})
+            _USER_SPECIES.add(org)
+        for t, params in (data.get("type_defaults") or {}).items():
+            TYPE_DEFAULTS.setdefault(t, {}).update(params or {})
+    except Exception as e:
+        print(f"  ⚠ species_params.yaml inválido, ignorado: {e}")
+
+def _save_species_yaml():
+    data = {"species": {o: SPECIES_PARAMS[o] for o in sorted(_USER_SPECIES)}}
+    _SPECIES_YAML.write_text(yaml.safe_dump(data, allow_unicode=True, sort_keys=False),
+                             encoding="utf-8")
+
+def _ensure_species_profile(organism: str, force: bool = False) -> str:
+    """Garante um perfil para `organism`. Se não existe (ou force), pergunta ao utilizador em
+    TEMPO REAL (tipo + limiares, com sugestões) e guarda no YAML. Sem TTY, usa a sugestão
+    silenciosamente. Devolve o tipo resolvido."""
+    organism = str(organism).strip()
+    if not organism:
+        return "bacteria"
+    if organism in SPECIES_PARAMS and not force:
+        return SPECIES_PARAMS[organism].get("type", _infer_type(organism))
+    suggested = _infer_type(organism)
+    if not sys.stdin.isatty():
+        SPECIES_PARAMS.setdefault(organism, {"type": suggested})
+        return suggested
+    print(f"\n  → Organismo sem perfil: '{organism}'")
+    t = input(f"    Tipo (bacteria/virus/fungus/protozoa/host)? [sugestão: {suggested}] ").strip() or suggested
+    prof = {"type": t}
+    for param, label in [("gc_min", "GC mínimo"), ("gc_max", "GC máximo"), ("tm_min", "Tm mínimo"),
+                         ("tm_max", "Tm máximo"), ("cons_min", "Conservação mínima")]:
+        rec = cfg_species(organism, t, param)
+        v = input(f"    {label} de '{organism}' [sugestão {rec}]: ").strip()
+        if v:
+            try:
+                prof[param] = float(v)
+            except ValueError:
+                print(f"      (valor inválido; mantém {rec})")
+    SPECIES_PARAMS[organism] = prof
+    _USER_SPECIES.add(organism)
+    _save_species_yaml()
+    print(f"    ✔ perfil de '{organism}' guardado em {_SPECIES_YAML.name}")
+    return t
+
+_load_species_yaml()
 
 # ── Dataclass ────────────────────────────────────────────────────────────────
 @dataclass
@@ -704,6 +831,7 @@ def _parse_reference_xlsx(path: Path) -> list[dict]:
             continue
         organism = str(row.get(c_sp, "") or "").strip() if c_sp else ""
         pid = (str(row.get(c_name, "") or "").strip() if c_name else "") or f"ref{len(rows)+1:04d}"
+        type_ = _ensure_species_profile(organism)   # perfil por espécie (pergunta se desconhecido)
         sc  = score_probe(seq)
         dg = paired = None
         if have_sf:
@@ -718,11 +846,12 @@ def _parse_reference_xlsx(path: Path) -> list[dict]:
                 pass
         obj = Probe("", organism, "", sequence=seq, tm=sc["tm"], gc=sc["gc"],
                     hairpin_dg=sc["hairpin_dg"], homodimer_dg=sc["homodimer_dg"], seqfold_dg=dg)
+        C = lambda pr: cfg_species(organism, type_, pr)   # limiares da espécie/tipo
         pass_basic = bool(
-            DEFAULTS["tm_min"] <= sc["tm"] <= DEFAULTS["tm_max"] and
-            DEFAULTS["gc_min"] <= sc["gc"] <= DEFAULTS["gc_max"] and
-            (sc["hairpin_dg"] is None or sc["hairpin_dg"] >= DEFAULTS["hp_min"]) and
-            (sc["homodimer_dg"] is None or sc["homodimer_dg"] >= DEFAULTS["dimer_min"]))
+            C("tm_min") <= sc["tm"] <= C("tm_max") and
+            C("gc_min") <= sc["gc"] <= C("gc_max") and
+            (sc["hairpin_dg"] is None or sc["hairpin_dg"] >= C("hp_min")) and
+            (sc["homodimer_dg"] is None or sc["homodimer_dg"] >= C("dimer_min")))
         rows.append({
             "gene": "", "organism": organism,
             "group": "A" if any(g in organism for g in _GROUP_A) else "B",
@@ -733,8 +862,8 @@ def _parse_reference_xlsx(path: Path) -> list[dict]:
             "seqfold_paired_frac": paired if paired is not None else "",
             "nofold_score": nofold_score(obj),
             "pass_basic": pass_basic,
-            "pass_seqfold": bool(dg is not None and dg >= DEFAULTS["seqfold_dg_max"]),
-            "fonte": "referencia", "notes": "conservacao N/A (probe externa, sem alinhamento)",
+            "pass_seqfold": bool(dg is not None and dg >= C("seqfold_dg_max")),
+            "fonte": "referencia", "notes": f"tipo={type_}; conservacao N/A (externa)",
         })
     print(f"  ✔ Referência: {len(rows)} probes pontuadas de {path.name}"
           + ("" if have_sf else "  (seqfold indisponível)"))
