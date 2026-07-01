@@ -1,0 +1,19 @@
+nivel,nome,referencia
+tipo,bacteria,SantaLucia & Hicks 2004 (Tm)
+tipo,bacteria,Wetmur 1991 (18-28 nt)
+tipo,bacteria,"IDT OligoAnalyzer (GC 40-60%, hairpin/dimer)"
+tipo,virus,Viral oligo probe design PMC2248741 (regiões conservadas)
+tipo,virus,"BOC Sciences (18-30 nt, GC 40-60%)"
+tipo,fungus,A. fumigatus ~49.5% GC (Nierman et al. 2005)
+tipo,protozoa,"P. falciparum ~80-90% AT (Nucleic Acids Res, PMC5389722)"
+tipo,host,Genoma humano ~41% GC
+especie,Staphylococcus aureus,S. aureus AT-rico — IDT
+especie,Haemophilus influenzae,H. influenzae AT-rico — IDT
+especie,Pseudomonas aeruginosa,P. aeruginosa ~67% GC — Stover et al. 2000
+especie,Klebsiella pneumoniae,K. pneumoniae ~57% GC
+especie,H1N1,Influenza A ~43% GC
+especie,STD HSV-1,HSV-1 68% GC (PMC2606590)
+especie,STD HSV-2,HSV-2 70% GC (PMC2606590)
+especie,Aspergillus fumigatus,A. fumigatus ~49.5% GC (Nierman 2005)
+especie,Plasmodium falciparum,P. falciparum ~19% GC (PMC5389722)
+especie,Homo sapiens,Genoma humano ~41% GC

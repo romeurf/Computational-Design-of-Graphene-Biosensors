@@ -75,6 +75,25 @@ quando justificado) — **não** são auto-derivados dos dados, para não baixar
 genes mal-conservados. Apenas o **comprimento** é data-driven (§3.2), por ser uma questão
 de qualidade do alinhamento e não um requisito biológico.
 
+## 4b. Parâmetros por tipo de organismo e por espécie
+
+Como o painel inclui **bactérias, vírus, fungos, protozoários e um controlo humano**, os limiares
+deixaram de ser só bacterianos. A resolução tem três camadas (`cfg`/`cfg_species`):
+**gene → espécie → tipo → global**.
+
+- **Perfis por tipo** (`TYPE_DEFAULTS`): as diferenças vêm sobretudo do **GC do genoma** e da
+  **variabilidade** (conservação). Ex.: vírus com janela GC larga (influenza ~43% a HSV ~68%) e
+  conservação mais permissiva; **protozoário AT-rico** (*Plasmodium* ~19% GC → GC 0,15–0,40);
+  fungo ~50% GC; hospedeiro humano ~41% GC.
+- **Perfis por espécie** (`SPECIES_PARAMS`): afinam pelo genoma de cada espécie (HSV-1 68%,
+  HSV-2 70%, *P. aeruginosa* ~67% GC, etc.).
+- **Espécies novas:** o programa **pergunta ao utilizador em tempo real** (sugere o tipo e cada
+  limiar; o utilizador aceita/altera) e guarda em `data/species_params.yaml`.
+
+Efeito nas 74 probes IPLEX: com critérios por tipo, **29 → 39** passam a triagem básica — ex.: a
+probe de *Plasmodium* (GC 0,30, AT-rica) passa agora, o que os critérios bacterianos rejeitariam.
+Referências de cada perfil em `docs/parametros_referencias.csv`.
+
 ## 5. Como o N (nº de sequências) foi decidido — rigor, não arbitrário
 
 Análise de **rarefação** (`scripts/analysis.py`): subamostrando N sequências por gene e

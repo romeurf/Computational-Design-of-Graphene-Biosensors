@@ -265,6 +265,24 @@ def _ensure_species_profile(organism: str, force: bool = False) -> str:
 
 _load_species_yaml()
 
+def write_refs_csv() -> "Path":
+    """Gera docs/parametros_referencias.csv (nível, nome, referência) a partir dos `_refs`
+    dos perfis por tipo e por espécie — para consulta ao escrever os Métodos da tese."""
+    out = BASE_DIR / "docs" / "parametros_referencias.csv"
+    out.parent.mkdir(exist_ok=True)
+    rows = []
+    for _t, _prof in TYPE_DEFAULTS.items():
+        for _ref in _prof.get("_refs", []):
+            rows.append({"nivel": "tipo", "nome": _t, "referencia": _ref})
+    for _sp, _prof in SPECIES_PARAMS.items():
+        for _ref in _prof.get("_refs", []):
+            rows.append({"nivel": "especie", "nome": _sp, "referencia": _ref})
+    with open(out, "w", newline="", encoding="utf-8") as f:
+        w = csv.DictWriter(f, fieldnames=["nivel", "nome", "referencia"])
+        w.writeheader(); w.writerows(rows)
+    print(f"  ✔ {out}  ({len(rows)} referências)")
+    return out
+
 # ── Dataclass ────────────────────────────────────────────────────────────────
 @dataclass
 class Probe:
@@ -624,7 +642,7 @@ def run_seqfold_probe(probe: Probe, gene_key: str) -> Probe:
     return probe
 
 # ── 6. Export para Colab (Boltz-2) ───────────────────────────────────────────
-def export_colab_inputs(probes: list, top_n: int) -> Path:
+def export_colab_inputs(probes: list, top_n: int, extra_probes: list = None) -> Path:
     """
     Gera os ficheiros de input para o Boltz-2 Colab:
       - YAML individual por probe (formato nativo Boltz-2)
@@ -643,6 +661,8 @@ def export_colab_inputs(probes: list, top_n: int) -> Path:
             key=probe_quality, reverse=True            # melhores por qualidade (PPI + No-fold)
         )[:top_n]
         selected.extend(cands)
+    if extra_probes:                       # ex.: probes IPLEX que passam (já filtradas)
+        selected.extend(extra_probes)
 
     if not selected:
         print("  ⚠ Nenhuma probe qualificada para export Colab.")
@@ -691,14 +711,14 @@ def export_colab_inputs(probes: list, top_n: int) -> Path:
     print(f"{'═'*60}")
     return zip_path
 
-def export_colab_from_csv(top_n: int) -> Path:
-    """Gera os inputs do Colab a partir do FINAL_PROBES_ALL.csv já existente
-    (sem re-correr NCBI/MAFFT) — determinístico e consistente com o CSV commitado.
-    Reutiliza export_colab_inputs(). Produz output/colab_boltz2/boltz2_inputs.zip
-    pronto para upload direto no notebook colab_boltz2_batch.ipynb."""
+def export_colab_from_csv(top_n: int, include_reference: bool = False) -> Path:
+    """Gera os inputs do Colab a partir do FINAL_PROBES_ALL.csv já existente (sem re-correr
+    NCBI/MAFFT). Reutiliza export_colab_inputs() → boltz2_inputs.zip. Se include_reference,
+    inclui também as probes IPLEX (fonte=referencia) que passam o básico e têm No-fold>60 —
+    para comparar minha vs IPLEX em 3D."""
     csv_path = BASE_DIR / "output" / "FINAL_PROBES_ALL.csv"
-    df = pd.read_csv(csv_path)
-    df = df[df["fonte"] == "romeu"]
+    full = pd.read_csv(csv_path)
+    df = full[full["fonte"] == "romeu"]
 
     def _f(v):
         try:
@@ -721,8 +741,22 @@ def export_colab_from_csv(top_n: int) -> Path:
         )
         for _, r in df.iterrows()
     ]
+    extra = None
+    if include_reference:
+        ref = full[full["fonte"] == "referencia"]
+        extra = [
+            Probe(gene=str(r.get("gene", "")), organism=str(r.get("organism", "")),
+                  group=str(r.get("group", "")), probe_id=r["probe_id"], sequence=str(r["sequence"]),
+                  tm=_f(r["tm"]) or 0.0, gc=_f(r["gc"]) or 0.0,
+                  hairpin_dg=_f(r["hairpin_dg"]), homodimer_dg=_f(r["homodimer_dg"]),
+                  seqfold_dg=_f(r["seqfold_dg"]), nofold_score=_f(r.get("nofold_score")),
+                  pass_basic=_b(r["pass_basic"]), pass_seqfold=_b(r.get("pass_seqfold", "")))
+            for _, r in ref.iterrows()
+            if _b(r["pass_basic"]) and (_f(r.get("nofold_score")) or 0) > 60
+        ]
+        print(f"  + {len(extra)} probes IPLEX (pass_basic, No-fold>60) para comparação 3D")
     print(f"  {len(probes)} probes próprias lidas de {csv_path.name}")
-    return export_colab_inputs(probes, top_n=top_n)
+    return export_colab_inputs(probes, top_n=top_n, extra_probes=extra)
 
 def merge_boltz_results(results_csv: str) -> Path:
     """Junta os resultados Boltz (confidence/pTM/pLDDT/quality) aos metadados das
@@ -1033,6 +1067,12 @@ if __name__ == "__main__":
     ap.add_argument("--export-docking", action="store_true",
                     help="Gerar input p/ pipeline de docking externa (job_name, sequence, species) "
                          "→ output/probes_for_docking.csv. Não corre o pipeline.")
+    ap.add_argument("--define-species", type=str, default=None, metavar="NOME",
+                    help="Definir interativamente o perfil de uma espécie (tipo + limiares) → data/species_params.yaml.")
+    ap.add_argument("--refs-csv", action="store_true",
+                    help="Gerar docs/parametros_referencias.csv a partir dos _refs dos perfis.")
+    ap.add_argument("--export-colab-iplex", type=int, default=0, metavar="N",
+                    help="Como --export-colab mas inclui as probes IPLEX que passam (No-fold>60) p/ comparação 3D.")
     args = ap.parse_args()
     if args.merge_boltz:                            # atalho: só fundir resultados Boltz
         merge_boltz_results(args.merge_boltz)
@@ -1042,6 +1082,15 @@ if __name__ == "__main__":
         raise SystemExit(0)
     if args.export_colab > 0:                       # atalho: só (re)gerar inputs Colab
         export_colab_from_csv(args.export_colab)
+        raise SystemExit(0)
+    if args.define_species:                         # atalho: definir perfil de espécie
+        _ensure_species_profile(args.define_species, force=True)
+        raise SystemExit(0)
+    if args.refs_csv:                               # atalho: gerar CSV de referências
+        write_refs_csv()
+        raise SystemExit(0)
+    if args.export_colab_iplex > 0:                 # atalho: Colab com as minhas + IPLEX
+        export_colab_from_csv(args.export_colab_iplex, include_reference=True)
         raise SystemExit(0)
     if args.max_seqs is not None:
         DEFAULTS["max_seqs"] = args.max_seqs
