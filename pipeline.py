@@ -174,6 +174,11 @@ SPECIES_PARAMS = {
                                  "_refs": ["P. falciparum ~19% GC (PMC5389722)"]},
     "Homo sapiens":             {"type": "host", "gc_min": 0.35, "gc_max": 0.58,
                                  "_refs": ["Genoma humano ~41% GC"]},
+    # IPLEX: marcadores de resistência (alvos bacterianos) e ISTs bacterianas
+    "AMR MecA":      {"type": "bacteria"}, "AMR OXA-48":  {"type": "bacteria"},
+    "AMR KPC":       {"type": "bacteria"},
+    "STD Chlamydia": {"type": "bacteria"}, "STD Syphilis": {"type": "bacteria"},
+    "STD Gonorrhea": {"type": "bacteria", "gc_max": 0.60, "_refs": ["N. gonorrhoeae ~52% GC"]},
 }
 
 _VIRAL_HINTS    = {"virus", "sars", "h1n1", "h3n2", "h5n1", "rsv", "corona", "dengue",
@@ -246,17 +251,22 @@ def _ensure_species_profile(organism: str, force: bool = False) -> str:
         SPECIES_PARAMS.setdefault(organism, {"type": suggested})
         return suggested
     print(f"\n  → Organismo sem perfil: '{organism}'")
-    t = input(f"    Tipo (bacteria/virus/fungus/protozoa/host)? [sugestão: {suggested}] ").strip() or suggested
-    prof = {"type": t}
-    for param, label in [("gc_min", "GC mínimo"), ("gc_max", "GC máximo"), ("tm_min", "Tm mínimo"),
-                         ("tm_max", "Tm máximo"), ("cons_min", "Conservação mínima")]:
-        rec = cfg_species(organism, t, param)
-        v = input(f"    {label} de '{organism}' [sugestão {rec}]: ").strip()
-        if v:
-            try:
-                prof[param] = float(v)
-            except ValueError:
-                print(f"      (valor inválido; mantém {rec})")
+    try:
+        t = input(f"    Tipo (bacteria/virus/fungus/protozoa/host)? [sugestão: {suggested}] ").strip() or suggested
+        prof = {"type": t}
+        for param, label in [("gc_min", "GC mínimo"), ("gc_max", "GC máximo"), ("tm_min", "Tm mínimo"),
+                             ("tm_max", "Tm máximo"), ("cons_min", "Conservação mínima")]:
+            rec = cfg_species(organism, t, param)
+            v = input(f"    {label} de '{organism}' [sugestão {rec}]: ").strip()
+            if v:
+                try:
+                    prof[param] = float(v)
+                except ValueError:
+                    print(f"      (valor inválido; mantém {rec})")
+    except (EOFError, KeyboardInterrupt):            # sem input real → usa a sugestão
+        SPECIES_PARAMS.setdefault(organism, {"type": suggested})
+        print(f"    (sem input — usa sugestão: {suggested})")
+        return suggested
     SPECIES_PARAMS[organism] = prof
     _USER_SPECIES.add(organism)
     _save_species_yaml()
