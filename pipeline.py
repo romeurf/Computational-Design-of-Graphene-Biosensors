@@ -690,7 +690,8 @@ def export_colab_inputs(probes: list, top_n: int, extra_probes: list = None) -> 
             f.write(f">{p.probe_id}\n{p.sequence}\n")
 
     meta_fields = ["probe_id", "gene", "organism", "sequence", "tm", "gc",
-                   "conservation", "hairpin_dg", "homodimer_dg", "seqfold_dg", "nofold_score"]
+                   "conservation", "hairpin_dg", "homodimer_dg", "seqfold_dg", "nofold_score",
+                   "fonte"]
     with open(COLAB_DIR / "probes_metadata.csv", "w", newline="", encoding="utf-8") as f:
         w = csv.DictWriter(f, fieldnames=meta_fields, extrasaction="ignore")
         w.writeheader()
@@ -760,7 +761,8 @@ def export_colab_from_csv(top_n: int, include_reference: bool = False) -> Path:
                   tm=_f(r["tm"]) or 0.0, gc=_f(r["gc"]) or 0.0,
                   hairpin_dg=_f(r["hairpin_dg"]), homodimer_dg=_f(r["homodimer_dg"]),
                   seqfold_dg=_f(r["seqfold_dg"]), nofold_score=_f(r.get("nofold_score")),
-                  pass_basic=_b(r["pass_basic"]), pass_seqfold=_b(r.get("pass_seqfold", "")))
+                  pass_basic=_b(r["pass_basic"]), pass_seqfold=_b(r.get("pass_seqfold", "")),
+                  fonte="referencia")
             for _, r in ref.iterrows()
             if _b(r["pass_basic"]) and (_f(r.get("nofold_score")) or 0) > 60
         ]
@@ -783,7 +785,7 @@ def merge_boltz_results(results_csv: str) -> Path:
 
     sort_cols = [c for c in ("confidence", "plddt") if c in m.columns] or ["seq_quality"]
     m = m.sort_values(sort_cols, ascending=False)
-    cols = [c for c in ["probe_id", "gene", "organism", "tm", "gc", "conservation",
+    cols = [c for c in ["probe_id", "gene", "organism", "fonte", "tm", "gc", "conservation",
                         "nofold_score", "seqfold_dg", "seq_quality", "confidence", "ptm",
                         "plddt", "quality", "sequence"] if c in m.columns]
     out = COLAB_DIR / "boltz2_shortlist_ranked.csv"
@@ -796,6 +798,19 @@ def merge_boltz_results(results_csv: str) -> Path:
     for _, r in m.head(5).iterrows():
         print(f"    {str(r['probe_id'])[:42]:42}  conf={r.get('confidence')}  "
               f"pLDDT={r.get('plddt')}  PPI={r.get('conservation')}  {r.get('quality')}")
+
+    # Entrega p/ a pipeline de docking externa — SÓ as minhas, melhores primeiro.
+    # Atualizada automaticamente a cada --merge-boltz → docs/melhores_probes_docking.csv
+    is_mine = (m["fonte"] == "romeu") if "fonte" in m.columns \
+              else ~m["probe_id"].astype(str).str.contains("iplex", case=False)
+    deliv = m[is_mine].rename(columns={"probe_id": "job_name", "organism": "species"})
+    dcols = [c for c in ["job_name", "sequence", "species", "gene", "tm", "gc",
+                         "nofold_score", "confidence", "plddt", "quality"] if c in deliv.columns]
+    dpath = BASE_DIR / "docs" / "melhores_probes_docking.csv"
+    dpath.parent.mkdir(exist_ok=True)
+    deliv[dcols].to_csv(dpath, index=False, encoding="utf-8")
+    print(f"  ✔ Entrega docking (job_name,sequence,species — só as minhas, melhores 1º): "
+          f"{dpath}  ({len(deliv)} probes)")
     return out
 
 def export_docking_input() -> Path:
