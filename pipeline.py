@@ -192,10 +192,12 @@ def _infer_type(organism: str) -> str:
     if organism in SPECIES_PARAMS:
         return SPECIES_PARAMS[organism].get("type", "bacteria")
     o = str(organism).lower()
-    if any(h in o for h in _HOST_HINTS):     return "host"
+    # patógeno-específico primeiro: "Human herpesvirus"/"Human papillomavirus" são VÍRUS,
+    # não hospedeiro. O host ("homo sapiens"/"human") só ganha se nenhum patógeno casar.
     if any(h in o for h in _PROTOZOA_HINTS): return "protozoa"
     if any(h in o for h in _FUNGAL_HINTS):   return "fungus"
     if any(h in o for h in _VIRAL_HINTS):    return "virus"
+    if any(h in o for h in _HOST_HINTS):     return "host"
     return "bacteria"
 
 def cfg_species(organism: str, type_: str, param: str):
