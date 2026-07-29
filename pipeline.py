@@ -815,17 +815,47 @@ def merge_boltz_results(results_csv: str) -> Path:
           f"{dpath}  ({len(deliv)} probes)")
     return out
 
-def export_docking_input() -> Path:
-    """Exporta as probes selecionadas no formato de input para uma pipeline de docking
-    externa: primeiras colunas job_name, sequence, species (+ métricas extra). Usa as
-    probes de probes_metadata.csv (as mesmas enviadas ao Boltz) → comparação direta."""
-    meta = pd.read_csv(COLAB_DIR / "probes_metadata.csv")
-    meta = meta.rename(columns={"probe_id": "job_name", "organism": "species"})
-    cols = [c for c in ["job_name", "sequence", "species", "gene", "tm", "gc",
-                        "conservation", "nofold_score", "seqfold_dg"] if c in meta.columns]
-    out = BASE_DIR / "output" / "probes_for_docking.csv"
-    meta[cols].to_csv(out, index=False, encoding="utf-8")
-    print(f"  ✔ Input p/ pipeline de docking: {out}  ({len(meta)} probes)")
+def export_docking_input(top_n: int = 0) -> Path:
+    """Exporta probes no formato de input para uma pipeline externa (docking / modelo de ML):
+    primeiras colunas job_name, sequence, species (+ métricas). Dois modos:
+      • top_n <= 0 → as probes que foram ao Boltz (probes_metadata.csv) → output/probes_for_docking.csv
+        (comparação directa com o que já correu no 3D).
+      • top_n  > 0 → as top-N/gene por QUALIDADE (PPI + No-fold, o mesmo critério do Boltz) do
+        FINAL_PROBES_ALL.csv, só as minhas e que passam basic+seqfold → output/probes_top{N}_por_gene.csv.
+        Serve para dar MAIS dados (ex.: 25/gene) a um modelo de ML sem re-correr o pipeline."""
+    if top_n <= 0:
+        meta = pd.read_csv(COLAB_DIR / "probes_metadata.csv")
+        meta = meta.rename(columns={"probe_id": "job_name", "organism": "species"})
+        cols = [c for c in ["job_name", "sequence", "species", "gene", "tm", "gc",
+                            "conservation", "nofold_score", "seqfold_dg"] if c in meta.columns]
+        out = BASE_DIR / "output" / "probes_for_docking.csv"
+        meta[cols].to_csv(out, index=False, encoding="utf-8")
+        print(f"  ✔ Input p/ pipeline de docking: {out}  ({len(meta)} probes)")
+        print(f"    colunas: {', '.join(cols)}  (job_name, sequence, species primeiro)")
+        return out
+
+    # top_n > 0 — seleccionar do CSV consolidado (mais probes do que as que foram ao Boltz)
+    full = pd.read_csv(BASE_DIR / "output" / "FINAL_PROBES_ALL.csv")
+    def _truthy(s):
+        return s.astype(str).str.strip().str.lower().isin(("true", "1", "1.0"))
+    mine = full[(full["fonte"] == "romeu") & _truthy(full["pass_basic"])
+                & _truthy(full["pass_seqfold"])].copy()
+    cons = pd.to_numeric(mine.get("conservation"), errors="coerce").fillna(0)
+    nof  = pd.to_numeric(mine.get("nofold_score"), errors="coerce").fillna(0)
+    mine["quality"] = ((cons + nof / 100) / 2).round(4)     # PPI + No-fold (igual ao Boltz)
+    mine = mine.sort_values("quality", ascending=False, kind="stable")
+    top = mine.groupby("gene", sort=False).head(top_n).copy()
+    top["rank_no_gene"] = top.groupby("gene").cumcount() + 1
+    top = top.sort_values(["gene", "rank_no_gene"]).rename(
+        columns={"probe_id": "job_name", "organism": "species"})
+    cols = [c for c in ["job_name", "sequence", "species", "gene", "rank_no_gene", "quality",
+                        "tm", "gc", "conservation", "nofold_score", "seqfold_dg",
+                        "hairpin_dg", "homodimer_dg"] if c in top.columns]
+    out = BASE_DIR / "output" / f"probes_top{top_n}_por_gene.csv"
+    top[cols].to_csv(out, index=False, encoding="utf-8")
+    per_gene = top.groupby("gene").size().to_dict()
+    print(f"  ✔ Top {top_n}/gene por qualidade (PPI + No-fold) → {out}  ({len(top)} probes)")
+    print(f"    por gene: {per_gene}")
     print(f"    colunas: {', '.join(cols)}  (job_name, sequence, species primeiro)")
     return out
 
@@ -1092,9 +1122,11 @@ if __name__ == "__main__":
     ap.add_argument("--merge-boltz", type=str, default=None, metavar="CSV",
                     help="Juntar resultados Boltz (boltz2_results_summary.csv) aos metadados "
                          "→ boltz2_shortlist_ranked.csv. Não corre o pipeline.")
-    ap.add_argument("--export-docking", action="store_true",
-                    help="Gerar input p/ pipeline de docking externa (job_name, sequence, species) "
-                         "→ output/probes_for_docking.csv. Não corre o pipeline.")
+    ap.add_argument("--export-docking", type=int, nargs="?", const=0, default=None, metavar="N",
+                    help="Gerar input p/ pipeline externa (job_name, sequence, species). Sem N = as "
+                         "que foram ao Boltz (output/probes_for_docking.csv). Com N = top N/gene por "
+                         "qualidade do FINAL_PROBES_ALL.csv (ex.: --export-docking 25 → mais dados p/ ML). "
+                         "Não corre o pipeline.")
     ap.add_argument("--define-species", type=str, default=None, metavar="NOME",
                     help="Definir interativamente o perfil de uma espécie (tipo + limiares) → data/species_params.yaml.")
     ap.add_argument("--refs-csv", action="store_true",
@@ -1105,8 +1137,8 @@ if __name__ == "__main__":
     if args.merge_boltz:                            # atalho: só fundir resultados Boltz
         merge_boltz_results(args.merge_boltz)
         raise SystemExit(0)
-    if args.export_docking:                         # atalho: só gerar input p/ docking
-        export_docking_input()
+    if args.export_docking is not None:             # atalho: gerar input p/ docking / ML
+        export_docking_input(top_n=args.export_docking)
         raise SystemExit(0)
     if args.export_colab > 0:                       # atalho: só (re)gerar inputs Colab
         export_colab_from_csv(args.export_colab)
