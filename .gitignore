@@ -5,3 +5,4 @@ __pycache__/
 .env
 .claude/settings.local.json
 msc_latex_template.zip
+thesis_overleaf.zip
