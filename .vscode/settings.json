@@ -1,0 +1,35 @@
+{
+  "//": "Thesis uses XeLaTeX (fontspec + NewsGotT.ttf) + natbib + glossaries.",
+  "latex-workshop.latex.tools": [
+    {
+      "name": "xelatex",
+      "command": "xelatex",
+      "args": ["-synctex=1", "-interaction=nonstopmode", "-file-line-error", "%DOCFILE%"],
+      "env": {}
+    },
+    {
+      "name": "bibtex",
+      "command": "bibtex",
+      "args": ["%DOCFILE%"],
+      "env": {}
+    },
+    {
+      "name": "makeglossaries",
+      "command": "makeglossaries",
+      "args": ["%DOCFILE%"],
+      "env": {}
+    }
+  ],
+  "latex-workshop.latex.recipes": [
+    {
+      "name": "XeLaTeX (bib + glossaries)",
+      "tools": ["xelatex", "bibtex", "makeglossaries", "xelatex", "xelatex"]
+    },
+    {
+      "name": "XeLaTeX (quick, no bib)",
+      "tools": ["xelatex"]
+    }
+  ],
+  "latex-workshop.latex.recipe.default": "first",
+  "latex-workshop.latex.autoBuild.run": "onSave"
+}

@@ -1,79 +1,78 @@
 \chapter*{Abstract}
 
-Graphene field-effect transistor (GFET) biosensors functionalised with single-stranded
-DNA (ssDNA) probes are a promising platform for the rapid, label-free and highly sensitive
-detection of pathogens. The performance of such a device depends critically on the capture
-probe: to detect a target reliably across clinical strains, the probe must target a
-\emph{conserved} genomic region, hybridise strongly and specifically at the assay
-temperature, and remain free of stable self-structure that would compete with hybridisation.
-Designing such probes by hand does not scale across many genes and organisms, and offers no
-reproducible, quantitative ranking of the candidates.
+Rapid and reliable detection of microbial DNA is central to clinical diagnostics, antimicrobial-resistance
+surveillance and environmental monitoring, yet the dominant amplification-based methods require
+laboratory infrastructure that limits their use at the point of care. Graphene field-effect transistor
+(GFET) biosensors, functionalised with single-stranded DNA recognition elements, offer a compelling
+label-free alternative, converting the hybridisation of a target sequence at the graphene surface into a
+measurable electrical signal. The bottleneck of this approach is the recognition sequence: identifying, for
+each pathogen, probe candidates that are conserved across strains, hybridise favourably, and are free of
+stable self-structure, without resorting to costly and low-throughput experimental screening of hundreds
+of candidates.
 
-This dissertation presents a reproducible computational pipeline that designs ssDNA capture
-probes from publicly available genomic data. Starting from sequences retrieved from the NCBI
-databases for six bacterial marker genes, the pipeline performs automatic length clustering,
-multiple sequence alignment with MAFFT, and per-column conservation scoring based on the
-Percentage of Pairwise Identity (PPI). Sliding-window candidates are screened with
-nearest-neighbour thermodynamics (melting temperature, GC content, hairpin and homodimer free
-energies) using primer3, and their secondary structure is evaluated with seqfold, condensed
-into a continuous ``No-fold'' score. A layered parameter system resolves thresholds by
-gene, species and organism type (bacteria, virus, fungus, protozoan or host), so that
-AT-rich or GC-rich targets are judged by criteria appropriate to their own genome rather
-than by a single global rule. Prioritised candidates are validated three-dimensionally with
-Boltz-2, and an existing experimental probe panel is scored with the same metrics for direct
-comparison.
+This dissertation addresses that bottleneck with a reproducible computational pipeline for the
+\emph{discovery} of DNA probe candidates for GFET biosensors, developed for a panel of clinically
+relevant bacterial marker genes. From sequences retrieved from the NCBI databases, the pipeline
+performs automatic length clustering, multiple sequence alignment with MAFFT, and per-column
+conservation scoring based on the Percentage of Pairwise Identity. Sliding-window candidates are
+screened with nearest-neighbour thermodynamics (melting temperature, GC content, hairpin and
+homodimer free energies) and evaluated for secondary structure, condensed into a continuous ``No-fold''
+score. All thresholds are resolved through an organism-aware, layered scheme (gene, species and
+organism type), so that pathogens with very different genome composition are judged fairly. The
+highest-quality candidates are prioritised and validated three-dimensionally, and a curated, feature-rich
+dataset is produced to feed the downstream stages of the wider project --- molecular docking of the
+probe--target duplexes onto graphene surfaces, and exploratory machine-learning ranking of candidates.
 
-Applied to the six target genes, the pipeline reduced 8455 candidate windows to 2943
-that passed thermodynamic and structural screening, from which the highest-quality probes
-per gene were validated in 3D. Alignment-free diversity and rarefaction analyses were used to
-justify the sampling depth and to characterise each gene. The resulting ranked, biophysically
-sound probe candidates provide a solid starting point for GFET biosensor fabrication and for
-downstream data-driven modelling, and the framework generalises to new genes and organisms
-with minimal configuration.
+Applied to the six-gene panel, the pipeline reduced 8455 candidate windows to 2943 that passed
+thermodynamic and structural screening, from which the best probes per gene were validated in 3D with
+high predicted confidence. Alignment-free diversity and rarefaction analyses characterised each target and
+justified the sampling depth. The result is a prioritised, biophysically sound set of probe candidates and a
+reproducible framework that provides the sequence-level foundation for the rational design of
+aptamer--graphene GFET biosensors, and that generalises to new genes and organisms with minimal
+configuration.
 
-\paragraph{Keywords} graphene biosensor, GFET, ssDNA probe design, multiple sequence
-alignment, sequence conservation, secondary structure, 3D structure prediction, pathogen
-detection
+\paragraph{Keywords} DNA aptamer, graphene biosensor, GFET, probe design, sequence conservation,
+molecular docking, 3D structure prediction, microbial DNA detection
 
 \cleardoublepage
 
 \chapter*{Resumo}
 
-Os biossensores baseados em transístores de efeito de campo de grafeno (GFET)
-funcionalizados com sondas de DNA de cadeia simples (ssDNA) são uma plataforma promissora
-para a deteção rápida, sem marcação e altamente sensível de agentes patogénicos. O desempenho
-do dispositivo depende de forma crítica da sonda de captura: para detetar um alvo de forma
-fiável nas várias estirpes clínicas, a sonda tem de reconhecer uma região genómica
-\emph{conservada}, hibridar de forma forte e específica à temperatura do ensaio e não formar
-estrutura secundária estável que compita com a hibridação. Desenhar estas sondas manualmente
-não é escalável para muitos genes e organismos e não fornece uma ordenação reprodutível e
-quantitativa das candidatas.
+A deteção rápida e fiável de DNA microbiano é central para o diagnóstico clínico, a vigilância da
+resistência antimicrobiana e a monitorização ambiental, mas os métodos dominantes, baseados em
+amplificação, exigem infraestrutura laboratorial que limita o seu uso no local de prestação de cuidados.
+Os biossensores baseados em transístores de efeito de campo de grafeno (GFET), funcionalizados com
+elementos de reconhecimento de DNA de cadeia simples, oferecem uma alternativa sem marcação
+apelativa, convertendo a hibridação de uma sequência-alvo à superfície do grafeno num sinal elétrico
+mensurável. O estrangulamento desta abordagem é a sequência de reconhecimento: identificar, para cada
+agente patogénico, sondas candidatas que sejam conservadas entre estirpes, hibridem favoravelmente e
+estejam livres de estrutura secundária estável, sem recorrer à triagem experimental dispendiosa e de
+baixo débito de centenas de candidatas.
 
-Esta dissertação apresenta um pipeline computacional reprodutível que desenha sondas de
-captura de ssDNA a partir de dados genómicos públicos. Partindo de sequências obtidas nas
-bases de dados do NCBI para seis genes marcadores bacterianos, o pipeline realiza a seleção
-automática do agrupamento de comprimento, o alinhamento múltiplo com o MAFFT e a pontuação de
-conservação por coluna baseada na Percentagem de Identidade Par-a-Par (PPI). As candidatas,
-geradas por janela deslizante, são filtradas com termodinâmica de vizinhos mais próximos
-(temperatura de fusão, conteúdo em GC, energias de hairpin e homodímero) através do primer3, e
-a sua estrutura secundária é avaliada com o seqfold, condensada num score contínuo
-``No-fold''. Um sistema de parâmetros em camadas resolve os limiares por gene, espécie e tipo
-de organismo (bactéria, vírus, fungo, protozoário ou hospedeiro), de modo a que alvos ricos
-em AT ou em GC sejam avaliados por critérios adequados ao seu próprio genoma, e não por uma
-regra global única. As candidatas prioritárias são validadas tridimensionalmente com o
-Boltz-2, e um painel experimental de sondas já existente é pontuado com as mesmas métricas
-para comparação direta.
+Esta dissertação aborda esse estrangulamento com um pipeline computacional reprodutível para a
+\emph{descoberta} de sondas de DNA candidatas para biossensores GFET, desenvolvido para um painel de
+genes marcadores bacterianos clinicamente relevantes. A partir de sequências obtidas nas bases de dados
+do NCBI, o pipeline realiza a seleção automática do agrupamento de comprimento, o alinhamento múltiplo
+com o MAFFT e a pontuação de conservação por coluna baseada na Percentagem de Identidade
+Par-a-Par. As candidatas, geradas por janela deslizante, são filtradas com termodinâmica de vizinhos
+mais próximos (temperatura de fusão, conteúdo em GC, energias de hairpin e homodímero) e avaliadas
+quanto à estrutura secundária, condensada num score contínuo ``No-fold''. Todos os limiares são
+resolvidos através de um esquema em camadas e sensível ao organismo (gene, espécie e tipo de
+organismo), para que agentes patogénicos com composição genómica muito distinta sejam avaliados de
+forma justa. As candidatas de maior qualidade são priorizadas e validadas tridimensionalmente, e é
+produzido um conjunto de dados curado e rico em atributos para alimentar as fases seguintes do projeto
+--- o \emph{docking} molecular dos duplexos sonda--alvo sobre superfícies de grafeno e a ordenação
+exploratória de candidatas por aprendizagem automática.
 
-Aplicado aos seis genes-alvo, o pipeline reduziu 8455 janelas candidatas a 2943 que passaram
-a triagem termodinâmica e estrutural, a partir das quais as sondas de maior qualidade por gene
-foram validadas em 3D. Análises de diversidade sem alinhamento e de rarefação foram usadas
-para justificar a profundidade de amostragem e para caracterizar cada gene. As candidatas
-resultantes, ordenadas e biofisicamente sólidas, constituem um ponto de partida robusto para o
-fabrico de biossensores GFET e para modelação orientada por dados, e a estrutura generaliza-se
-a novos genes e organismos com configuração mínima.
+Aplicado ao painel de seis genes, o pipeline reduziu 8455 janelas candidatas a 2943 que passaram a
+triagem termodinâmica e estrutural, a partir das quais as melhores sondas por gene foram validadas em
+3D com elevada confiança prevista. Análises de diversidade sem alinhamento e de rarefação
+caracterizaram cada alvo e justificaram a profundidade de amostragem. O resultado é um conjunto
+priorizado e biofisicamente sólido de sondas candidatas e uma estrutura reprodutível que constitui o
+alicerce, ao nível da sequência, para o desenho racional de biossensores GFET de aptâmero--grafeno,
+generalizável a novos genes e organismos com configuração mínima.
 
-\paragraph{Palavras-chave} biossensor de grafeno, GFET, desenho de sondas ssDNA, alinhamento
-múltiplo de sequências, conservação de sequência, estrutura secundária, previsão de estrutura
-3D, deteção de agentes patogénicos
+\paragraph{Palavras-chave} aptâmero de DNA, biossensor de grafeno, GFET, desenho de sondas,
+conservação de sequência, docking molecular, previsão de estrutura 3D, deteção de DNA microbiano
 
 \cleardoublepage

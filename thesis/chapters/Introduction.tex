@@ -2,6 +2,8 @@
 \newacronym{gfet}{GFET}{Graphene Field-Effect Transistor}
 \newacronym{fet}{FET}{Field-Effect Transistor}
 \newacronym{ssdna}{ssDNA}{single-stranded DNA}
+\newacronym{dsdna}{dsDNA}{double-stranded DNA}
+\newacronym{selex}{SELEX}{Systematic Evolution of Ligands by EXponential enrichment}
 \newacronym{msa}{MSA}{Multiple Sequence Alignment}
 \newacronym{ppi}{PPI}{Percentage of Pairwise Identity}
 \newacronym{ncbi}{NCBI}{National Center for Biotechnology Information}
@@ -9,74 +11,81 @@
 \newacronym{mfe}{MFE}{Minimum Free Energy}
 \newacronym{amr}{AMR}{Antimicrobial Resistance}
 \newacronym{poc}{PoC}{Point-of-Care}
+\newacronym{go}{GO}{Graphene Oxide}
 \newacronym{plddt}{pLDDT}{predicted Local Distance Difference Test}
 \newacronym{pae}{PAE}{Predicted Aligned Error}
+\newacronym{ml}{ML}{Machine Learning}
 
 \chapter{Introduction}
 
-\section{Context and motivation}
+\section{Context}
 
-The timely identification of pathogenic microorganisms is a cornerstone of clinical
-diagnostics, public-health surveillance and the containment of antimicrobial resistance
-(\acrshort{amr}). Conventional diagnostic methods, such as microbiological culture and
-polymerase chain reaction, are sensitive and well established, but they are typically slow,
-laboratory-bound and require trained personnel and specialised equipment. There is therefore a
-strong demand for \acrfull{poc} devices that are fast, portable, inexpensive and able to
-detect a pathogen directly from a biological sample with minimal preparation.
+The fast identification of microbial DNA underpins the diagnosis of infection, the monitoring of
+antibiotic resistance (\acrshort{amr}) and the tracking of environmental contamination. Amplification-based
+methods such as the polymerase chain reaction are highly sensitive, but they require dedicated equipment,
+controlled laboratory conditions and lengthy sample preparation, which restricts their use outside the
+laboratory \citep{hu2024}. The development of miniaturised solid-state biosensors, which convert a
+molecular-recognition event directly into an electrical or electrochemical signal, now enables portable and
+continuous monitoring in small \acrfull{poc} devices \citep{gegenhuber2025,krishnan2023}.
 
-Biosensors based on the \acrfull{gfet} have emerged as one of the most attractive platforms to
-meet this demand. Graphene, a single layer of carbon atoms arranged in a honeycomb lattice,
-combines exceptional electrical conductivity with an entirely surface-exposed conduction
-channel, so that any charged molecule binding at its surface produces a measurable change in
-the transistor current \citep{novoselov2004,schedin2007}. When the graphene channel is
-functionalised with a \acrfull{ssdna} capture probe, the hybridisation of a complementary
-target strand can be transduced into an electrical signal in a label-free manner and with very
-high sensitivity, down to the single-molecule regime in optimised devices
-\citep{hwang2020,beraud2021}. This makes the \acrshort{gfet} an ideal transducer for
-nucleic-acid-based detection of pathogens.
+Coupling DNA recognition elements to a \acrfull{gfet} has been proposed as a particularly promising route
+to label-free nucleic-acid detection \citep{green2015,campos2019}. Graphene, a two-dimensional sheet of
+carbon whose entire conduction channel is exposed at its surface, transduces local charge variations with
+great sensitivity; when it is functionalised with a \acrfull{ssdna} probe, the hybridisation of a
+complementary microbial target modulates the transistor current in a label-free manner
+\citep{sun2022,hu2024}. Electrolyte-gated \acrshort{gfet} devices functionalised with DNA probes have
+achieved label-free detection of hybridisation down to the attomolar range \citep{campos2019}, and
+microfluidic, programmable graphene DNA sensors have since been demonstrated \citep{purwidyantri2022}.
+Their response, however, is shaped by the design of the sensing interface and by the ionic conditions, since
+high ionic strength imposes strong Debye screening that attenuates the contribution of distant charges
+\citep{purwidyantri2021}.
 
-The analytical performance of a \acrshort{gfet} biosensor is, however, only as good as the
-capture probe immobilised on its surface. A useful probe must simultaneously satisfy several,
-partly competing, requirements. It must be complementary to a region of the target genome that
-is \emph{conserved} across the clinical strains of the pathogen, otherwise strain-to-strain
-variation would cause false negatives. It must hybridise with its target strongly and
-specifically at the temperature of the assay, which constrains its length, melting temperature
-and GC content. Finally, it must not fold back on itself into stable secondary structures
-(hairpins or self-dimers), because a probe that is folded is not available to capture the
-target. Balancing these criteria for a single probe is already non-trivial; doing so
-systematically for many genes and organisms, while ranking the surviving candidates in a
-reproducible and quantitative way, is beyond what manual design can offer.
+Building on these experimental developments, a central practical obstacle remains: the high cost and low
+throughput of experimentally testing hundreds of candidate probes in order to discriminate multiple
+pathogenic species. This motivates a \emph{complementary computational screening strategy} that can
+prioritise a small number of promising candidates before any experimental effort is spent.
 
-\section{Aims and objectives}
+\section{Problem statement}
 
-The goal of this dissertation is to design, \emph{in silico}, high-quality \acrshort{ssdna}
-capture probes for a panel of clinically relevant bacterial pathogens, to be used in the
-fabrication of \acrshort{gfet} biosensors. To that end, a single, reproducible computational
-pipeline was developed that takes a target gene as input and returns a small set of ranked,
-biophysically validated probe candidates. The specific objectives were:
+The scientific problem addressed in this dissertation is how to computationally \emph{discover and
+prioritise} DNA probe candidates that recognise specific microbial DNA sequences and are suitable for
+transduction on a \acrshort{gfet}. This requires analysing the sequence and structural features --- genomic
+conservation, hybridisation thermodynamics and self-structure --- that determine whether a probe will bind
+its target strongly and specifically across clinical strains, and doing so in a reproducible, automated way
+that scales across many genes and organisms of very different genome composition
+\citep{green2015,campos2019}.
+
+\section{Objectives}
+
+The main objective is to build a reproducible computational pipeline that turns a target gene into a small
+set of ranked, biophysically validated \acrshort{ssdna} probe candidates for \acrshort{gfet} biosensing,
+and to provide the sequence-level foundation for the downstream structural and data-driven stages of the
+wider project. This decomposes into the following specific objectives:
 
 \begin{itemize}
-  \item to automate the retrieval and curation of gene sequences from the \acrshort{ncbi}
-        databases, and their alignment, so that conserved regions can be identified without
-        manual intervention;
-  \item to screen candidate probes with well-founded biophysical criteria --- sequence
-        conservation, melting temperature, GC content, and hairpin, homodimer and secondary
-        structure stability --- and to combine these into transparent quality scores;
-  \item to make the design criteria \emph{organism-aware}, so that targets with very different
-        genome composition (for example AT-rich or GC-rich pathogens) are evaluated fairly;
-  \item to validate the most promising candidates by three-dimensional structure prediction;
-        and
-  \item to integrate and compare the computationally designed probes with an existing
-        experimental probe panel, and to produce curated datasets for downstream use.
+  \item select a panel of clinically relevant microbial targets and marker genes, and automate the
+        retrieval and curation of their sequences from the \acrshort{ncbi} databases;
+  \item identify conserved regions through multiple sequence alignment and per-column conservation
+        scoring, so that the probes detect their target across clinical strains;
+  \item screen candidate probes with well-founded biophysical criteria (melting temperature, GC content,
+        hairpin, homodimer and secondary-structure stability) and combine them into transparent quality
+        scores;
+  \item make the design criteria \emph{organism-aware}, so that targets with very different genome
+        composition (AT-rich or GC-rich) are evaluated fairly;
+  \item prioritise and validate the most promising candidates by three-dimensional structure prediction; and
+  \item produce curated, feature-rich datasets that feed the downstream stages of the project --- molecular
+        docking of the probe--target duplexes onto graphene surfaces, and exploratory \acrfull{ml} ranking
+        of candidates.
 \end{itemize}
 
 \section{Target panel}
 
-Six marker genes from six clinically important bacterial species were used as the working
-panel throughout this work (Table~\ref{tab:targets}). They were selected as established
-species-specific markers and span a wide range of genome composition, from AT-rich
-(\emph{Staphylococcus aureus}, \emph{Haemophilus influenzae}) to GC-rich (\emph{Pseudomonas
-aeruginosa}), which makes them a demanding test of a general-purpose design method.
+Six marker genes from six clinically important bacterial species were used as the working panel throughout
+this work (Table~\ref{tab:targets}). They are established species-specific markers reported in experimental
+studies on microbial diagnostics and graphene-based DNA sensors, and they span a wide range of genome
+composition --- from AT-rich (\emph{Staphylococcus aureus}, \emph{Haemophilus influenzae}) to GC-rich
+(\emph{Pseudomonas aeruginosa}) --- which makes them a demanding test of a general-purpose design
+method.
 
 \begin{table}[H]
 \begin{center}
@@ -99,10 +108,10 @@ aeruginosa}), which makes them a demanding test of a general-purpose design meth
 
 \section{Structure of the dissertation}
 
-The remainder of this dissertation is organised as follows. Chapter~2 reviews the state of the
-art in graphene biosensors and in the computational design of oligonucleotide probes.
-Chapter~3 describes the methods, detailing every stage of the pipeline and the rationale for
-each design decision and threshold. Chapter~4 presents and discusses the results obtained for
-the target panel, including the screening funnel, the three-dimensional validation, the
-diversity and rarefaction analyses, and the comparison with the reference probe panel.
-Chapter~5 draws the main conclusions and outlines directions for future work.
+The remainder of this dissertation is organised as follows. Chapter~2 reviews the state of the art in DNA
+aptamers and probes, in graphene \acrshort{gfet} biosensors for nucleic-acid detection, and in the
+computational methods used to design and validate probe sequences. Chapter~3 describes the methods,
+detailing every stage of the pipeline and the rationale for each design decision and threshold. Chapter~4
+presents and discusses the results for the target panel --- the screening funnel, the three-dimensional
+validation, the diversity and rarefaction analyses, and the comparison with a reference probe panel.
+Chapter~5 draws the main conclusions and outlines future work.
