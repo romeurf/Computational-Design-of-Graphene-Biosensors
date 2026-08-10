@@ -15,6 +15,12 @@
 \newacronym{plddt}{pLDDT}{predicted Local Distance Difference Test}
 \newacronym{pae}{PAE}{Predicted Aligned Error}
 \newacronym{ml}{ML}{Machine Learning}
+\newacronym{pcr}{PCR}{Polymerase Chain Reaction}
+\newacronym{fret}{FRET}{Förster Resonance Energy Transfer}
+\newacronym{gpu}{GPU}{Graphics Processing Unit}
+\newacronym{iupac}{IUPAC}{International Union of Pure and Applied Chemistry}
+\newacronym{gc}{GC}{Guanine-Cytosine}
+\newacronym{nn}{NN}{Nearest-Neighbour}
 
 \chapter{Introduction}
 
@@ -24,9 +30,11 @@ The fast identification of microbial DNA underpins the diagnosis of infection, t
 antibiotic resistance (\acrshort{amr}) and the tracking of environmental contamination. Amplification-based
 methods such as the polymerase chain reaction are highly sensitive, but they require dedicated equipment,
 controlled laboratory conditions and lengthy sample preparation, which restricts their use outside the
-laboratory \citep{hu2024}. The development of miniaturised solid-state biosensors, which convert a
-molecular-recognition event directly into an electrical or electrochemical signal, now enables portable and
-continuous monitoring in small \acrfull{poc} devices \citep{gegenhuber2025,krishnan2023}.
+laboratory \citep{hu2024}. Amplification-based methods such as the \acrfull{pcr}, in particular, are highly
+sensitive but require dedicated equipment, controlled conditions and lengthy sample preparation. The
+development of miniaturised solid-state biosensors, which convert a molecular-recognition event directly
+into an electrical or electrochemical signal, now enables portable and continuous monitoring in small
+\acrfull{poc} devices \citep{gegenhuber2025,krishnan2023}.
 
 Coupling DNA recognition elements to a \acrfull{gfet} has been proposed as a particularly promising route
 to label-free nucleic-acid detection \citep{green2015,campos2019}. Graphene, a two-dimensional sheet of
@@ -39,6 +47,14 @@ microfluidic, programmable graphene DNA sensors have since been demonstrated \ci
 Their response, however, is shaped by the design of the sensing interface and by the ionic conditions, since
 high ionic strength imposes strong Debye screening that attenuates the contribution of distant charges
 \citep{purwidyantri2021}.
+
+The specificity and sensitivity of such a device ultimately depend on the immobilised recognition
+sequence, which must meet several partly competing requirements: it must target a genomic region that is
+conserved across the clinical strains of the pathogen, so that strain variation does not cause false
+negatives; it must hybridise strongly and specifically at the assay temperature, which constrains its
+length, melting temperature and \acrshort{gc} content; and it must avoid folding into stable hairpins or
+self-dimers that would compete with hybridisation. These requirements are biophysical and quantifiable,
+which makes them amenable to systematic computational evaluation.
 
 Building on these experimental developments, a central practical obstacle remains: the high cost and low
 throughput of experimentally testing hundreds of candidate probes in order to discriminate multiple

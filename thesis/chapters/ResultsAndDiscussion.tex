@@ -97,13 +97,6 @@ p8448 & \emph{frdB} & 1.00 & 98  & 0.716 & 0.845 \\
 \label{tab:boltz}
 \end{table}
 
-% Suggested figure: copy the analysis output into thesis/images/ and uncomment.
-% \begin{figure}[H]\centering
-%   \includegraphics[width=0.7\textwidth]{images/boltz2_confidence.png}
-%   \caption{Distribution of Boltz-2 confidence over the 30 validated probes.}
-%   \label{fig:boltz}
-% \end{figure}
-
 \section{Genetic diversity of the targets}
 
 The alignment-free diversity analysis (Table~\ref{tab:diversity}) explains much of the
@@ -138,6 +131,15 @@ and the most conserved/redundant (\emph{frdB}) genes.}
 \label{tab:diversity}
 \end{table}
 
+\begin{figure}[H]
+\begin{center}
+\includegraphics[width=\textwidth]{images/diversity_heatmaps.png}
+\end{center}
+\caption{Pairwise $4$-mer distance heatmaps per gene (alignment-free). Each cell is the $4$-mer
+distance between two retrieved sequences of the gene.}
+\label{fig:diversity}
+\end{figure}
+
 \section{Choice of sampling depth}
 
 The rarefaction analysis showed that both the $k$-mer diversity and the $k$-mer richness
@@ -147,11 +149,14 @@ essentially all of the available diversity with a comfortable margin, while addi
 sequences add little new information. The true limiting factor is not $N$ but the small number
 of records available in \acrshort{ncbi} for the data-limited genes.
 
-% \begin{figure}[H]\centering
-%   \includegraphics[width=0.7\textwidth]{images/rarefaction.png}
-%   \caption{Rarefaction curves of $k$-mer richness per gene, saturating by $N\approx 50$--$75$.}
-%   \label{fig:rarefaction}
-% \end{figure}
+\begin{figure}[H]
+\begin{center}
+\includegraphics[width=\textwidth]{images/rarefaction.png}
+\end{center}
+\caption{Rarefaction of the mean $4$-mer diversity (left) and of the richness, i.e.\ the number
+of distinct $4$-mers (right), per gene, as a function of the number of subsampled sequences.}
+\label{fig:rarefaction}
+\end{figure}
 
 \section{Effect of the organism-aware parameters}
 
@@ -168,11 +173,12 @@ for the balanced targets.
 \section{Comparison with the reference panel}
 
 Scored with identical metrics, the designed probes and the reference panel can be compared
-directly. On average, the reference probes that pass the screen sit slightly below the designed
-ones on the sequence-quality signals (for instance in mean \acrshort{tm} and No-fold score),
-which is consistent with their being an older and more heterogeneous panel. Because both sets
-carry a source label and share every column, they can also be submitted together to Boltz-2,
-enabling a like-for-like comparison in three dimensions as well as in sequence space.
+directly. Among the probes that pass the basic screen, the designed probes have a higher mean
+melting temperature ($59.3$ versus $56.9\,^{\circ}$C) and a very similar mean GC content ($0.52$
+versus $0.53$), while the reference probes have a marginally higher mean No-fold score ($86.0$
+versus $82.9$). Because both sets carry a source label and share every column, they can also be
+submitted together to Boltz-2, enabling a like-for-like comparison in three dimensions as well as
+in sequence space.
 
 \section{Curated dataset for downstream modelling}
 
