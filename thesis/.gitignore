@@ -1,0 +1,25 @@
+# LaTeX build artifacts
+*.aux
+*.log
+*.out
+*.toc
+*.lof
+*.lot
+*.bbl
+*.blg
+*.glo
+*.gls
+*.glg
+*.acn
+*.acr
+*.alg
+*.ist
+*.idx
+*.ind
+*.ilg
+*.synctex.gz
+*.fls
+*.fdb_latexmk
+*.xdv
+# Compiled dissertation (regenerated locally)
+dissertation.pdf

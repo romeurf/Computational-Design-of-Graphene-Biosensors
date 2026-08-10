@@ -1,0 +1,108 @@
+% ---- Acronyms used throughout the dissertation -----------------------------
+\newacronym{gfet}{GFET}{Graphene Field-Effect Transistor}
+\newacronym{fet}{FET}{Field-Effect Transistor}
+\newacronym{ssdna}{ssDNA}{single-stranded DNA}
+\newacronym{msa}{MSA}{Multiple Sequence Alignment}
+\newacronym{ppi}{PPI}{Percentage of Pairwise Identity}
+\newacronym{ncbi}{NCBI}{National Center for Biotechnology Information}
+\newacronym{tm}{$T_m$}{melting temperature}
+\newacronym{mfe}{MFE}{Minimum Free Energy}
+\newacronym{amr}{AMR}{Antimicrobial Resistance}
+\newacronym{poc}{PoC}{Point-of-Care}
+\newacronym{plddt}{pLDDT}{predicted Local Distance Difference Test}
+\newacronym{pae}{PAE}{Predicted Aligned Error}
+
+\chapter{Introduction}
+
+\section{Context and motivation}
+
+The timely identification of pathogenic microorganisms is a cornerstone of clinical
+diagnostics, public-health surveillance and the containment of antimicrobial resistance
+(\acrshort{amr}). Conventional diagnostic methods, such as microbiological culture and
+polymerase chain reaction, are sensitive and well established, but they are typically slow,
+laboratory-bound and require trained personnel and specialised equipment. There is therefore a
+strong demand for \acrfull{poc} devices that are fast, portable, inexpensive and able to
+detect a pathogen directly from a biological sample with minimal preparation.
+
+Biosensors based on the \acrfull{gfet} have emerged as one of the most attractive platforms to
+meet this demand. Graphene, a single layer of carbon atoms arranged in a honeycomb lattice,
+combines exceptional electrical conductivity with an entirely surface-exposed conduction
+channel, so that any charged molecule binding at its surface produces a measurable change in
+the transistor current \citep{novoselov2004,schedin2007}. When the graphene channel is
+functionalised with a \acrfull{ssdna} capture probe, the hybridisation of a complementary
+target strand can be transduced into an electrical signal in a label-free manner and with very
+high sensitivity, down to the single-molecule regime in optimised devices
+\citep{hwang2020,beraud2021}. This makes the \acrshort{gfet} an ideal transducer for
+nucleic-acid-based detection of pathogens.
+
+The analytical performance of a \acrshort{gfet} biosensor is, however, only as good as the
+capture probe immobilised on its surface. A useful probe must simultaneously satisfy several,
+partly competing, requirements. It must be complementary to a region of the target genome that
+is \emph{conserved} across the clinical strains of the pathogen, otherwise strain-to-strain
+variation would cause false negatives. It must hybridise with its target strongly and
+specifically at the temperature of the assay, which constrains its length, melting temperature
+and GC content. Finally, it must not fold back on itself into stable secondary structures
+(hairpins or self-dimers), because a probe that is folded is not available to capture the
+target. Balancing these criteria for a single probe is already non-trivial; doing so
+systematically for many genes and organisms, while ranking the surviving candidates in a
+reproducible and quantitative way, is beyond what manual design can offer.
+
+\section{Aims and objectives}
+
+The goal of this dissertation is to design, \emph{in silico}, high-quality \acrshort{ssdna}
+capture probes for a panel of clinically relevant bacterial pathogens, to be used in the
+fabrication of \acrshort{gfet} biosensors. To that end, a single, reproducible computational
+pipeline was developed that takes a target gene as input and returns a small set of ranked,
+biophysically validated probe candidates. The specific objectives were:
+
+\begin{itemize}
+  \item to automate the retrieval and curation of gene sequences from the \acrshort{ncbi}
+        databases, and their alignment, so that conserved regions can be identified without
+        manual intervention;
+  \item to screen candidate probes with well-founded biophysical criteria --- sequence
+        conservation, melting temperature, GC content, and hairpin, homodimer and secondary
+        structure stability --- and to combine these into transparent quality scores;
+  \item to make the design criteria \emph{organism-aware}, so that targets with very different
+        genome composition (for example AT-rich or GC-rich pathogens) are evaluated fairly;
+  \item to validate the most promising candidates by three-dimensional structure prediction;
+        and
+  \item to integrate and compare the computationally designed probes with an existing
+        experimental probe panel, and to produce curated datasets for downstream use.
+\end{itemize}
+
+\section{Target panel}
+
+Six marker genes from six clinically important bacterial species were used as the working
+panel throughout this work (Table~\ref{tab:targets}). They were selected as established
+species-specific markers and span a wide range of genome composition, from AT-rich
+(\emph{Staphylococcus aureus}, \emph{Haemophilus influenzae}) to GC-rich (\emph{Pseudomonas
+aeruginosa}), which makes them a demanding test of a general-purpose design method.
+
+\begin{table}[H]
+\begin{center}
+\begin{tabular}{l l c l}
+\hline
+\textbf{Gene} & \textbf{Organism} & \textbf{Group} & \textbf{Function} \\
+\hline
+\emph{nuc}  & \emph{Staphylococcus aureus}    & A & thermonuclease \\
+\emph{rmpM} & \emph{Neisseria meningitidis}   & A & class-4 outer-membrane protein \\
+\emph{lytA} & \emph{Streptococcus pneumoniae} & B & autolysin \\
+\emph{oprL} & \emph{Pseudomonas aeruginosa}   & B & peptidoglycan-associated lipoprotein \\
+\emph{algD} & \emph{Pseudomonas aeruginosa}   & B & GDP-mannose 6-dehydrogenase \\
+\emph{frdB} & \emph{Haemophilus influenzae}   & B & fumarate reductase Fe--S subunit \\
+\hline
+\end{tabular}
+\end{center}
+\caption{Target genes and their host organisms used as the working panel.}
+\label{tab:targets}
+\end{table}
+
+\section{Structure of the dissertation}
+
+The remainder of this dissertation is organised as follows. Chapter~2 reviews the state of the
+art in graphene biosensors and in the computational design of oligonucleotide probes.
+Chapter~3 describes the methods, detailing every stage of the pipeline and the rationale for
+each design decision and threshold. Chapter~4 presents and discusses the results obtained for
+the target panel, including the screening funnel, the three-dimensional validation, the
+diversity and rarefaction analyses, and the comparison with the reference probe panel.
+Chapter~5 draws the main conclusions and outlines directions for future work.

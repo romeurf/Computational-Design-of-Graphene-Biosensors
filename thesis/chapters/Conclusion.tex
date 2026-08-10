@@ -1,0 +1,56 @@
+\chapter{Conclusions and Future Work}
+
+\section{Conclusions}
+
+This dissertation set out to design, \emph{in silico}, high-quality \acrshort{ssdna} capture
+probes for \acrshort{gfet} biosensors targeting a panel of clinically relevant bacterial
+pathogens. The main outcome is a single, reproducible computational pipeline that turns a
+target gene into a small set of ranked, biophysically validated probe candidates, with every
+design decision grounded in the literature.
+
+The pipeline integrates, in one automated workflow, the stages that are usually performed
+separately or by hand: retrieval and curation of sequences from \acrshort{ncbi}, automatic
+length clustering, multiple sequence alignment and \acrshort{ppi}-based conservation scoring,
+nearest-neighbour thermodynamic screening, secondary-structure evaluation with a continuous
+No-fold score, and a final three-dimensional validation with Boltz-2. Two design choices give
+the method its generality and rigour. First, thresholds are resolved through a layered,
+\emph{organism-aware} scheme (gene\,$\rightarrow$\,species\,$\rightarrow$\,type\,$\rightarrow$\,
+global), so that pathogens with very different genome composition are judged by fair criteria;
+this was shown to recover candidates --- such as AT-rich probes --- that a single global rule
+would wrongly discard. Second, candidates are prioritised by a transparent quality score
+combining conservation and the No-fold score, which concentrates the expensive 3D validation on
+the most promising sequences.
+
+Applied to the six-gene panel, the pipeline reduced $8455$ candidate windows to $2943$ that
+passed screening and identified a shortlist of top candidates whose high sequence quality was
+independently corroborated by the highest 3D confidence and \acrshort{plddt}. Alignment-free
+diversity and rarefaction analyses characterised each target and justified the sampling depth
+in a principled, non-arbitrary way. An existing experimental probe panel was folded into the
+same workflow and scored with identical metrics, enabling a direct comparison, and a curated
+$150$-probe dataset was produced for downstream data-driven modelling.
+
+Overall, the work delivers a solid, extensible foundation for the computational stage of
+\acrshort{gfet} biosensor development: it produces prioritised, structurally sound probe
+candidates and generalises to new genes and organisms with minimal configuration.
+
+\section{Prospects for future work}
+
+Several directions follow naturally from this work:
+
+\begin{itemize}
+  \item \textbf{Experimental validation.} The ultimate test of the designed probes is their
+        performance on fabricated \acrshort{gfet} devices; the ranked shortlist provides the
+        immediate candidates for functionalisation and characterisation.
+  \item \textbf{Specificity screening.} Adding an automated specificity check (for example a
+        BLAST step against non-target genomes and the host) would complement the current
+        conservation-driven, sensitivity-oriented selection.
+  \item \textbf{Comparison of 3D methods.} The Boltz-2 predictions can be benchmarked against an
+        independent molecular-docking pipeline, to assess the agreement of the two structural
+        views of the probe--target interaction.
+  \item \textbf{Data-driven modelling.} The curated feature dataset opens the way to a machine-
+        learning model that predicts probe quality directly, potentially accelerating or
+        refining the ranking.
+  \item \textbf{Broader panels.} As the framework already supports viral, fungal, protozoan and
+        host profiles, extending the panel to further genes and non-bacterial pathogens is
+        largely a matter of configuration.
+\end{itemize}

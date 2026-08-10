@@ -4,3 +4,4 @@ __pycache__/
 *.pyo
 .env
 .claude/settings.local.json
+msc_latex_template.zip

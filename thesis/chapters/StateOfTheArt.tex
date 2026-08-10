@@ -1,0 +1,97 @@
+\chapter{State of the Art}
+
+This chapter reviews the background needed to frame the work. It first introduces graphene and
+\acrshort{gfet} biosensors for nucleic-acid detection, then surveys the biophysical principles
+and computational tools used to design oligonucleotide probes, and finally the recent advances
+in three-dimensional structure prediction that make an \emph{in silico} structural validation
+of the probes feasible.
+
+\section{Graphene and GFET biosensors}
+
+Graphene is a two-dimensional allotrope of carbon whose charge carriers behave as massless
+Dirac fermions, giving it very high carrier mobility and a conductance that is extremely
+sensitive to the local electrostatic environment \citep{novoselov2004}. Because every atom of
+graphene lies at the surface, the adsorption of even a single gas molecule was shown to be
+detectable as a change in its electrical resistance \citep{schedin2007}, which established
+graphene as an outstanding transducer material for sensing.
+
+In a \acrfull{gfet}, a graphene sheet forms the conductive channel between a source and a drain
+electrode, and its conductance is modulated by a gate potential. When biomolecules bind to the
+functionalised graphene surface, their intrinsic charge acts as an additional local gate,
+shifting the transfer characteristic of the device. For biosensing, the surface is decorated
+with a bioreceptor that confers specificity. Using an \acrfull{ssdna} capture probe as the
+bioreceptor turns the device into a nucleic-acid sensor: hybridisation of a complementary
+target strand brings additional negative charge (the phosphate backbone) close to the channel
+and produces a measurable, label-free signal. Devices of this kind have achieved ultra-low
+limits of detection for nucleic acids, in some engineered geometries approaching the
+single-molecule level \citep{hwang2020}, and the design, operation and performance trade-offs
+of \acrshort{gfet} bioanalytical sensors have been reviewed in detail \citep{beraud2021}.
+
+The specificity and sensitivity of the assay are ultimately governed by the capture probe,
+which is the object of the computational design effort described in this dissertation.
+
+\section{Design of oligonucleotide capture probes}
+
+The requirements for a good hybridisation probe have been understood since the foundational
+work on nucleic-acid hybridisation \citep{wetmur1991}. Three families of criteria are
+generally considered.
+
+\subsection{Hybridisation thermodynamics}
+
+The stability of the probe--target duplex is quantified by its melting temperature
+(\acrshort{tm}), the temperature at which half of the duplexes are dissociated. \acrshort{tm}
+is predicted accurately with the nearest-neighbour model, whose thermodynamic parameters were
+unified by \citet{santalucia2004}. A probe must have a \acrshort{tm} comfortably above the
+assay temperature so that the duplex is stable during measurement, but not so high that it
+loses specificity. The GC content is a related constraint: it influences both the
+\acrshort{tm} and the propensity to form stable secondary structure, and a window of roughly
+40--60\% is usually recommended. Software such as \texttt{primer3} \citep{untergasser2012} and
+the IDT OligoAnalyzer tool \citep{idtoligo} implement these calculations and are widely used
+for primer and probe design.
+
+\subsection{Self-structure}
+
+A probe that folds into a stable hairpin, or that dimerises with a copy of itself, is
+sequestered away from its target and loses capture efficiency. The relevant quantity is the
+free energy of these structures: the more negative the free energy, the more stable, and hence
+more problematic, the fold. Free energies of hairpins and self-dimers are again available from
+\texttt{primer3} and OligoAnalyzer, while the overall secondary-structure stability of a single
+strand can be estimated from its \acrfull{mfe} using dynamic-programming folding algorithms
+parameterised with nearest-neighbour energies \citep{turner2010,zadeh2011}. Lightweight
+implementations such as \texttt{seqfold} \citep{seqfold} make this practical to run over
+thousands of candidates.
+
+\subsection{Sequence conservation}
+
+To detect a pathogen across its clinical strains, a probe must target a region that is
+conserved in the population. Conserved regions are identified from a \acrfull{msa} of many
+sequences of the gene; MAFFT is a fast and accurate aligner widely used for this purpose
+\citep{katoh2013}. Conservation can then be scored column by column. A simple measure is the
+frequency of the most common base, but a more robust measure is the \acrfull{ppi}, the average
+identity over all pairs of sequences in a column, which correctly handles ambiguous
+(IUPAC) bases. The \acrshort{ppi} and an associated ``No-fold'' score were introduced in the
+\emph{ViruScope} probe-design tool \citep{viruscope}, and are adopted in this work.
+
+\section{Three-dimensional structure prediction}
+
+Recent deep-learning methods have transformed the prediction of biomolecular structure.
+AlphaFold demonstrated near-experimental accuracy for protein structures \citep{jumper2021},
+and AlphaFold~3 extended the approach to complexes that include nucleic acids and other
+molecules, together with per-residue and pairwise confidence estimates such as the
+\acrfull{plddt} and the \acrfull{pae} \citep{abramson2024}. Open models such as Boltz-1 and its
+successor Boltz-2 make this class of prediction freely available and runnable on commodity
+GPUs \citep{wohlwend2024}. Although these confidence metrics were calibrated primarily for
+proteins, the predicted structure and the \acrshort{plddt} of a short \acrshort{ssdna} probe
+still provide a useful, independent check on whether a computationally selected sequence is
+structurally well behaved --- an opportunity that this dissertation exploits as a final
+validation stage.
+
+\section{Summary}
+
+Graphene \acrshort{gfet} devices provide an excellent transducer for label-free nucleic-acid
+detection, but their performance hinges on the capture probe. The biophysical criteria for a
+good probe --- conservation, favourable hybridisation thermodynamics and absence of stable
+self-structure --- are individually well understood and supported by mature software, yet they
+are rarely combined into a single, reproducible and organism-aware pipeline that also ranks the
+candidates and validates them structurally. The methodology presented in the next chapter is
+designed to fill exactly that gap.
