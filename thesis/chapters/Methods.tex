@@ -192,18 +192,43 @@ with the 3D confidence.
 To obtain atomistic models of the sensing interface, the predicted probe structures were combined
 with a graphene sheet.
 
-\paragraph{Graphene sheet.} Pristine graphene layers were generated with GOPY
-\citep{muraru2020}, a Python tool that builds two-dimensional graphene-based models and writes
-them in PDB format. A single planar sheet was produced with
+\subsection{Generation of the graphene sheet with GOPY}
+
+The graphene component was built with \textbf{GOPY} \citep{muraru2020}, a free and open-source
+Python tool for the automated construction of two-dimensional graphene-based molecular models.
+Building such models by hand is slow and introduces bias, because the position of every atom ---
+and, in functionalised variants, of every chemical group --- has to be placed manually; GOPY
+generates them programmatically instead, which makes larger and more complex sheets practical and
+reproducible. Besides pristine graphene, the tool can produce graphene oxide and its derivatives
+(reduced graphene oxide, carboxyl-, epoxy- and hydroxyl-functionalised forms, PEG-aminated reduced
+graphene oxide and nitrogen-doped graphene), and can introduce vacancy defects (``holes'') in a
+layer. Each model is written directly in PDB format, which makes it usable by standard structural
+biology and molecular modelling software without conversion. GOPY requires only Python~3 with
+\texttt{numpy} and \texttt{scipy}.
+
+For this work only the pristine graphene functionality was used, since the sensing channel modelled
+here is unfunctionalised graphene. A single layer was generated with the command
 \begin{center}
 \texttt{python GOPY.py generate\_PG 120 120 graphene\_PG\_12nm.pdb}
 \end{center}
-which returns a $121.6 \times 119.8$~\AA{} layer of $5700$ carbon atoms, all at $z=0$. The lateral
-dimensions were chosen from the measured footprints of the probes themselves (Section~\ref{sec:complexres}),
-so that every probe of the panel fits within the sheet with a margin.
+where the two numerical arguments are the requested lateral dimensions in \AA{}ngstr\"om. The
+resulting sheet was inspected to confirm that it reproduces the expected graphene lattice: it
+contains $5700$ carbon atoms spanning $121.6 \times 119.8$~\AA{}, it is strictly planar (all atoms
+at $z = 0$, with zero dispersion), and the nearest-neighbour carbon--carbon distance is
+$1.418$~\AA{}, the accepted bond length of the graphene honeycomb lattice. Of the $5700$ atoms,
+$5488$ are three-coordinated, as expected for the $sp^2$ interior of the lattice, while the
+remaining $212$ are the two-- and one--coordinated atoms that necessarily terminate the edges of a
+finite, non-periodic sheet. These edge atoms are left unsaturated, as the model is used as a rigid
+surface for placement rather than in a reactive or dynamical simulation.
 
-\paragraph{Placement.} Each probe was placed above the sheet by a rigid-body translation, computed
-with a script built on Biopython \citep{cock2009}. The probe structure (Boltz-2 CIF) and the sheet
+The lateral dimensions were not chosen arbitrarily but from the measured footprints of the probes
+themselves (Section~\ref{sec:complexres}), so that every probe of the panel fits within the sheet
+with a margin.
+
+\subsection{Assembly of the probe--graphene models}
+
+Each probe was placed above the sheet by a rigid-body translation, computed with a script built on
+Biopython \citep{cock2009}. The probe structure (Boltz-2 CIF) and the sheet
 (GOPY PDB) are read, and the probe is translated by
 \[
 \Delta = \Bigl(\bar{x}_{g}-\bar{x}_{p},\;\;
@@ -214,15 +239,13 @@ where $\bar{x},\bar{y},\bar{z}$ denote centroid coordinates of the sheet ($g$) a
 ($p$), and $d$ is the chosen separation. The first two components centre the probe over the sheet
 in the plane; the third places its lowest atom at a height $d$ above the graphene plane.
 
-The choice of $d$ was informed by the equilibrium geometry of nucleobases on graphene. Van der
-Waals-corrected density-functional calculations place physisorbed nucleobases at $3.16$--$3.22$~\AA{}
-above the graphene plane, in the regime of strong physisorption \citep{tayo2023}, consistent with
-the physisorption picture established for the four bases on graphene \citep{lee2013}. A separation
-of $d = 5$~\AA{} was therefore used: deliberately somewhat larger than this equilibrium contact
-distance, so that the assembly provides a clash-free starting point without imposing a contact
-geometry \emph{a priori}, and leaves the final probe--surface separation to be determined by
-subsequent docking or force-field refinement rather than fixed by construction. The separation is
-a parameter of the script and can be set to any value.
+The separation $d$ was taken from the literature rather than chosen arbitrarily. Van der
+Waals-corrected density-functional calculations place physisorbed DNA nucleobases at
+$3.16$--$3.22$~\AA{} above the graphene plane, a regime of strong physisorption dominated by van
+der Waals interactions \citep{tayo2023}, consistent with the physisorption picture established for
+the four bases on graphene and h-BN \citep{lee2013}. Accordingly, $d = 3.2$~\AA{} was used as the
+default, so that the assembled model starts at the reported equilibrium contact distance. The
+separation is an explicit parameter of the script and can be set to any other value.
 
 The probe's internal conformation and its orientation are left untouched: the operation is a pure
 translation, so no coordinate is distorted.

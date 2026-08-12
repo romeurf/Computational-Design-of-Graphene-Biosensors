@@ -6,6 +6,11 @@ Places a Boltz-2-predicted probe structure (CIF) above a GOPY pristine-graphene 
 in x-y, and so that its lowest atom sits `gap` Angstrom above the graphene plane in z.
 The probe's internal conformation and orientation are left untouched.
 
+The default separation, 3.2 A, is the equilibrium physisorption height of DNA nucleobases
+on graphene from van der Waals-corrected DFT (3.16-3.22 A; Tayo, Walkup & Caliskan, AIP
+Advances 13:085213, 2023; see also Lee et al., J. Phys. Chem. C 117:13435, 2013), so the
+model starts at the literature contact distance rather than an arbitrary one.
+
 This is an initial physical placement (a starting geometry for subsequent docking or
 force-field refinement), not a docked or energy-minimised pose.
 
@@ -23,8 +28,9 @@ from Bio.PDB import PDBParser, MMCIFParser, PDBIO
 
 ap = argparse.ArgumentParser()
 ap.add_argument("probe"); ap.add_argument("graphene"); ap.add_argument("out")
-ap.add_argument("--gap", type=float, default=5.0,
-                help="vertical separation probe-to-sheet, in Angstrom (default 5.0)")
+ap.add_argument("--gap", type=float, default=3.2,
+                help="vertical separation probe-to-sheet, in Angstrom (default 3.2, the "
+                     "equilibrium nucleobase-graphene physisorption height from vdW-DFT)")
 ap.add_argument("--allow-overhang", action="store_true",
                 help="write the complex even if the probe extends beyond the sheet")
 args = ap.parse_args()
@@ -47,8 +53,11 @@ p = np.array([a.coord for a in prb_atoms])
 # the probe must sit within the sheet footprint
 outside = int(((p[:, 0] < g[:, 0].min()) | (p[:, 0] > g[:, 0].max()) |
                (p[:, 1] < g[:, 1].min()) | (p[:, 1] > g[:, 1].max())).sum())
+dmin = np.linalg.norm(p[:, None, :] - g[None, :, :], axis=-1).min()  # closest contact
+
 print(f"  sheet    : {len(g)} atoms, {np.ptp(g[:,0]):.1f} x {np.ptp(g[:,1]):.1f} A")
 print(f"  probe    : {len(p)} atoms, footprint {np.ptp(p[:,0]):.1f} x {np.ptp(p[:,1]):.1f} A")
+print(f"  contact  : closest probe-sheet atom pair {dmin:.2f} A")
 print(f"  overhang : {outside} probe atoms outside the sheet")
 if outside and not args.allow_overhang:
     raise SystemExit("  ! probe overhangs the sheet - use a larger sheet (or --allow-overhang)")

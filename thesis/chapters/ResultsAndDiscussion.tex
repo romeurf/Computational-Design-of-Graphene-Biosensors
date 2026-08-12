@@ -187,45 +187,86 @@ in sequence space.
 \section{Probe--graphene models}
 \label{sec:complexres}
 
-The $30$ probes validated in 3D were combined with a graphene sheet to obtain atomistic models of
+All $30$ probes validated in 3D were combined with a graphene sheet to obtain atomistic models of
 the sensing interface (Section~\ref{sec:complex}). The predicted probe structures contain between
 $359$ and $585$ atoms (median $416$), consistent with single strands of $18$--$28$ nucleotides.
 
-The lateral dimensions of the sheet were set from the probes themselves. Measuring, for each
-predicted structure, its largest extent in the plane gives a median of $41.9$~\AA{} but a range
-that reaches $82.9$~\AA{} (Table~\ref{tab:footprint}): the probes are predicted in a variety of
-extended and compact conformations, and the most extended ones are nearly twice the median. A
-$4 \times 4$~nm sheet would therefore have been too small for $16$ of the $30$ probes, whose atoms
-would overhang the edges. A $121.6 \times 119.8$~\AA{} sheet
-($5700$ carbon atoms) was used instead, which accommodates all $30$ probes, the most extended one
-still leaving a margin of $19.3$~\AA{} on each side.
+\paragraph{Sizing the sheet.} The lateral dimensions of the sheet were set from the probes
+themselves. Measuring, for each predicted structure, its largest extent in the plane gives a
+median of $42.0$~\AA{} but a range that reaches $82.9$~\AA{} (Table~\ref{tab:complexes}): the
+probes are predicted in a variety of extended and compact conformations, and the most extended are
+nearly twice the median. A $4 \times 4$~nm sheet would therefore have been too small for $16$ of
+the $30$ probes, whose atoms would overhang the edges --- an artefact that the fit check built
+into the assembly script rejects. A $121.6 \times 119.8$~\AA{} sheet ($5700$ carbon atoms) was used
+instead, which accommodates all $30$ probes, the most extended one still leaving a margin of
+$19.3$~\AA{} on each side.
+
+\paragraph{Assembled models.} The complete set of $30$ probe--graphene models was built, each
+comprising $6059$--$6285$ atoms. Table~\ref{tab:complexes} summarises their geometry by gene. Two
+observations follow. First, no model contains a steric clash: the closest probe--sheet atom pair
+lies between $3.20$ and $3.47$~\AA{} (median $3.25$~\AA{}) across all $30$ systems, that is, within
+the physisorption regime reported for nucleobases on graphene \citep{tayo2023} and never below it.
+The small spread above the nominal $3.2$~\AA{} separation arises because the probe atom closest to
+the surface is generally offset laterally from the graphene atoms beneath it, so the true
+interatomic distance slightly exceeds the vertical one.
+
+Second, the probes stand well above the surface: their vertical extent ranges from $20.6$ to
+$80.4$~\AA{}. This is relevant to the transduction context of Chapter~2, since in an
+electrolyte-gated device the charge carried far from the graphene plane is screened, and only the
+portion of the probe within the Debye length contributes appreciably to the signal
+\citep{purwidyantri2021}. The models therefore make explicit a property that the sequence-level
+metrics cannot capture: probes of identical length may present very different amounts of their
+structure close to the sensing surface.
 
 \begin{table}[H]
 \begin{center}
-\begin{tabular}{l c c c}
+\begin{tabular}{l c c c c c}
 \hline
-\textbf{Gene} & \textbf{Probes} & \textbf{Median extent (\AA)} & \textbf{Maximum extent (\AA)} \\
+\textbf{Gene} & \textbf{Models} & \textbf{Median extent (\AA)} & \textbf{Max.\ extent (\AA)}
+ & \textbf{Height (\AA)} & \textbf{Closest contact (\AA)} \\
 \hline
-\emph{nuc}  & 5 & 45.0 & 82.9 \\
-\emph{rmpM} & 5 & 54.9 & 56.1 \\
-\emph{lytA} & 5 & 38.2 & 66.7 \\
-\emph{oprL} & 5 & 46.6 & 63.2 \\
-\emph{algD} & 5 & 32.9 & 47.7 \\
-\emph{frdB} & 5 & 39.0 & 55.6 \\
+\emph{nuc}  & 5 & 45.0 & 82.9 & 23.0--80.4 & 3.21--3.40 \\
+\emph{rmpM} & 5 & 54.9 & 56.1 & 20.6--48.2 & 3.22--3.27 \\
+\emph{lytA} & 5 & 38.2 & 66.7 & 23.0--47.5 & 3.24--3.35 \\
+\emph{oprL} & 5 & 46.6 & 63.2 & 25.4--44.2 & 3.20--3.45 \\
+\emph{algD} & 5 & 32.9 & 47.7 & 20.6--42.9 & 3.26--3.38 \\
+\emph{frdB} & 5 & 39.0 & 55.6 & 27.7--51.4 & 3.20--3.47 \\
+\hline
+\textbf{All} & \textbf{30} & \textbf{42.0} & \textbf{82.9} & \textbf{20.6--80.4} & \textbf{3.20--3.47} \\
 \hline
 \end{tabular}
 \end{center}
-\caption{Largest in-plane extent of the predicted probe structures, per gene. These values
-determined the graphene sheet size.}
-\label{tab:footprint}
+\caption{Geometry of the $30$ assembled probe--graphene models. ``Extent'' is the largest in-plane
+dimension of the probe (which determined the sheet size), ``height'' its vertical extent above the
+sheet, and ``closest contact'' the shortest probe--sheet interatomic distance.}
+\label{tab:complexes}
 \end{table}
 
-Models were assembled for the two highest-confidence probes, \emph{p5972} (\emph{algD}) and
-\emph{p7716} (\emph{frdB}), giving systems of $6070$ and $6229$ atoms respectively. In both, the
-probe sits with its lowest atom $5$~\AA{} above the graphene plane and extends to $25.6$ and
-$47.7$~\AA{} in height, and no probe atom falls outside the sheet. These assembled structures are
-starting geometries for subsequent docking or force-field refinement; no interaction energy is
-computed at this stage, so they support no claim about binding affinity or preferred orientation.
+Figure~\ref{fig:complex} shows the assembled model of the highest-confidence probe of each of the
+two best-performing genes, drawn directly from the atomic coordinates of the output files. The side
+view makes the assembly geometry explicit --- the planar graphene lattice, the probe resting above
+it, and the $3.2$~\AA{} separation --- while the top view shows the probe footprint contained well
+within the sheet. The two panels also illustrate the conformational contrast noted above:
+\emph{p5972} is compact, reaching about $20$~\AA{} in height, whereas \emph{p7716} is extended and
+reaches beyond $40$~\AA{}, so a much larger fraction of its structure lies far from the surface.
+
+\begin{figure}[H]
+\begin{center}
+\includegraphics[width=\textwidth]{images/complex_p5972_algD.png}\\[0.6em]
+\includegraphics[width=\textwidth]{images/complex_p7716_frdB.png}
+\end{center}
+\caption{Assembled probe--graphene models for \emph{p5972} (\emph{algD}, top) and \emph{p7716}
+(\emph{frdB}, bottom), rendered from the model coordinates. Left: side view, with the graphene
+plane, the probe above it and the $3.2$~\AA{} separation indicated. Right: top view, showing the
+probe footprint within the $121.6 \times 119.8$~\AA{} sheet. Probe atoms are coloured by element;
+graphene carbons are grey.}
+\label{fig:complex}
+\end{figure}
+
+These assembled structures are starting geometries for subsequent docking or force-field
+refinement. No interaction energy is computed at this stage, so they support no claim about
+binding affinity or preferred orientation; what they establish is that the whole validated panel
+can be assembled into clash-free, physically sensible interface models by an automated procedure.
 
 \section{Curated dataset of prioritised candidates}
 
