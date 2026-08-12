@@ -5,3 +5,8 @@ __pycache__/
 .env
 msc_latex_template.zip
 thesis_overleaf.zip
+# External aligner (vendored locally, not versioned)
+MAFFT/
+# Editor / session junk
+.Rhistory
+*.Rhistory
