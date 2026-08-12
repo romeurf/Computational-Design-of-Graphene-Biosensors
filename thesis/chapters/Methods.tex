@@ -186,6 +186,57 @@ independent indicators of the structural soundness of the short probes. The pred
 sequence metadata to produce a final ranked shortlist combining sequence quality (conservation and No-fold)
 with the 3D confidence.
 
+\section{Assembly of probe--graphene models}
+\label{sec:complex}
+
+To obtain atomistic models of the sensing interface, the predicted probe structures were combined
+with a graphene sheet.
+
+\paragraph{Graphene sheet.} Pristine graphene layers were generated with GOPY
+\citep{muraru2020}, a Python tool that builds two-dimensional graphene-based models and writes
+them in PDB format. A single planar sheet was produced with
+\begin{center}
+\texttt{python GOPY.py generate\_PG 120 120 graphene\_PG\_12nm.pdb}
+\end{center}
+which returns a $121.6 \times 119.8$~\AA{} layer of $5700$ carbon atoms, all at $z=0$. The lateral
+dimensions were chosen from the measured footprints of the probes themselves (Section~\ref{sec:complexres}),
+so that every probe of the panel fits within the sheet with a margin.
+
+\paragraph{Placement.} Each probe was placed above the sheet by a rigid-body translation, computed
+with a script built on Biopython \citep{cock2009}. The probe structure (Boltz-2 CIF) and the sheet
+(GOPY PDB) are read, and the probe is translated by
+\[
+\Delta = \Bigl(\bar{x}_{g}-\bar{x}_{p},\;\;
+               \bar{y}_{g}-\bar{y}_{p},\;\;
+               (\bar{z}_{g}+d) - \min z_{p}\Bigr),
+\]
+where $\bar{x},\bar{y},\bar{z}$ denote centroid coordinates of the sheet ($g$) and of the probe
+($p$), and $d$ is the chosen separation. The first two components centre the probe over the sheet
+in the plane; the third places its lowest atom at a height $d$ above the graphene plane.
+
+The choice of $d$ was informed by the equilibrium geometry of nucleobases on graphene. Van der
+Waals-corrected density-functional calculations place physisorbed nucleobases at $3.16$--$3.22$~\AA{}
+above the graphene plane, in the regime of strong physisorption \citep{tayo2023}, consistent with
+the physisorption picture established for the four bases on graphene \citep{lee2013}. A separation
+of $d = 5$~\AA{} was therefore used: deliberately somewhat larger than this equilibrium contact
+distance, so that the assembly provides a clash-free starting point without imposing a contact
+geometry \emph{a priori}, and leaves the final probe--surface separation to be determined by
+subsequent docking or force-field refinement rather than fixed by construction. The separation is
+a parameter of the script and can be set to any value.
+
+The probe's internal conformation and its orientation are left untouched: the operation is a pure
+translation, so no coordinate is distorted.
+
+The two structures are then merged into a single model, with the graphene assigned to chain
+\texttt{G} and the probe to chain \texttt{D}, and written as one PDB file. Before writing, the
+script verifies that no probe atom falls outside the sheet footprint in $x$--$y$ and refuses to
+produce a model with overhanging atoms, so that an undersized sheet cannot pass unnoticed.
+
+It should be stressed that this procedure yields a \emph{starting geometry} --- a physically
+reasonable initial placement of the two components --- and not a docked, energy-minimised or
+dynamically equilibrated structure. It provides the assembled input required by subsequent
+molecular docking or force-field refinement, but no interaction energy is computed at this stage.
+
 \section{Integration of a reference probe panel}
 
 An existing experimental probe panel was integrated into the same workflow for comparison. Each reference

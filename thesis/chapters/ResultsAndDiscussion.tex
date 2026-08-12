@@ -5,7 +5,7 @@ $100$ sequences requested per gene (and a per-gene override of $200$ for the dat
 \emph{algD}). It follows the flow of the method: sequence retrieval and
 curation, the screening funnel, three-dimensional validation, the diversity and rarefaction
 analyses, the effect of the organism-aware parameters, the comparison with the reference panel,
-and the curated dataset of prioritised candidates.
+the assembly of probe--graphene models, and the curated dataset of prioritised candidates.
 
 \section{Retrieval and length curation}
 
@@ -183,6 +183,49 @@ versus $0.53$), while the reference probes have a marginally higher mean No-fold
 versus $82.9$). Because both sets carry a source label and share every column, they can also be
 submitted together to Boltz-2, enabling a like-for-like comparison in three dimensions as well as
 in sequence space.
+
+\section{Probe--graphene models}
+\label{sec:complexres}
+
+The $30$ probes validated in 3D were combined with a graphene sheet to obtain atomistic models of
+the sensing interface (Section~\ref{sec:complex}). The predicted probe structures contain between
+$359$ and $585$ atoms (median $416$), consistent with single strands of $18$--$28$ nucleotides.
+
+The lateral dimensions of the sheet were set from the probes themselves. Measuring, for each
+predicted structure, its largest extent in the plane gives a median of $41.9$~\AA{} but a range
+that reaches $82.9$~\AA{} (Table~\ref{tab:footprint}): the probes are predicted in a variety of
+extended and compact conformations, and the most extended ones are nearly twice the median. A
+$4 \times 4$~nm sheet would therefore have been too small for $16$ of the $30$ probes, whose atoms
+would overhang the edges. A $121.6 \times 119.8$~\AA{} sheet
+($5700$ carbon atoms) was used instead, which accommodates all $30$ probes, the most extended one
+still leaving a margin of $19.3$~\AA{} on each side.
+
+\begin{table}[H]
+\begin{center}
+\begin{tabular}{l c c c}
+\hline
+\textbf{Gene} & \textbf{Probes} & \textbf{Median extent (\AA)} & \textbf{Maximum extent (\AA)} \\
+\hline
+\emph{nuc}  & 5 & 45.0 & 82.9 \\
+\emph{rmpM} & 5 & 54.9 & 56.1 \\
+\emph{lytA} & 5 & 38.2 & 66.7 \\
+\emph{oprL} & 5 & 46.6 & 63.2 \\
+\emph{algD} & 5 & 32.9 & 47.7 \\
+\emph{frdB} & 5 & 39.0 & 55.6 \\
+\hline
+\end{tabular}
+\end{center}
+\caption{Largest in-plane extent of the predicted probe structures, per gene. These values
+determined the graphene sheet size.}
+\label{tab:footprint}
+\end{table}
+
+Models were assembled for the two highest-confidence probes, \emph{p5972} (\emph{algD}) and
+\emph{p7716} (\emph{frdB}), giving systems of $6070$ and $6229$ atoms respectively. In both, the
+probe sits with its lowest atom $5$~\AA{} above the graphene plane and extends to $25.6$ and
+$47.7$~\AA{} in height, and no probe atom falls outside the sheet. These assembled structures are
+starting geometries for subsequent docking or force-field refinement; no interaction energy is
+computed at this stage, so they support no claim about binding affinity or preferred orientation.
 
 \section{Curated dataset of prioritised candidates}
 
