@@ -12,6 +12,15 @@ Everything runs from a single script, [`pipeline.py`](pipeline.py).
 
 ---
 
+## Documents
+
+- 📄 **[Thesis (PDF)](Thesis.pdf)** — dissertation document (view / download)
+- 📝 **[Thesis (DOCX)](Thesis.docx)** — editable version
+
+*(The LaTeX source of the dissertation is under [`thesis/`](thesis/).)*
+
+---
+
 ## Overview
 
 ```
