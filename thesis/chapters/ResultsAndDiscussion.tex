@@ -1,7 +1,8 @@
 \chapter{Results and Discussion}
 
-This chapter reports the results obtained by applying the pipeline to the six-gene panel with
-$N=100$ sequences requested per gene. It follows the flow of the method: sequence retrieval and
+This chapter reports the results obtained by applying the pipeline to the six-gene panel, with
+$100$ sequences requested per gene (and a per-gene override of $200$ for the data-limited
+\emph{algD}). It follows the flow of the method: sequence retrieval and
 curation, the screening funnel, three-dimensional validation, the diversity and rarefaction
 analyses, the effect of the organism-aware parameters, the comparison with the reference panel,
 and the curated dataset produced for downstream modelling.
@@ -72,13 +73,13 @@ secondary-structure screen.}
 
 The five highest-quality candidates per gene ($30$ probes) were validated with Boltz-2. Of
 these, $4$ were classified as \textsc{good}, $11$ as \textsc{moderate} and $15$ as \textsc{low}
-by the overall confidence. The best candidates, which are strong \emph{both} in sequence
-quality and in 3D, are listed in Table~\ref{tab:boltz}. Notably, they belong to the two
-data-limited but highly conserved genes \emph{algD} and \emph{frdB}: their sequences are
-strongly conserved (\acrshort{ppi} up to $1.00$) and essentially free of self-structure
-(No-fold up to $100$), and this translates into the highest predicted-structure confidence and
-\acrshort{plddt}. This coherence between the sequence-level signals and the independent 3D
-prediction is a reassuring internal validation of the ranking.
+by the overall confidence. The best candidates, strong \emph{both} in sequence quality and in
+3D, are listed in Table~\ref{tab:boltz}; they come from \emph{algD} and \emph{frdB}. The
+selected probes are strongly conserved (\acrshort{ppi} up to $1.00$) and essentially free of
+self-structure (No-fold above $96$), which coincides with the highest structure-prediction
+confidence and \acrshort{plddt} among the $30$ validated probes. The agreement between the
+sequence-level signals and the independent 3D prediction provides an internal consistency check
+on the ranking.
 
 \begin{table}[H]
 \begin{center}
@@ -86,10 +87,10 @@ prediction is a reassuring internal validation of the ranking.
 \hline
 \textbf{Probe} & \textbf{Gene} & \textbf{\acrshort{ppi}} & \textbf{No-fold} & \textbf{Confidence} & \textbf{\acrshort{plddt}} \\
 \hline
-p5972 & \emph{algD} & 0.93 & 98  & 0.731 & 0.901 \\
-p7716 & \emph{frdB} & 0.99 & 100 & 0.723 & 0.822 \\
-p5938 & \emph{algD} & 0.90 & 96  & 0.721 & 0.887 \\
-p8448 & \emph{frdB} & 1.00 & 98  & 0.716 & 0.845 \\
+p5972 & \emph{algD} & 0.93 & 98.4 & 0.731 & 0.901 \\
+p7716 & \emph{frdB} & 0.99 & 99.6 & 0.723 & 0.822 \\
+p5938 & \emph{algD} & 0.90 & 96.2 & 0.721 & 0.887 \\
+p8448 & \emph{frdB} & 1.00 & 98.2 & 0.716 & 0.845 \\
 \hline
 \end{tabular}
 \end{center}
@@ -108,8 +109,10 @@ gene (mean cosine distance $0.025$ and only $35\%$ unique sequences, i.e.\ many 
 duplicates in \acrshort{ncbi}), which is why it yields probes of very high conservation.
 \emph{algD} has $100\%$ unique sequences but very few of them, which accounts for its
 instability at low sampling and motivates the automatic length-clustering and the per-gene
-allowance of more sequences. The cosine and Jaccard distances agree in their ordering of the
-genes, giving a robust, alignment-independent reading of diversity.
+allowance of more sequences. The cosine and Jaccard distances are complementary --- the former
+weighs $4$-mer frequencies, the latter only their presence or absence --- and they concur in
+identifying \emph{frdB} as the most conserved and redundant gene, giving an alignment-independent
+reading of diversity.
 
 \begin{table}[H]
 \begin{center}
@@ -142,12 +145,12 @@ distance between two retrieved sequences of the gene.}
 
 \section{Choice of sampling depth}
 
-The rarefaction analysis showed that both the $k$-mer diversity and the $k$-mer richness
-saturate at around $N \approx 50$--$75$ sequences for the most demanding gene (\emph{nuc}), and
-much earlier for the others. Requesting $N \approx 100$ sequences per gene therefore captures
-essentially all of the available diversity with a comfortable margin, while additional
-sequences add little new information. The true limiting factor is not $N$ but the small number
-of records available in \acrshort{ncbi} for the data-limited genes.
+The rarefaction analysis showed that both the $4$-mer diversity and the $4$-mer richness
+saturate at around $N \approx 50$ sequences for the most demanding gene (\emph{nuc}), and much
+earlier for the others. Requesting up to $100$ sequences per gene therefore captures essentially
+all of the available diversity with a comfortable margin, while additional sequences add little
+new information. The true limiting factor is not this cap but the small number of records
+available in \acrshort{ncbi} for the data-limited genes.
 
 \begin{figure}[H]
 \begin{center}
@@ -185,5 +188,5 @@ in sequence space.
 Finally, the same quality ranking was used to export a larger curated dataset: the top $25$
 probes per gene ($150$ probes in total), each with its sequence-level features (\acrshort{tm},
 GC, conservation, No-fold and folding energies). This dataset extends the small set validated
-in 3D and provides labelled, biophysically annotated examples for data-driven modelling of
-probe quality, which is a natural continuation of this work.
+in 3D and provides biophysically annotated candidates for the data-driven modelling of probe
+quality that is a natural continuation of this work.

@@ -77,10 +77,10 @@ hybridisation assay temperature $T$ as $[T+15,\,T+35]\,^{\circ}$C.
 \hline
 Probe length            & 18--28 nt              & \citet{wetmur1991} \\
 Melting temperature $T_m$ & 53--72 $^{\circ}$C   & \citet{santalucia2004}; assay-derivable \\
-GC content              & 40--60\%               & IDT / PremierBiosoft guidelines \\
-Hairpin $\Delta G$      & $\geq -2.0$ kcal/mol   & IDT / primer3 guidance \\
-Homodimer $\Delta G$    & $\geq -5.0$ kcal/mol   & IDT guidance \\
-Conservation (\acrshort{ppi}) & $\geq 0.85$      & pan-strain detection \\
+GC content              & 40--60\%               & IDT OligoAnalyzer \citep{idtoligo} \\
+Hairpin $\Delta G$      & $\geq -2.0$ kcal/mol   & \citet{idtoligo}; primer3 \citep{untergasser2012} \\
+Homodimer $\Delta G$    & $\geq -5.0$ kcal/mol   & IDT OligoAnalyzer \citep{idtoligo} \\
+Conservation (\acrshort{ppi}) & $\geq 0.85$      & pan-strain detection \citep{viruscope} \\
 Alignment gap fraction  & $\leq 20\%$            & alignment quality \\
 Secondary structure $\Delta G_{\text{MFE}}$ & $\geq -2.6$ kcal/mol & 5th percentile of the data \\
 \hline
@@ -149,7 +149,7 @@ Bacteria    & 40--60\% & 0.85 & 28 \\
 Virus       & 35--68\% & 0.70 & 30 \\
 Fungus      & 40--60\% & 0.80 & 28 \\
 Protozoan   & 15--40\% & 0.80 & 30 \\
-Host (human)& 35--60\% & ---  & 28 \\
+Host (human)& 35--60\% & 0.85 & 28 \\
 \hline
 \end{tabular}
 \end{center}
@@ -167,8 +167,8 @@ the suggested values without prompting.
 
 Because three-dimensional prediction is comparatively expensive, only the best candidates per gene are
 carried forward. Rather than ranking by melting temperature --- which the thermodynamic screen has already
-bounded --- the surviving candidates are ranked by a \emph{quality} score that averages the two signals the
-pipeline trusts most:
+bounded --- the surviving candidates are ranked by a \emph{quality} score that averages the two signals most
+indicative of sequence quality:
 \[
 \text{quality} \;=\; \tfrac{1}{2}\left(\text{\acrshort{ppi}} + \tfrac{\text{No-fold}}{100}\right).
 \]
