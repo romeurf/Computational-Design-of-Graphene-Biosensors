@@ -203,8 +203,19 @@ reproducible. Besides pristine graphene, the tool can produce graphene oxide and
 (reduced graphene oxide, carboxyl-, epoxy- and hydroxyl-functionalised forms, PEG-aminated reduced
 graphene oxide and nitrogen-doped graphene), and can introduce vacancy defects (``holes'') in a
 layer. Each model is written directly in PDB format, which makes it usable by standard structural
-biology and molecular modelling software without conversion. GOPY requires only Python~3 with
-\texttt{numpy} and \texttt{scipy}.
+biology and molecular modelling software without conversion.
+
+A note on how the tool was obtained is warranted, since it conditions reproducibility. GOPY is not
+published on a package index: it is released by its authors as a standalone Python script under the
+GNU General Public License, hosted in a public repository,\footnote{\url{https://github.com/Iourarum/GOPY}}
+and contains no packaging metadata that would allow installation through \texttt{pip}. Retrieving
+the source directly from that repository and executing it locally is therefore the only available
+distribution route, and it is the one used here. Care is needed because the name \emph{gopy} is
+shared by at least two unrelated projects --- a Go-to-Python bindings generator and a
+data-structures package published on PyPI --- neither of which has any connection to graphene
+modelling; the tool used in this work is specifically the one accompanying \citet{muraru2020},
+developed by S. Muraru, J. S. Burns and M. Ioni\c{t}\u{a}, to whom credit for it belongs. Only
+Python~3 with \texttt{numpy} and \texttt{scipy} is required to run it.
 
 For this work only the pristine graphene functionality was used, since the sensing channel modelled
 here is unfunctionalised graphene. A single layer was generated with the command
@@ -250,10 +261,20 @@ separation is an explicit parameter of the script and can be set to any other va
 The probe's internal conformation and its orientation are left untouched: the operation is a pure
 translation, so no coordinate is distorted.
 
-The two structures are then merged into a single model, with the graphene assigned to chain
-\texttt{G} and the probe to chain \texttt{D}, and written as one PDB file. Before writing, the
-script verifies that no probe atom falls outside the sheet footprint in $x$--$y$ and refuses to
-produce a model with overhanging atoms, so that an undersized sheet cannot pass unnoticed.
+The two structures are then merged into a single model and written as one PDB file. Because the PDB
+format identifies each molecular entity by a single-character chain identifier, and none is
+reserved for non-biological components such as a graphene layer, an explicit convention was adopted
+here: the graphene sheet is assigned chain \texttt{G} and the probe chain \texttt{D}, the initials
+of \emph{graphene} and \emph{DNA}. The choice is arbitrary in the sense that any identifiers would
+serve, but keeping the two components in separate, consistently named chains is what allows either
+of them to be selected unambiguously in downstream tools --- for instance to hold the sheet rigid
+during a docking or minimisation run, or to compute probe--surface distances --- and the same
+convention is used in every model produced.
+
+Before writing, the script verifies that no probe atom falls outside the sheet footprint in
+$x$--$y$ and refuses to produce a model with overhanging atoms, so that an undersized sheet cannot
+pass unnoticed. It also reports the shortest probe--sheet interatomic distance, as a check that the
+placement introduces no steric clash.
 
 It should be stressed that this procedure yields a \emph{starting geometry} --- a physically
 reasonable initial placement of the two components --- and not a docked, energy-minimised or

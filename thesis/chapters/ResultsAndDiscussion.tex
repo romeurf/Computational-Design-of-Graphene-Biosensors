@@ -268,6 +268,43 @@ refinement. No interaction energy is computed at this stage, so they support no 
 binding affinity or preferred orientation; what they establish is that the whole validated panel
 can be assembled into clash-free, physically sensible interface models by an automated procedure.
 
+\subsection*{What the models already indicate}
+
+Although the models are unrefined, they make one device-relevant quantity measurable that no
+sequence-level metric captures: how much of the probe sits close enough to the graphene to be
+electrically visible. In an electrolyte-gated device the signal from charges beyond the Debye
+length is screened, and that length depends strongly on the buffer: for the electrolytes
+characterised on graphene DNA transistors it ranges from $0.76$~nm in $1\times$~PBS to $2.41$~nm in
+$0.1\times$~PBS and $7.61$~nm in $0.01\times$~PBS \citep{purwidyantri2021}. Taking the first two as
+reference, the fraction of probe atoms lying within the Debye length of the sheet varies markedly
+across the panel: from $2.0$ to $14.3\%$ (median $6.9\%$) at $1\times$~PBS, and from $22$ to
+$100\%$ at $0.1\times$~PBS. In other words, at physiological ionic strength the great majority of
+every probe would be screened, whereas in dilute buffer some probes become almost fully visible and
+others remain largely hidden --- a spread that is a property of their predicted conformation, not
+of their sequence.
+
+Two consequences follow for the candidates themselves. First, this geometric criterion is
+\emph{not} aligned with the 3D confidence used to rank them: across the $30$ models the correlation
+between the Boltz-2 confidence and the fraction of the probe within $0.76$~nm is weak and slightly
+negative ($r = -0.19$). A probe can therefore be well predicted and still present little of itself
+to the sensing surface. Second, and more usefully, the two criteria can be combined. The probe
+\emph{p5972} (\emph{algD}) is the only candidate that is simultaneously the best-scoring in 3D
+(confidence $0.731$, \textsc{good}) and among the most compact, with a height of $20.6$~\AA{} and
+\emph{all} of its atoms within $2.41$~nm of the surface; \emph{p2392} (\emph{rmpM}) shows the same
+favourable geometry with a more modest confidence. By contrast \emph{p7716} and \emph{p8448}
+(\emph{frdB}), despite ranking \textsc{good} in 3D, are extended structures with only $38$ and
+$22\%$ of their atoms within $2.41$~nm, so a large part of them would fall outside the sensing
+volume.
+
+This analysis carries an important caveat. The probe orientation in these models is the one
+predicted by Boltz-2, preserved by the rigid-body placement and \emph{not} optimised against the
+surface; since single-stranded DNA is known to adsorb flat on graphene through $\pi$--$\pi$
+stacking \citep{green2015}, the orientations adopted after docking or dynamics will differ, and
+with them the exact coverage values. The numbers above should therefore be read as an indication of
+the range of behaviour the panel can display, and as evidence that interface geometry is an
+independent axis of probe quality worth carrying into the selection, rather than as predictions of
+device response.
+
 \section{Curated dataset of prioritised candidates}
 
 Finally, the same quality ranking was used to export a larger curated dataset: the top $25$
