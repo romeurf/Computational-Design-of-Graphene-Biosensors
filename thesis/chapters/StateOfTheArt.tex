@@ -6,9 +6,9 @@ DNA--graphene interface, and the computational methods used to design and valida
 
 \section{DNA aptamers and probes as recognition elements}
 
-DNA aptamers are short single-stranded nucleic acids, selected \emph{in vitro} by \acrfull{selex}, that fold
-into defined structures capable of high-affinity, high-specificity recognition of a target
-\citep{stephens2025,sun2022}. Cell-\acrshort{selex} and related variants allow aptamers to be raised
+DNA aptamers are short single-stranded nucleic acids, selected \emph{in vitro} by \acrfull{selex}
+\citep{tuerk1990,ellington1990}, that fold into defined structures capable of high-affinity,
+high-specificity recognition of a target \citep{stephens2025,sun2022}. Cell-\acrshort{selex} and related variants allow aptamers to be raised
 against whole microbial cells and complex targets, yielding recognition elements for bacterial surface
 antigens, toxins and viral components \citep{kolm2020,hu2024}. Because they are chemically synthesised,
 aptamers and DNA probes are inexpensive, reproducible and easily modified, which makes them well suited
@@ -31,8 +31,9 @@ architectures have enabled scalable device production \citep{ping2016}, and micr
 turned such devices into programmable lab-on-chip DNA sensors \citep{purwidyantri2022}. A key operating
 constraint is the ionic strength of the medium: high salt concentration produces strong Debye screening
 that shortens the effective sensing length and attenuates the signal from charges far from the surface
-\citep{purwidyantri2021}. These experimental studies define the device context that the computational
-design in this dissertation aims to support.
+\citep{purwidyantri2021}; transduction schemes based on target-induced conformational change of the probe
+have been shown to mitigate this limitation \citep{nakatsuka2018}. These experimental studies define the
+device context that the computational design in this dissertation aims to support.
 
 \section{The DNA--graphene interface}
 
@@ -41,7 +42,8 @@ Single-stranded DNA adsorbs strongly and flat onto graphene through $\pi$--$\pi$
 nucleobases, whereas double-stranded DNA binds much more weakly because base pairing sequesters the
 bases \citep{green2015,krishnan2023}. This contrast is the basis of many transduction schemes: for
 example, graphene-oxide \acrfull{fret} aptasensors, in which a single-stranded
-aptamer adsorbed on \acrfull{go} is desorbed upon target binding, restoring fluorescence \citep{zhu2015}.
+aptamer adsorbed on \acrfull{go} is desorbed upon target binding, restoring fluorescence
+\citep{lu2009,zhu2015}.
 Adsorption can, however, perturb DNA folding and kinetics, which matters especially for structured
 recognition elements: a useful probe must retain its ability to hybridise its target while still producing a
 detectable electronic perturbation at the surface \citep{green2015}.
@@ -76,5 +78,4 @@ detection, but their performance hinges on the recognition sequence. The biophys
 probe --- conservation, favourable hybridisation thermodynamics and absence of stable self-structure ---
 are individually well understood and supported by mature software, yet they are rarely combined into a
 single, reproducible and organism-aware pipeline that also ranks the candidates and validates them
-structurally before they are passed to docking and data-driven analysis. The methodology presented in the
-next chapter is designed to fill exactly that gap.
+structurally. The methodology presented in the next chapter is designed to address that gap.
