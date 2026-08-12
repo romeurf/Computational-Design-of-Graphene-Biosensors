@@ -25,23 +25,32 @@
 
 \section{Context}
 
-The fast identification of microbial DNA underpins the diagnosis of infection, the monitoring of
-antibiotic resistance (\acrshort{amr}) and the tracking of environmental contamination. Amplification-based
-methods such as the polymerase chain reaction are highly sensitive, but they require dedicated equipment,
-controlled laboratory conditions and lengthy sample preparation, which restricts their use outside the
-laboratory \citep{hu2024}. Amplification-based methods such as the \acrfull{pcr}, in particular, are highly
-sensitive but require dedicated equipment, controlled conditions and lengthy sample preparation. The
-development of miniaturised solid-state biosensors, which convert a molecular-recognition event directly
-into an electrical or electrochemical signal, now enables portable and continuous monitoring in small
-\acrfull{poc} devices \citep{krishnan2023}.
+Bacterial infections are among the leading causes of death worldwide, and the spread of \acrfull{amr}
+is steadily eroding the ability to treat them: an estimated $4.95$~million deaths were associated with
+bacterial \acrshort{amr} in $2019$, of which $1.27$~million were directly attributable to it
+\citep{murray2022}. Rapid identification of the infecting pathogen, and increasingly of its resistance
+determinants, is therefore central to guiding therapy, to infection control and to public-health
+surveillance; several of the species targeted in this work feature on the {WHO} Bacterial Priority
+Pathogens List \citep{who2024bppl}.
+
+The fast identification of microbial DNA underpins the diagnosis of infection and the tracking of
+environmental contamination. Culture-based methods are slow, and although the \acrfull{pcr} and related
+amplification techniques are highly sensitive and specific, they require dedicated equipment, controlled
+laboratory conditions and lengthy sample preparation, which restricts their use outside the laboratory
+\citep{hu2024}. This has driven the development of miniaturised solid-state biosensors, which convert a
+molecular-recognition event directly into an electrical or electrochemical signal and thereby enable rapid,
+portable and \acrfull{poc} testing \citep{kozel2017,krishnan2023}.
 
 Coupling DNA recognition elements to a \acrfull{gfet} has been proposed as a particularly promising route
 to label-free nucleic-acid detection \citep{green2015,campos2019}. Graphene, a two-dimensional sheet of
 carbon isolated in 2004 \citep{novoselov2004}, has its entire conduction channel exposed at its surface
 and transduces local charge variations with such sensitivity that even a single adsorbed molecule can be
 detected \citep{schedin2007}; when it is functionalised with a \acrfull{ssdna} probe, the hybridisation of
-a complementary microbial target modulates the transistor current in a label-free manner. Graphene
-biosensors have reached the ultrasensitive detection of nucleic acids \citep{hwang2020}: electrolyte-gated
+a complementary microbial target modulates the transistor current in a label-free manner. In practice, the
+probe is anchored to the graphene surface through a linker, such as a pyrene derivative that binds
+non-covalently by $\pi$--$\pi$ stacking, and target hybridisation shifts the transistor's charge-neutrality
+(Dirac) point \citep{campos2019}. Graphene biosensors have reached the ultrasensitive detection of nucleic
+acids \citep{hwang2020}: electrolyte-gated
 \acrshort{gfet} devices functionalised with DNA probes have achieved label-free detection of hybridisation
 down to the attomolar range \citep{campos2019}, and
 microfluidic, programmable graphene DNA sensors have since been demonstrated \citep{purwidyantri2022}.
@@ -95,10 +104,13 @@ This decomposes into the following specific objectives:
 \section{Target panel}
 
 Six marker genes from six clinically important bacterial species were used as the working panel throughout
-this work (Table~\ref{tab:targets}). They are established species-specific markers reported in experimental
-studies on microbial diagnostics and graphene-based DNA sensors, and they span a wide range of genome
-composition --- from AT-rich (\emph{Staphylococcus aureus}, \emph{Haemophilus influenzae}) to GC-rich
-(\emph{Pseudomonas aeruginosa}) --- which makes them a demanding test of a general-purpose design
+this work (Table~\ref{tab:targets}). Several are established targets for the molecular detection of their
+species: the thermonuclease gene \emph{nuc} for \emph{Staphylococcus aureus} \citep{brakstad1992}, the
+autolysin gene \emph{lytA} for \emph{Streptococcus pneumoniae} \citep{carvalho2007}, and the
+outer-membrane lipoprotein gene \emph{oprL} for \emph{Pseudomonas aeruginosa} \citep{devos1997}. The panel
+spans a wide range of genome composition --- from AT-rich (\emph{Staphylococcus aureus},
+\emph{Haemophilus influenzae}) to GC-rich (\emph{Pseudomonas aeruginosa}) --- which makes it a demanding
+test of a general-purpose design
 method.
 
 \begin{table}[H]
