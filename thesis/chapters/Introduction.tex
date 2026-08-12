@@ -14,7 +14,6 @@
 \newacronym{go}{GO}{Graphene Oxide}
 \newacronym{plddt}{pLDDT}{predicted Local Distance Difference Test}
 \newacronym{pae}{PAE}{Predicted Aligned Error}
-\newacronym{ml}{ML}{Machine Learning}
 \newacronym{pcr}{PCR}{Polymerase Chain Reaction}
 \newacronym{fret}{FRET}{Förster Resonance Energy Transfer}
 \newacronym{gpu}{GPU}{Graphics Processing Unit}
@@ -34,15 +33,17 @@ laboratory \citep{hu2024}. Amplification-based methods such as the \acrfull{pcr}
 sensitive but require dedicated equipment, controlled conditions and lengthy sample preparation. The
 development of miniaturised solid-state biosensors, which convert a molecular-recognition event directly
 into an electrical or electrochemical signal, now enables portable and continuous monitoring in small
-\acrfull{poc} devices \citep{gegenhuber2025,krishnan2023}.
+\acrfull{poc} devices \citep{krishnan2023}.
 
 Coupling DNA recognition elements to a \acrfull{gfet} has been proposed as a particularly promising route
 to label-free nucleic-acid detection \citep{green2015,campos2019}. Graphene, a two-dimensional sheet of
-carbon whose entire conduction channel is exposed at its surface, transduces local charge variations with
-great sensitivity; when it is functionalised with a \acrfull{ssdna} probe, the hybridisation of a
-complementary microbial target modulates the transistor current in a label-free manner
-\citep{sun2022,hu2024}. Electrolyte-gated \acrshort{gfet} devices functionalised with DNA probes have
-achieved label-free detection of hybridisation down to the attomolar range \citep{campos2019}, and
+carbon isolated in 2004 \citep{novoselov2004}, has its entire conduction channel exposed at its surface
+and transduces local charge variations with such sensitivity that even a single adsorbed molecule can be
+detected \citep{schedin2007}; when it is functionalised with a \acrfull{ssdna} probe, the hybridisation of
+a complementary microbial target modulates the transistor current in a label-free manner. Graphene
+biosensors have reached the ultrasensitive detection of nucleic acids \citep{hwang2020}: electrolyte-gated
+\acrshort{gfet} devices functionalised with DNA probes have achieved label-free detection of hybridisation
+down to the attomolar range \citep{campos2019}, and
 microfluidic, programmable graphene DNA sensors have since been demonstrated \citep{purwidyantri2022}.
 Their response, however, is shaped by the design of the sensing interface and by the ionic conditions, since
 high ionic strength imposes strong Debye screening that attenuates the contribution of distant charges
@@ -74,9 +75,8 @@ that scales across many genes and organisms of very different genome composition
 \section{Objectives}
 
 The main objective is to build a reproducible computational pipeline that turns a target gene into a small
-set of ranked, biophysically validated \acrshort{ssdna} probe candidates for \acrshort{gfet} biosensing,
-and to provide the sequence-level foundation for the downstream structural and data-driven stages of the
-wider project. This decomposes into the following specific objectives:
+set of ranked, biophysically validated \acrshort{ssdna} probe candidates for \acrshort{gfet} biosensing.
+This decomposes into the following specific objectives:
 
 \begin{itemize}
   \item select a panel of clinically relevant microbial targets and marker genes, and automate the
@@ -89,9 +89,7 @@ wider project. This decomposes into the following specific objectives:
   \item make the design criteria \emph{organism-aware}, so that targets with very different genome
         composition (AT-rich or GC-rich) are evaluated fairly;
   \item prioritise and validate the most promising candidates by three-dimensional structure prediction; and
-  \item produce curated, feature-rich datasets that feed the downstream stages of the project --- molecular
-        docking of the probe--target duplexes onto graphene surfaces, and exploratory \acrfull{ml} ranking
-        of candidates.
+  \item produce curated, feature-rich datasets of the prioritised probe candidates.
 \end{itemize}
 
 \section{Target panel}

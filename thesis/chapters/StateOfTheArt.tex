@@ -12,7 +12,7 @@ into defined structures capable of high-affinity, high-specificity recognition o
 against whole microbial cells and complex targets, yielding recognition elements for bacterial surface
 antigens, toxins and viral components \citep{kolm2020,hu2024}. Because they are chemically synthesised,
 aptamers and DNA probes are inexpensive, reproducible and easily modified, which makes them well suited
-to solid-state biosensors and to \emph{in silico} optimisation \citep{gegenhuber2025,sun2022}. For the
+to solid-state biosensors and to \emph{in silico} optimisation \citep{sun2022}. For the
 detection of a known microbial DNA sequence, a complementary hybridisation probe is the natural
 recognition element: it targets a defined genomic region and is captured by Watson--Crick pairing, which is
 the mechanism exploited throughout this work.
@@ -20,12 +20,14 @@ the mechanism exploited throughout this work.
 \section{Graphene GFET biosensors for DNA detection}
 
 Graphene combines very high carrier mobility with a fully surface-exposed conduction channel, so that
-charges binding at its surface strongly modulate its conductance, making it an outstanding transducer for
-label-free sensing \citep{krishnan2023,green2015}. In a \acrfull{gfet}, the graphene channel is gated
+charges binding at its surface strongly modulate its conductance \citep{novoselov2004}; the adsorption of
+even a single molecule can be resolved electrically \citep{schedin2007}, making it an outstanding
+transducer for label-free sensing \citep{krishnan2023,green2015}, including for nucleic acids at very low
+concentrations \citep{hwang2020}. In a \acrfull{gfet}, the graphene channel is gated
 electrolytically, and the hybridisation of a target strand to an immobilised probe shifts the transfer
 characteristic through the added backbone charge. Electrolyte-gated \acrshort{gfet}s functionalised with
 DNA probes have reached attomolar, label-free detection of hybridisation \citep{campos2019}, back-gated
-architectures have enabled scalable device production \citep{zhan2016}, and microfluidic integration has
+architectures have enabled scalable device production \citep{ping2016}, and microfluidic integration has
 turned such devices into programmable lab-on-chip DNA sensors \citep{purwidyantri2022}. A key operating
 constraint is the ionic strength of the medium: high salt concentration produces strong Debye screening
 that shortens the effective sensing length and attenuates the signal from charges far from the surface
@@ -42,13 +44,13 @@ example, graphene-oxide \acrfull{fret} aptasensors, in which a single-stranded
 aptamer adsorbed on \acrfull{go} is desorbed upon target binding, restoring fluorescence \citep{zhu2015}.
 Adsorption can, however, perturb DNA folding and kinetics, which matters especially for structured
 recognition elements: a useful probe must retain its ability to hybridise its target while still producing a
-detectable electronic perturbation at the surface \citep{green2015,smith2020}.
+detectable electronic perturbation at the surface \citep{green2015}.
 
 \section{Computational design and validation of probe sequences}
 
 Because experimentally screening large numbers of candidate probes is costly and slow, computational
 methods that link sequence and structure to binding and transduction are increasingly used to design and
-prioritise candidates \citep{sun2022,smith2020}. Several families of criteria are well established. The
+prioritise candidates \citep{sun2022}. Several families of criteria are well established. The
 stability of the probe--target duplex is quantified by its melting temperature (\acrshort{tm}), predicted
 accurately with the nearest-neighbour thermodynamic model \citep{santalucia2004}, together with GC
 content and probe length \citep{wetmur1991}; tools such as \texttt{primer3} implement these calculations
@@ -65,10 +67,7 @@ this to nucleic-acid-containing complexes with per-residue and pairwise confiden
 \citep{abramson2024}; open models such as Boltz-1/2 make these predictions freely runnable on commodity
 GPUs \citep{wohlwend2024}. Although calibrated primarily for proteins, the predicted structure and the
 associated confidence of a short \acrshort{ssdna} probe provide a useful, independent check on a
-computationally selected sequence. Downstream, molecular docking of the resulting probe--target duplexes
-onto graphene surfaces is used to study preferred orientations and transduction-relevant configurations,
-and exploratory \acrfull{ml} models can be trained to rank candidates from these features
-\citep{sun2022,smith2020}.
+computationally selected sequence.
 
 \section{Summary}
 

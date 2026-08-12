@@ -5,7 +5,7 @@ $100$ sequences requested per gene (and a per-gene override of $200$ for the dat
 \emph{algD}). It follows the flow of the method: sequence retrieval and
 curation, the screening funnel, three-dimensional validation, the diversity and rarefaction
 analyses, the effect of the organism-aware parameters, the comparison with the reference panel,
-and the curated dataset produced for downstream modelling.
+and the curated dataset of prioritised candidates.
 
 \section{Retrieval and length curation}
 
@@ -14,7 +14,7 @@ Table~\ref{tab:retrieval} shows, for each gene, the number of sequences returned
 partial and oversized records that would otherwise degrade the alignment; its effect is largest
 for the genes with the most heterogeneous records. Two genes, \emph{oprL} and \emph{algD},
 are intrinsically data-limited in \acrshort{ncbi} (only 24 and 12 sequences survive
-respectively), which, as shown below, is reflected in their downstream behaviour.
+respectively), which, as shown below, is reflected in their behaviour through the pipeline.
 
 \begin{table}[H]
 \begin{center}
@@ -183,10 +183,10 @@ versus $82.9$). Because both sets carry a source label and share every column, t
 submitted together to Boltz-2, enabling a like-for-like comparison in three dimensions as well as
 in sequence space.
 
-\section{Curated dataset for downstream modelling}
+\section{Curated dataset of prioritised candidates}
 
 Finally, the same quality ranking was used to export a larger curated dataset: the top $25$
 probes per gene ($150$ probes in total), each with its sequence-level features (\acrshort{tm},
-GC, conservation, No-fold and folding energies). This dataset extends the small set validated
-in 3D and provides biophysically annotated candidates for the data-driven modelling of probe
-quality that is a natural continuation of this work.
+GC, conservation, No-fold and folding energies). This dataset extends the set of $30$ probes
+validated in 3D to a broader, biophysically annotated selection of the highest-quality
+candidates per gene.
