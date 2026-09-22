@@ -28,12 +28,26 @@ electrolytically, and the hybridisation of a target strand to an immobilised pro
 characteristic through the added backbone charge. Electrolyte-gated \acrshort{gfet}s functionalised with
 DNA probes have reached attomolar, label-free detection of hybridisation \citep{campos2019}, back-gated
 architectures have enabled scalable device production \citep{ping2016}, and microfluidic integration has
-turned such devices into programmable lab-on-chip DNA sensors \citep{purwidyantri2022}. A key operating
-constraint is the ionic strength of the medium: high salt concentration produces strong Debye screening
-that shortens the effective sensing length and attenuates the signal from charges far from the surface
-\citep{purwidyantri2021}; transduction schemes based on target-induced conformational change of the probe
-have been shown to mitigate this limitation \citep{nakatsuka2018}. These experimental studies define the
-device context that the computational design in this dissertation aims to support.
+turned such devices into programmable lab-on-chip DNA sensors \citep{purwidyantri2022}.
+
+A key operating constraint of any electrolyte-gated \acrshort{fet} biosensor is the screening of
+charge by the ions of the solution. Mobile ions in the electrolyte rearrange around any fixed
+charge and cancel its electric field beyond a characteristic distance, the \emph{Debye length}
+$\lambda_D$, given by
+\[
+\lambda_D = \sqrt{\frac{\varepsilon_r \varepsilon_0 k_B T}{2 N_A e^2 I}},
+\]
+where $\varepsilon_r$ and $\varepsilon_0$ are the relative and vacuum permittivities, $k_B T$ the
+thermal energy, $N_A$ the Avogadro constant, $e$ the elementary charge and $I$ the ionic strength of
+the solution \citep{bhattacharyya2020}. Because $\lambda_D$ scales with $I^{-1/2}$, it shrinks
+sharply as the buffer becomes more concentrated: only charge within roughly one $\lambda_D$ of the
+graphene surface contributes appreciably to the field-effect signal, while charge further away is
+electrostatically screened. In practice this means that high salt concentration produces strong
+screening that shortens the effective sensing length and attenuates the signal from charges far from
+the surface \citep{purwidyantri2021}; transduction schemes based on target-induced conformational
+change of the probe have been shown to mitigate this limitation \citep{nakatsuka2018}. These
+experimental studies define the device context that the computational design in this dissertation
+aims to support.
 
 \section{The DNA--graphene interface}
 
