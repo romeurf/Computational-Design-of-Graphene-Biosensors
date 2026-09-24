@@ -289,12 +289,65 @@ between the Boltz-2 confidence and the fraction of the probe within $0.76$~nm is
 negative ($r = -0.19$). A probe can therefore be well predicted and still present little of itself
 to the sensing surface. Second, and more usefully, the two criteria can be combined. The probe
 \emph{p5972} (\emph{algD}) is the only candidate that is simultaneously the best-scoring in 3D
-(confidence $0.731$, \textsc{good}) and among the most compact, with a height of $20.6$~\AA{} and
+(confidence $0.731$, \textsc{good}) and among the most compact, with a vertical extent of only $20.6$~\AA{} and
 \emph{all} of its atoms within $2.41$~nm of the surface; \emph{p2392} (\emph{rmpM}) shows the same
 favourable geometry with a more modest confidence. By contrast \emph{p7716} and \emph{p8448}
 (\emph{frdB}), despite ranking \textsc{good} in 3D, are extended structures with only $38$ and
 $22\%$ of their atoms within $2.41$~nm, so a large part of them would fall outside the sensing
 volume.
+
+\subsection*{Coverage by confidence class and by buffer}
+
+Because the panel is already stratified by the Boltz-2 confidence class, the coverage was
+tabulated per class and per buffer (Table~\ref{tab:debye_class}), extending the comparison to the
+$0.01\times$~PBS electrolyte. Three observations follow. At $1\times$~PBS no model in any class
+reaches even $15\%$ coverage, and the class medians ($5.6$, $6.7$ and $7.5\%$ for \textsc{good},
+\textsc{moderate} and \textsc{low}) are ordered \emph{against} the confidence, confirming at the
+level of the classes what the correlation showed for the individual models. At $0.1\times$~PBS the
+models separate: $2$ of $4$ \textsc{good}, $6$ of $11$ \textsc{moderate} and $11$ of $15$
+\textsc{low} models place at least half of their atoms inside the screening length, so it is in
+this buffer that the criterion is most informative. At $0.01\times$~PBS the criterion saturates:
+$29$ of the $30$ models are entirely within $\lambda_D$, the single exception being \emph{p129},
+the tallest model of the panel at $83.6$~\AA{} above the sheet, at $91.7\%$. The correlation with
+the Boltz-2 confidence remains weak and slightly negative in all three electrolytes ($r = -0.19$,
+$-0.26$ and $-0.22$ respectively), so the independence of the two criteria is not an artefact of
+the particular buffer chosen.
+
+\begin{table}[H]
+\begin{center}
+\begin{tabular}{l c c c c c c}
+\hline
+ & & \textbf{Height} & \multicolumn{4}{c}{\textbf{Probe atoms within $\lambda_D$}} \
+\textbf{Class} & \textbf{$n$} & \textbf{(\AA)} & \textbf{$1\times$} & \textbf{$0.1\times$} &
+\textbf{$0.1\times$, $\geq 50\%$} & \textbf{$0.01\times$} \
+\hline
+\textsc{good}     & 4  & 41.4 & 5.6\% & 51.8\% & 2/4   & 100\% \
+\textsc{moderate} & 11 & 44.3 & 6.7\% & 50.9\% & 6/11  & 100\% \
+\textsc{low}      & 15 & 33.7 & 7.5\% & 76.9\% & 11/15 & 100\% \
+\hline
+\end{tabular}
+\end{center}
+\caption{Debye coverage of the $30$ graphene--probe models by Boltz-2 confidence class. Height is
+the median height of the probe above the graphene plane; the coverage columns give the median
+percentage of probe atoms lying within the Debye length of the three PBS dilutions, and the fourth
+column the number of models of each class in which at least half of the probe is inside
+$\lambda_D$ at $0.1\times$~PBS.}
+\label{tab:debye_class}
+\end{table}
+
+The comparison between buffers should not be read as a recommendation to dilute. Of the three
+electrolytes, $1\times$~PBS is the isotonic formulation and therefore the one whose ionic strength
+approximates that of the biological fluids a diagnostic device would sample; each tenfold dilution
+lengthens $\lambda_D$ by a factor of $\sqrt{10}$ and mechanically increases the visible fraction of
+every probe, but it does so by moving the measurement away from the composition of the sample it is
+meant to emulate. Operating at physiological ionic strength is precisely the regime in which
+screening is most severe, and the strategies reported to circumvent it transduce a target-induced
+conformational change occurring within the screening length rather than dilute the sample
+\citep{nakatsuka2018}. The $0.01\times$ condition illustrates the limit of the dilution route from
+the design point of view: it makes essentially the entire panel visible and, in doing so, removes
+the very differences between candidates that make the criterion useful. In this work $1\times$~PBS
+is therefore taken as the physiologically meaningful reference and $0.1\times$~PBS as the
+condition in which the geometric criterion discriminates between probes.
 
 This analysis carries an important caveat. The probe orientation in these models is the one
 predicted by Boltz-2, preserved by the rigid-body placement and \emph{not} optimised against the

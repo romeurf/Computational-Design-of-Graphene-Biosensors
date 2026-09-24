@@ -38,19 +38,51 @@ default**), so AT-rich and GC-rich targets are screened by criteria appropriate 
 
 ```
 .
-├── pipeline.py                 Main entry point (all stages + CLI)
+├── pipeline.py                     Main entry point (sequence stages 1-10 + CLI)
+├── colab_boltz2_batch.ipynb        Boltz-2 batch 3D prediction on Colab (GPU)
 ├── scripts/
-│   ├── analysis.py             Exploratory analysis (diversity, rarefaction, seqfold threshold)
-│   ├── boltz2_predict.py       Standalone local Boltz-2 predictor
-│   └── nucleofold_predict.py   NucleoFold3D wrapper (WSL/Linux)
-├── colab_boltz2_batch.ipynb    Boltz-2 batch 3D prediction on Colab (GPU)
+│   ├── analysis.py                 Exploratory analysis (diversity, rarefaction, seqfold threshold)
+│   ├── boltz2_predict.py           Standalone local Boltz-2 predictor
+│   ├── nucleofold_predict.py       NucleoFold3D wrapper (WSL/Linux)
+│   ├── build_graphene_complex.py   Places a predicted probe on a graphene sheet -> complex PDB
+│   ├── debye_analysis.py           Debye-screening coverage of the complexes, per buffer/class
+│   └── render_complex.py           Side + top view renders of a complex
 ├── data/
-│   ├── sequencias_iplex.xlsx   Reference probe panel (job_name, sequence, species)
-│   └── species_params.yaml     User-defined species profiles (created at runtime)
-├── docs/                       Reference tables, deliverables, analysis outputs, notes
-├── thesis/                     LaTeX dissertation (UMinho template, XeLaTeX)
-└── output/                     Generated at runtime (git-ignored)
+│   ├── sequencias_iplex.xlsx       Reference probe panel (job_name, sequence, species)
+│   └── species_params.yaml         User-defined species profiles (created at runtime)
+├── docs/                           Reference tables, deliverables, analysis outputs, notes
+├── results/                        Structures and measurements of the probe-graphene stage
+├── thesis/                         LaTeX dissertation (UMinho template, XeLaTeX)
+└── output/                         Generated at runtime (git-ignored)
 ```
+
+### Which file does what
+
+The project has one entry point and five single-purpose helpers; nothing else is executable.
+
+| Run this | To |
+|---|---|
+| `pipeline.py` | Do everything from NCBI to the ranked probe list and the Boltz-2 input zip, and to merge the 3D results back in. This is the pipeline. |
+| `colab_boltz2_batch.ipynb` | Predict the 3D structures on a GPU (Google Colab). The one step that does not run inside `pipeline.py` — see *Automation* below. |
+| `scripts/analysis.py` | Reproduce the exploratory figures and tables (diversity, rarefaction, seqfold threshold sweep). Independent of a pipeline run except for its inputs. |
+| `scripts/build_graphene_complex.py` | Build one graphene + probe model from a predicted CIF and a graphene PDB. |
+| `scripts/debye_analysis.py` | Measure, on the built models, how much of each probe lies inside the Debye length. |
+| `scripts/render_complex.py` | Render a model as a side + top view PNG. |
+| `scripts/boltz2_predict.py`, `scripts/nucleofold_predict.py` | Predict structures locally instead of on Colab (require a local GPU / WSL). Alternatives, not pipeline steps. |
+
+### Automation
+
+Stages 1–10 run unattended inside `pipeline.py`: one command takes a gene from NCBI to a ranked
+candidate list and a Boltz-2 input archive. The chain is broken in exactly one place — the 3D
+prediction. Boltz-2 needs a GPU; on CPU a 30-probe batch is not practically finishable, so the
+prediction is run in Google Colab through `colab_boltz2_batch.ipynb` and the results are fed back
+with `pipeline.py --merge-boltz`. The handover is a file in each direction (`boltz2_inputs.zip`
+out, the results CSV in), so the split costs two manual file transfers and no reprocessing; running
+it end to end locally requires only a machine with a CUDA GPU and `pip install boltz`
+(`scripts/boltz2_predict.py`).
+
+The probe–graphene modelling stage that follows is likewise scripted but is driven separately, one
+model at a time, by `build_graphene_complex.py`.
 
 > **MAFFT** is used as an external aligner. Install it and make sure `mafft` is on the `PATH`
 > (the pipeline also auto-detects a local `MAFFT/` folder in the repository root if one exists).
