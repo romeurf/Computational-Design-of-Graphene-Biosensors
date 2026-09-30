@@ -25,7 +25,11 @@ from Bio.SeqRecord import SeqRecord
 Entrez.email = "pg45861@uminho.pt"
 
 # ── Parâmetros primer3 (SantaLucia & Hicks 2004) ────────────────────────────
-P3_MV_CONC  = 50.0    # [Na+] mM
+# Tampão de referência: 1× PBS, o de composição iónica mais próxima dos fluidos biológicos
+# (Purwidyantri et al. 2021). Receita padrão (Cold Spring Harbor Protocols 2006,
+# doi:10.1101/pdb.rec8247): 137 mM NaCl + 2,7 mM KCl + 10 mM Na2HPO4 + 1,8 mM KH2PO4
+# → 157 mM Na+ + 4,5 mM K+; o primer3 trata-os em conjunto como catião monovalente.
+P3_MV_CONC  = 161.5   # [Na+] + [K+] mM (1× PBS)
 P3_DV_CONC  = 0.0     # [Mg2+] mM
 P3_DNTP     = 0.0     # [dNTP] mM
 P3_DNA_CONC = 250.0   # [oligo] nM
@@ -654,10 +658,18 @@ def run_seqfold_probe(probe: Probe, gene_key: str) -> Probe:
     return probe
 
 # ── 6. Export para Colab (Boltz-2) ───────────────────────────────────────────
-def export_colab_inputs(probes: list, top_n: int, extra_probes: list = None) -> Path:
+def reverse_complement(seq: str) -> str:
+    return seq.translate(str.maketrans("ACGT", "TGCA"))[::-1]
+
+DUPLEX_SUFFIX = "__duplex"
+
+def export_colab_inputs(probes: list, top_n: int, extra_probes: list = None,
+                        duplex: bool = False) -> Path:
     """
     Gera os ficheiros de input para o Boltz-2 Colab:
       - YAML individual por probe (formato nativo Boltz-2)
+      - com duplex=True, também um YAML <probe_id>__duplex por probe, com a sonda (cadeia A)
+        e o alvo complementar do mesmo comprimento (cadeia B) — o estado hibridado
       - FASTA consolidado
       - boltz2_inputs.zip → upload directo ao Colab batch
     """
@@ -686,6 +698,14 @@ def export_colab_inputs(probes: list, top_n: int, extra_probes: list = None) -> 
                        "sequences": [{"dna": {"id": ["A"], "sequence": p.sequence}}]}),
             encoding="utf-8"
         )
+        if duplex:
+            (yaml_dir / f"{p.probe_id}{DUPLEX_SUFFIX}.yaml").write_text(
+                yaml.dump({"version": 1,
+                           "sequences": [{"dna": {"id": ["A"], "sequence": p.sequence}},
+                                         {"dna": {"id": ["B"],
+                                                  "sequence": reverse_complement(p.sequence)}}]}),
+                encoding="utf-8"
+            )
 
     with open(COLAB_DIR / "probes_for_boltz2.fasta", "w", encoding="utf-8") as f:
         for p in selected:
@@ -707,6 +727,8 @@ def export_colab_inputs(probes: list, top_n: int, extra_probes: list = None) -> 
     print(f"\n{'═'*60}")
     print(f"  EXPORT COLAB — Boltz-2")
     print(f"  {len(selected)} probes seleccionadas (top {top_n}/gene por qualidade: PPI + No-fold)")
+    if duplex:
+        print(f"  + {len(selected)} duplexes sonda–alvo ({DUPLEX_SUFFIX})")
     print(f"{'═'*60}")
     print(f"  Ficheiros em: {COLAB_DIR}")
     print(f"    boltz2_inputs.zip         ← upload para o Colab batch")
@@ -724,7 +746,8 @@ def export_colab_inputs(probes: list, top_n: int, extra_probes: list = None) -> 
     print(f"{'═'*60}")
     return zip_path
 
-def export_colab_from_csv(top_n: int, include_reference: bool = False) -> Path:
+def export_colab_from_csv(top_n: int, include_reference: bool = False,
+                          duplex: bool = False) -> Path:
     """Gera os inputs do Colab a partir do FINAL_PROBES_ALL.csv já existente (sem re-correr
     NCBI/MAFFT). Reutiliza export_colab_inputs() → boltz2_inputs.zip. Se include_reference,
     inclui também as probes IPLEX (fonte=referencia) que passam o básico e têm No-fold>60 —
@@ -770,7 +793,7 @@ def export_colab_from_csv(top_n: int, include_reference: bool = False) -> Path:
         ]
         print(f"  + {len(extra)} probes IPLEX (pass_basic, No-fold>60) para comparação 3D")
     print(f"  {len(probes)} probes próprias lidas de {csv_path.name}")
-    return export_colab_inputs(probes, top_n=top_n, extra_probes=extra)
+    return export_colab_inputs(probes, top_n=top_n, extra_probes=extra, duplex=duplex)
 
 def merge_boltz_results(results_csv: str) -> Path:
     """Junta os resultados Boltz (confidence/pTM/pLDDT/quality) aos metadados das
@@ -779,6 +802,18 @@ def merge_boltz_results(results_csv: str) -> Path:
     res  = pd.read_csv(results_csv)
     meta = pd.read_csv(COLAB_DIR / "probes_metadata.csv")
     keep = [c for c in ("probe_id", "confidence", "ptm", "plddt", "quality") if c in res.columns]
+
+    # os duplexes sonda–alvo (--duplex) têm tabela própria, com o probe_id da sonda
+    is_dup = res["probe_id"].astype(str).str.endswith(DUPLEX_SUFFIX)
+    if is_dup.any():
+        dup = res.loc[is_dup, keep].copy()
+        dup["probe_id"] = dup["probe_id"].str[:-len(DUPLEX_SUFFIX)]
+        for dpath in (COLAB_DIR / "boltz2_duplex_summary.csv",
+                      BASE_DIR / "docs" / "boltz2_duplex_summary.csv"):
+            dup.to_csv(dpath, index=False)
+        print(f"  ✔ Duplexes sonda–alvo: {len(dup)} → docs/boltz2_duplex_summary.csv")
+        res = res[~is_dup]
+
     m = meta.merge(res[keep], on="probe_id", how="left")
 
     cons = m["conservation"].fillna(0) if "conservation" in m else 0
@@ -792,6 +827,7 @@ def merge_boltz_results(results_csv: str) -> Path:
                         "plddt", "quality", "sequence"] if c in m.columns]
     out = COLAB_DIR / "boltz2_shortlist_ranked.csv"
     m[cols].to_csv(out, index=False)
+    m[cols].to_csv(BASE_DIR / "docs" / "boltz2_shortlist_ranked.csv", index=False)  # cópia versionada
 
     print(f"\n  ✔ Shortlist final ranqueada: {out}  ({len(m)} probes)")
     if "quality" in m.columns:
@@ -974,7 +1010,8 @@ def write_consolidated_csv(all_probes: list[Probe], include_reference: bool = Fa
     print(f"\n  ✔ CSV consolidado: {out_path}  ({len(all_rows)} probes total)")
 
 # ── Pipeline principal ────────────────────────────────────────────────────────
-def run_pipeline(run_seqfold: bool = True, colab_top: int = 0, with_reference: bool = False):
+def run_pipeline(run_seqfold: bool = True, colab_top: int = 0, with_reference: bool = False,
+                 from_alignments: bool = False, duplex: bool = False):
     print("\n" + "═"*60)
     print("  GFET Probe Pipeline")
     print(f"  Targets: {list(TARGETS.keys())}")
@@ -995,14 +1032,22 @@ def run_pipeline(run_seqfold: bool = True, colab_top: int = 0, with_reference: b
         print(f"  {gene_key.upper()}  |  {t['organism']}  |  Grupo {t['group']}")
         print(f"{'━'*60}")
 
-        records = fetch_sequences(gene_key)
-        if cfg(gene_key, "len_cluster"):
-            records, info = select_length_cluster(records, cfg(gene_key, "len_cluster_tol"))
-            if info:
-                lo, hi, dropped = info
-                print(f"  [1b] Cluster de comprimento dominante: {lo}–{hi} bp "
-                      f"→ {len(records)} seqs (removidas {dropped} fora do cluster)")
-        aln     = align_mafft(records, gene_key)
+        if from_alignments:
+            # recomeça do alinhamento guardado por uma corrida anterior: muda-se um parâmetro
+            # a jusante (ex.: condições termodinâmicas) sem voltar ao NCBI, que traria outras sequências
+            aln_path = ALIGN_DIR / gene_key / "aligned.fasta"
+            aln = AlignIO.read(aln_path, "fasta")
+            print(f"  [1-2] Alinhamento reutilizado: {aln_path.relative_to(BASE_DIR)} "
+                  f"({len(aln)} seqs × {aln.get_alignment_length()} posições)")
+        else:
+            records = fetch_sequences(gene_key)
+            if cfg(gene_key, "len_cluster"):
+                records, info = select_length_cluster(records, cfg(gene_key, "len_cluster_tol"))
+                if info:
+                    lo, hi, dropped = info
+                    print(f"  [1b] Cluster de comprimento dominante: {lo}–{hi} bp "
+                          f"→ {len(records)} seqs (removidas {dropped} fora do cluster)")
+            aln = align_mafft(records, gene_key)
         windows = candidate_windows(aln, gene_key)
 
         probes: list[Probe] = []
@@ -1094,7 +1139,7 @@ def run_pipeline(run_seqfold: bool = True, colab_top: int = 0, with_reference: b
 
     if colab_top > 0:
         # lê o CSV consolidado (acabado de escrever) → inclui as IPLEX se --with-reference
-        export_colab_from_csv(colab_top, include_reference=with_reference)
+        export_colab_from_csv(colab_top, include_reference=with_reference, duplex=duplex)
 
 if __name__ == "__main__":
     import argparse
@@ -1133,6 +1178,12 @@ if __name__ == "__main__":
                     help="Gerar docs/parametros_referencias.csv a partir dos _refs dos perfis.")
     ap.add_argument("--export-colab-iplex", type=int, default=0, metavar="N",
                     help="Como --export-colab mas inclui as probes IPLEX que passam (No-fold>60) p/ comparação 3D.")
+    ap.add_argument("--from-alignments", action="store_true",
+                    help="Recomeçar dos alinhamentos guardados em output/alignments/ (sem NCBI nem "
+                         "MAFFT) — para mudar parâmetros a jusante sem alterar as sequências.")
+    ap.add_argument("--duplex", action="store_true",
+                    help="Com --colab/--export-colab: exportar também o duplex sonda–alvo de cada "
+                         "probe (alvo complementar do mesmo comprimento) para o Boltz-2.")
     args = ap.parse_args()
     if args.merge_boltz:                            # atalho: só fundir resultados Boltz
         merge_boltz_results(args.merge_boltz)
@@ -1141,7 +1192,7 @@ if __name__ == "__main__":
         export_docking_input(top_n=args.export_docking)
         raise SystemExit(0)
     if args.export_colab > 0:                       # atalho: só (re)gerar inputs Colab
-        export_colab_from_csv(args.export_colab)
+        export_colab_from_csv(args.export_colab, duplex=args.duplex)
         raise SystemExit(0)
     if args.define_species:                         # atalho: definir perfil de espécie
         _ensure_species_profile(args.define_species, force=True)
@@ -1161,4 +1212,5 @@ if __name__ == "__main__":
     if args.cluster_tol is not None:
         DEFAULTS["len_cluster_tol"] = args.cluster_tol
     run_pipeline(run_seqfold=not args.no_seqfold, colab_top=args.colab,
-                 with_reference=args.with_reference)
+                 with_reference=args.with_reference, from_alignments=args.from_alignments,
+                 duplex=args.duplex)

@@ -45,7 +45,7 @@ default**), so AT-rich and GC-rich targets are screened by criteria appropriate 
 │   ├── boltz2_predict.py           Standalone local Boltz-2 predictor
 │   ├── nucleofold_predict.py       NucleoFold3D wrapper (WSL/Linux)
 │   ├── build_graphene_complex.py   Places a predicted probe on a graphene sheet -> complex PDB
-│   ├── debye_analysis.py           Debye-screening coverage of the complexes, per buffer/class
+│   ├── debye_analysis.py           Debye coverage (rigid, 3′-anchored, duplex) + final shortlist
 │   └── render_complex.py           Side + top view renders of a complex
 ├── data/
 │   ├── sequencias_iplex.xlsx       Reference probe panel (job_name, sequence, species)
@@ -66,7 +66,7 @@ The project has one entry point and five single-purpose helpers; nothing else is
 | `colab_boltz2_batch.ipynb` | Predict the 3D structures on a GPU (Google Colab). The one step that does not run inside `pipeline.py` — see *Automation* below. |
 | `scripts/analysis.py` | Reproduce the exploratory figures and tables (diversity, rarefaction, seqfold threshold sweep). Independent of a pipeline run except for its inputs. |
 | `scripts/build_graphene_complex.py` | Build one graphene + probe model from a predicted CIF and a graphene PDB. |
-| `scripts/debye_analysis.py` | Measure, on the built models, how much of each probe lies inside the Debye length. |
+| `scripts/debye_analysis.py` | Measure how much of each probe, and of its hybridised target, lies inside the Debye length (rigid and 3′-anchored), and pick the final shortlist per gene. |
 | `scripts/render_complex.py` | Render a model as a side + top view PNG. |
 | `scripts/boltz2_predict.py`, `scripts/nucleofold_predict.py` | Predict structures locally instead of on Colab (require a local GPU / WSL). Alternatives, not pipeline steps. |
 
@@ -114,7 +114,7 @@ Each stage is a function in `pipeline.py`:
 | 3. Alignment | `align_mafft` | MAFFT `--auto` (single-sequence mode when only one record) |
 | 4. Conservation | `_pairwise_identity`, `candidate_windows` | Per-column **PPI** (Percentage of Pairwise Identity, IUPAC-aware; ported from ViruScope) |
 | 5. Candidates | `candidate_windows` | Sliding window (18–28 nt, step 3), gap and conservation filters, consensus sequence |
-| 6. Thermodynamics | `score_probe` | primer3-py: Tm, GC, hairpin ΔG, homodimer ΔG ([Na⁺]=50 mM, [oligo]=250 nM, 37 °C) |
+| 6. Thermodynamics | `score_probe` | primer3-py: Tm, GC, hairpin ΔG, homodimer ΔG in 1× PBS ([Na⁺]+[K⁺]=161.5 mM, [oligo]=250 nM, 37 °C) |
 | 7. Structure | `run_seqfold_probe`, `nofold_score` | seqfold MFE at 37 °C; continuous **No-fold** score (logistic map of the folding energies) |
 | 8. Parameters | `cfg`, `cfg_species`, `_infer_type` | Layered threshold resolution + interactive profiles for new species |
 | 9. Selection | `probe_quality`, `export_colab_inputs` | Rank by quality = ½·(PPI + No-fold/100); export top-N/gene |
@@ -140,6 +140,11 @@ python pipeline.py --max-seqs 100 --colab 5
 # Include the reference (IPLEX) panel, scored with the same metrics, in one run
 python pipeline.py --max-seqs 100 --with-reference --colab 5
 
+# Re-run from the stored alignments (no NCBI/MAFFT) after changing a downstream parameter,
+# exporting each probe and its probe–target duplex for Boltz-2
+python pipeline.py --from-alignments --with-reference
+python pipeline.py --export-colab 5 --duplex
+
 # Merge Boltz-2 results (downloaded from Colab) into a ranked shortlist
 python pipeline.py --merge-boltz output/colab_boltz2/boltz2_results_summary.csv
 
@@ -158,7 +163,9 @@ Main flags:
 | `--colab N` | Full run, then export the top-N/gene (by quality) as Boltz-2 input |
 | `--with-reference` | Also score the reference panel (`data/sequencias_iplex.xlsx`) |
 | `--export-colab N` / `--export-colab-iplex N` | Re-export Boltz-2 input from an existing `FINAL_PROBES_ALL.csv` |
-| `--merge-boltz CSV` | Merge Boltz-2 results into `boltz2_shortlist_ranked.csv` |
+| `--duplex` | With `--colab`/`--export-colab`: also export each probe hybridised to its complementary target |
+| `--from-alignments` | Start from the alignments stored in `output/alignments/`, without NCBI or MAFFT |
+| `--merge-boltz CSV` | Merge Boltz-2 results into `boltz2_shortlist_ranked.csv` (duplexes → `boltz2_duplex_summary.csv`) |
 | `--export-docking [N]` | Export `job_name,sequence,species` (+features); with `N`, top-N/gene |
 | `--define-species NAME` | Interactive per-species profile → `data/species_params.yaml` |
 | `--assay-temp C` | Derive the Tm window from the hybridisation assay temperature |
@@ -171,7 +178,7 @@ Main flags:
 |---|---|
 | `FINAL_PROBES_ALL.csv` | All probes (own + optional reference) with every metric |
 | `alignments/<gene>/` | MAFFT alignment, per-gene scored TSV and FASTA |
-| `colab_boltz2/boltz2_inputs.zip` | Boltz-2 input (one YAML per probe) for the Colab notebook |
+| `colab_boltz2/boltz2_inputs.zip` | Boltz-2 input (one YAML per probe, plus one per duplex with `--duplex`) for the Colab notebook |
 | `colab_boltz2/boltz2_shortlist_ranked.csv` | Ranked shortlist after merging 3D results |
 
 ---
