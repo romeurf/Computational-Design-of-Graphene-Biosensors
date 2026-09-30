@@ -7,11 +7,11 @@ charge further away is screened by the mobile ions of the buffer. For each compl
 by `build_graphene_complex.py`, this script measures the height of every probe atom above
 the graphene plane and reports the fraction of the probe that falls inside lambda_D.
 
-The Debye lengths are not computed here from an idealised Debye-Huckel expression; they
-are the values measured for the buffers actually used in graphene FET work by
-Purwidyantri et al., Biosensors 11:120 (2021):
+The Debye lengths are the values reported by Purwidyantri et al., Biosensors 11(1):24
+(2021), who calculated them with the Debye-Huckel approximation for the buffers used in
+their DNA-hybridisation experiments on graphene transistors:
 
-    1x   PBS   ->  0.76 nm  ( 7.6 A)   physiological ionic strength (~163 mM)
+    1x   PBS   ->  0.76 nm  ( 7.6 A)   osmolarity and ion content close to body fluids
     0.1x PBS   ->  2.41 nm  (24.1 A)
     0.01x PBS  ->  7.61 nm  (76.1 A)
 
@@ -31,7 +31,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 COMPLEX_DIR = BASE_DIR / "results" / "structures" / "complexes"
 SUMMARY = BASE_DIR / "results" / "complexes_summary.csv"
 
-# measured Debye lengths, in Angstrom (Purwidyantri et al., Biosensors 11:120, 2021)
+# Debye lengths, in Angstrom (Purwidyantri et al., Biosensors 11(1):24, 2021)
 BUFFERS = {"1x PBS": 7.6, "0.1x PBS": 24.1, "0.01x PBS": 76.1}
 
 
@@ -66,7 +66,8 @@ def main():
         rows.append(row)
 
     cov = pd.DataFrame(rows).sort_values(["gene", "probe"])
-    cov.to_csv(BASE_DIR / "results" / "debye_coverage.csv", index=False)
+    # ";" so that the tables open in columns in Excel with a Portuguese locale
+    cov.to_csv(BASE_DIR / "results" / "debye_coverage.csv", index=False, sep=";")
 
     # aggregate by Boltz-2 confidence class
     order = ["GOOD", "MODERATE", "LOW"]
@@ -87,7 +88,7 @@ def main():
             rec[f"{name} n>=50%"] = int((col >= 50).sum())
         agg.append(rec)
     agg = pd.DataFrame(agg)
-    agg.to_csv(BASE_DIR / "results" / "debye_by_class.csv", index=False)
+    agg.to_csv(BASE_DIR / "results" / "debye_by_class.csv", index=False, sep=";")
 
     print(cov.to_string(index=False))
     print()

@@ -68,8 +68,9 @@ overhang.
 
 **4. Debye-screening measurements** — [`scripts/debye_analysis.py`](../scripts/debye_analysis.py)
 measures the height of every probe atom above the graphene plane and reports how much of each probe
-lies within the Debye length λ_D of the three PBS dilutions measured on graphene FETs by
-Purwidyantri et al., *Biosensors* 11:120 (2021): 0.76 nm (1×), 2.41 nm (0.1×) and 7.61 nm (0.01×).
+lies within the Debye length λ_D of three PBS dilutions: 0.76 nm (1×), 2.41 nm (0.1×) and
+7.61 nm (0.01×), the values calculated (Debye–Hückel) for the buffers of the graphene-transistor
+DNA-detection study of Purwidyantri et al., *Biosensors* 11(1):24 (2021).
 
 **5. Renders** — [`scripts/render_complex.py`](../scripts/render_complex.py) produces the side and
 top views, with the probe–sheet separation annotated.

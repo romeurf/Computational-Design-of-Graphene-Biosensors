@@ -274,8 +274,9 @@ Although the models are unrefined, they make one device-relevant quantity measur
 sequence-level metric captures: how much of the probe sits close enough to the graphene to be
 electrically visible. In an electrolyte-gated device the signal from charges beyond the Debye
 length is screened, and that length depends strongly on the buffer: for the electrolytes
-characterised on graphene DNA transistors it ranges from $0.76$~nm in $1\times$~PBS to $2.41$~nm in
-$0.1\times$~PBS and $7.61$~nm in $0.01\times$~PBS \citep{purwidyantri2021}. Taking the first two as
+used in a study of DNA detection with graphene transistors it ranges from $0.76$~nm in
+$1\times$~PBS to $2.41$~nm in $0.1\times$~PBS and $7.61$~nm in $0.01\times$~PBS
+\citep{purwidyantri2021}. Taking the first two as
 reference, the fraction of probe atoms lying within the Debye length of the sheet varies markedly
 across the panel: from $2.0$ to $14.3\%$ (median $6.9\%$) at $1\times$~PBS, and from $22$ to
 $100\%$ at $0.1\times$~PBS. In other words, at physiological ionic strength the great majority of
@@ -336,8 +337,9 @@ $\lambda_D$ at $0.1\times$~PBS.}
 \end{table}
 
 The comparison between buffers should not be read as a recommendation to dilute. Of the three
-electrolytes, $1\times$~PBS is the isotonic formulation and therefore the one whose ionic strength
-approximates that of the biological fluids a diagnostic device would sample; each tenfold dilution
+electrolytes, $1\times$~PBS is the one whose osmolarity and ion concentration are closest to those
+of physiological body fluids \citep{purwidyantri2021}, and therefore the one that approximates the
+samples a diagnostic device would handle; each tenfold dilution
 lengthens $\lambda_D$ by a factor of $\sqrt{10}$ and mechanically increases the visible fraction of
 every probe, but it does so by moving the measurement away from the composition of the sample it is
 meant to emulate. Operating at physiological ionic strength is precisely the regime in which
@@ -349,14 +351,21 @@ the very differences between candidates that make the criterion useful. In this 
 is therefore taken as the physiologically meaningful reference and $0.1\times$~PBS as the
 condition in which the geometric criterion discriminates between probes.
 
-This analysis carries an important caveat. The probe orientation in these models is the one
-predicted by Boltz-2, preserved by the rigid-body placement and \emph{not} optimised against the
+This analysis carries two important caveats. First, the probe orientation in these models is the
+one predicted by Boltz-2, preserved by the rigid-body placement and \emph{not} optimised against the
 surface; since single-stranded DNA is known to adsorb flat on graphene through $\pi$--$\pi$
 stacking \citep{green2015}, the orientations adopted after docking or dynamics will differ, and
-with them the exact coverage values. The numbers above should therefore be read as an indication of
-the range of behaviour the panel can display, and as evidence that interface geometry is an
-independent axis of probe quality worth carrying into the selection, rather than as predictions of
-device response.
+with them the exact coverage values. Second, the fraction of atoms within $\lambda_D$ is a
+geometric index derived from the Debye--H\"uckel picture, which overstates the practical penalty of
+a concentrated buffer. In the same study from which the Debye lengths were taken, hybridisation of
+a $25$-nucleotide target was still detected at attomolar concentration in $1\times$~PBS, with a
+sensitivity of $12.67$~mV per decade against $26.69$~mV per decade in $0.01\times$~PBS; the authors
+note that part of the hybridisation occurs outside the double layer at high ionic strength and
+attribute the persisting response to the contribution of the buffer ions to the ionic density of
+the Stern layer \citep{purwidyantri2021}. The numbers above should therefore be read as a relative
+comparison between candidates and as evidence that interface geometry is an independent axis of
+probe quality worth carrying into the selection, rather than as predictions of whether, or how
+strongly, a device will respond.
 
 \section{Curated dataset of prioritised candidates}
 
