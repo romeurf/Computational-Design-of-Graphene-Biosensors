@@ -136,7 +136,7 @@ DEFAULTS = {
     "max_len":       5000,
     "len_cluster":     True,   # selecionar automaticamente o cluster de comprimento
     "len_cluster_tol": 0.25,   # ±25% em torno do comprimento dominante
-    "seqfold_dg_max": -2.6,   # kcal/mol — P5 da distribuição observada (fixo/reprodutível); era -6.0
+    "seqfold_dg_max": -2.1,   # kcal/mol — P5 da distribuição observada a 1× PBS (fixo/reprodutível)
 }
 
 # ── Perfis por TIPO (bacteria/virus/fungus/protozoa/host) ────────────────────
