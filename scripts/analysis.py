@@ -113,9 +113,9 @@ def analyze_seqfold(df: pd.DataFrame):
     fig, axes = plt.subplots(1, 2, figsize=(12, 4.2))
     axes[0].hist(dgp, bins=40, color="#2E75B6", edgecolor="white")
     axes[0].axvline(SEQFOLD_DEFAULT, color="red", ls="--",
-                    label=f"limiar atual {SEQFOLD_DEFAULT}")
-    axes[0].set(title="Distribuição ΔG MFE (todas as probes pass_basic)",
-                xlabel="ΔG (kcal/mol)", ylabel="nº de probes")
+                    label=f"threshold {SEQFOLD_DEFAULT} kcal/mol")
+    axes[0].set(title="MFE of the probes passing the basic screen",
+                xlabel="ΔG (kcal/mol)", ylabel="number of probes")
     axes[0].legend()
     for g in GENES:
         gd = pop[pop["gene"] == g]["seqfold_dg"].to_numpy()
@@ -123,7 +123,7 @@ def analyze_seqfold(df: pd.DataFrame):
         if gd.size > 5:
             axes[1].hist(gd, bins=25, histtype="step", lw=1.6, label=f"{g} (n={gd.size})")
     axes[1].axvline(SEQFOLD_DEFAULT, color="red", ls="--")
-    axes[1].set(title="ΔG MFE por gene", xlabel="ΔG (kcal/mol)", ylabel="nº de probes")
+    axes[1].set(title="MFE per gene", xlabel="ΔG (kcal/mol)", ylabel="number of probes")
     axes[1].legend(fontsize=8)
     fig.tight_layout(); fig.savefig(FIGDIR / "seqfold_hist.png", dpi=130); plt.close(fig)
 
@@ -133,14 +133,14 @@ def analyze_seqfold(df: pd.DataFrame):
     fig, ax = plt.subplots(figsize=(8, 4.6))
     ax.plot(grid, frac_pass * 100, color="#1F3864", lw=2)
     ax.axvline(SEQFOLD_DEFAULT, color="red", ls="--",
-               label=f"limiar atual {SEQFOLD_DEFAULT} → {(dg>=SEQFOLD_DEFAULT).mean()*100:.1f}% passam")
+               label=f"threshold {SEQFOLD_DEFAULT} kcal/mol → {(dg>=SEQFOLD_DEFAULT).mean()*100:.1f}% pass")
     for p in (5, 10, 25):
         v = np.percentile(dgp, p)
         ax.axvline(v, color="grey", ls=":", lw=0.9)
         ax.text(v, 5, f"P{p}", rotation=90, fontsize=7, color="grey", va="bottom")
-    ax.set(title="Curva cumulativa de aprovação seqfold (% que passa para cada limiar)",
-           xlabel="limiar de ΔG (kcal/mol)  — probe passa se ΔG ≥ limiar",
-           ylabel="% de probes que passam")
+    ax.set(title="Pass rate of the secondary-structure screen by threshold",
+           xlabel="ΔG threshold (kcal/mol); a probe passes if ΔG ≥ threshold",
+           ylabel="probes passing (%)")
     ax.legend(); ax.grid(alpha=0.3)
     fig.tight_layout(); fig.savefig(FIGDIR / "seqfold_cumulative_pass.png", dpi=130); plt.close(fig)
 
@@ -184,7 +184,7 @@ def analyze_sizes(df: pd.DataFrame):
         lens = np.array([len(s) for s in seqs])
         n = len(lens)
         if n == 0:
-            ax.set_title(f"{g} — sem sequências"); ax.axis("off")
+            ax.set_title(f"{g}: no sequences"); ax.axis("off")
             rows.append({"gene": g, "n_seqs": 0}); continue
         sw_p = float(stats.shapiro(lens).pvalue) if 3 <= n <= 5000 and lens.std() > 0 else float("nan")
         normal = (sw_p >= 0.05) if not math.isnan(sw_p) else None
@@ -197,8 +197,8 @@ def analyze_sizes(df: pd.DataFrame):
                      "normal_p<0.05": ("sim" if normal else "não") if normal is not None else "n/a"})
         ax.hist(lens, bins=min(30, max(5, n // 3)), color="#70AD47", edgecolor="white")
         ax.set_title(f"{g}  (n={n}, μ={lens.mean():.0f}±{lens.std():.0f})", fontsize=10)
-        ax.set_xlabel("comprimento (bp)")
-    fig.suptitle("Distribuição do tamanho das sequências NCBI recuperadas por gene")
+        ax.set_xlabel("length (bp)")
+    fig.suptitle("Length of the NCBI sequences retrieved per gene")
     fig.tight_layout(); fig.savefig(FIGDIR / "sizes_per_gene.png", dpi=130); plt.close(fig)
 
     pd.DataFrame(rows).to_csv(ANADIR / "per_gene_sizes.csv", index=False)
@@ -217,10 +217,10 @@ def analyze_sizes(df: pd.DataFrame):
         lens = np.array([len(s) for s in gene_input_seqs(g)])
         if lens.size >= 3 and lens.std() > 0:
             stats.probplot(lens, dist="norm", plot=ax)
-            ax.set_title(f"QQ — {g}", fontsize=10)
+            ax.set_title(f"Q–Q plot: {g}", fontsize=10)
         else:
-            ax.set_title(f"{g} — n/a"); ax.axis("off")
-    fig.suptitle("QQ-plots (normalidade do tamanho das sequências por gene)")
+            ax.set_title(f"{g}: n/a"); ax.axis("off")
+    fig.suptitle("Q–Q plots of sequence length per gene (normality)")
     fig.tight_layout(); fig.savefig(FIGDIR / "sizes_qqplots.png", dpi=130); plt.close(fig)
 
     # Comprimento das probes (próprias)
@@ -232,7 +232,7 @@ def analyze_sizes(df: pd.DataFrame):
         fig, ax = plt.subplots(figsize=(6, 4))
         ax.hist(plen, bins=range(int(plen.min()), int(plen.max()) + 2),
                 color="#2E75B6", edgecolor="white", align="left")
-        ax.set(title="Comprimento das probes (nt)", xlabel="nt", ylabel="nº de probes")
+        ax.set(title="Probe length", xlabel="length (nt)", ylabel="number of probes")
         fig.tight_layout(); fig.savefig(FIGDIR / "probe_length.png", dpi=130); plt.close(fig)
 
 # ── 3. diversidade sem alinhamento (k-mer) ──────────────────────────────────────
@@ -291,8 +291,8 @@ def analyze_diversity(df: pd.DataFrame):
                 D = D[np.ix_(sel, sel)]
             im = ax.imshow(D, cmap="viridis", vmin=0)
             ax.set_title(f"{g}", fontsize=10); ax.set_xticks([]); ax.set_yticks([])
-        fig.colorbar(im, ax=axes, fraction=0.025, label="distância k-mer")
-        fig.suptitle("Diversidade par-a-par (distância k-mer, sem alinhamento)")
+        fig.colorbar(im, ax=axes, fraction=0.025, label="k-mer distance")
+        fig.suptitle("Pairwise diversity (alignment-free k-mer distance)")
         fig.savefig(FIGDIR / "diversity_heatmaps.png", dpi=130, bbox_inches="tight"); plt.close(fig)
 
 # ── 4. rarefação → justificar N ─────────────────────────────────────────────────
@@ -330,8 +330,8 @@ def analyze_rarefaction(df: pd.DataFrame):
         rich_max = richs[-1]
         sat_n = next((m for m, r in zip(sched, richs) if rich_max and r >= 0.95 * rich_max), sched[-1])
         sat_rows.append((g, n, sat_n))
-    axes[0].set(title="Diversidade k-mer média vs N", xlabel="nº de sequências", ylabel="diversidade média")
-    axes[1].set(title="Riqueza (k-mers distintos) vs N", xlabel="nº de sequências", ylabel="k-mers distintos")
+    axes[0].set(title="Mean k-mer diversity", xlabel="number of sequences", ylabel="mean diversity")
+    axes[1].set(title="Richness (distinct k-mers)", xlabel="number of sequences", ylabel="distinct k-mers")
     for ax in axes:
         ax.legend(fontsize=8); ax.grid(alpha=0.3)
     fig.tight_layout(); fig.savefig(FIGDIR / "rarefaction.png", dpi=130); plt.close(fig)

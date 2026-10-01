@@ -74,8 +74,6 @@ TARGETS = {
         "ncbi_query_fallback": '"Neisseria meningitidis"[Organism] AND "outer membrane protein"[Title] AND 100:1200[Sequence Length]',
         "refseq_fallback": "NC_003112",
         "min_len": 100, "max_len": 1200,
-        "gc_max": 0.65,           # IDT OligoAnalyzer guidelines
-        "cons_min": 0.80,         # poucos homólogos NCBI
         "allow_single_seq": True,
     },
     "lytA": {
@@ -166,7 +164,7 @@ SPECIES_PARAMS = {
                                  "_refs": ["H. influenzae AT-rico — IDT"]},
     "Pseudomonas aeruginosa":   {"type": "bacteria", "gc_max": 0.70,
                                  "_refs": ["P. aeruginosa ~67% GC — Stover et al. 2000"]},
-    "Neisseria meningitidis":   {"type": "bacteria", "gc_max": 0.65},
+    "Neisseria meningitidis":   {"type": "bacteria"},
     "Streptococcus pneumoniae": {"type": "bacteria"},
     "Klebsiella pneumoniae":    {"type": "bacteria", "gc_max": 0.65, "_refs": ["K. pneumoniae ~57% GC"]},
     "H1N1":      {"type": "virus", "gc_min": 0.35, "gc_max": 0.52, "_refs": ["Influenza A ~43% GC"]},
