@@ -2,7 +2,8 @@
 
 This chapter reports the results obtained by applying the pipeline to the six-gene panel, with
 $100$ sequences requested per gene (and a per-gene override of $200$ for the data-limited
-\emph{algD}). It follows the flow of the method: sequence retrieval and
+\emph{algD}), with every thermodynamic quantity computed in $1\times$~PBS at $37\,^{\circ}$C
+(Section~\ref{sec:thermo}). It follows the flow of the method: sequence retrieval and
 curation, the screening funnel, three-dimensional validation, the diversity and rarefaction
 analyses, the effect of the organism-aware parameters, the comparison with the reference panel,
 the assembly of probe--graphene models, and the curated dataset of prioritised candidates.
@@ -37,14 +38,18 @@ respectively), which, as shown below, is reflected in their behaviour through th
 
 \section{Screening funnel}
 
-Across the six genes, the pipeline generated $8455$ candidate windows and filtered them down to
-$2943$ that passed both the thermodynamic screen and the secondary-structure screen
-(Table~\ref{tab:funnel}). The melting-temperature and GC filters remove the largest fractions,
-as expected, since they encode the core hybridisation requirements; the homodimer filter is
-particularly severe for the GC-rich \emph{P.\ aeruginosa} genes (\emph{oprL}, \emph{algD}),
-whose sequences are more prone to self-complementarity. The secondary-structure screen removes
-only a small additional fraction, confirming that most structurally problematic candidates are
-already eliminated by the thermodynamic filters.
+Across the six genes, the pipeline generated $7661$ candidate windows and filtered them down to
+$2439$ that passed both the thermodynamic screen and the secondary-structure screen
+(Table~\ref{tab:funnel}). The GC, melting-temperature and homodimer filters remove the largest numbers
+of windows ($1687$, $1609$ and $1403$, respectively), as expected, since they encode the core
+hybridisation requirements. The homodimer filter is most severe for \emph{oprL}, \emph{rmpM} and
+\emph{algD}, removing $55$, $47$ and $41\%$ of the windows that reach it, and mildest for the AT-rich
+\emph{nuc} ($8\%$). In the GC-rich \emph{P.\ aeruginosa} genes, the upper bound of the \acrshort{tm}
+window also removes many windows ($583$ of the $1360$ of \emph{oprL} and $368$ of the $1012$ of
+\emph{algD}), since G--C pairs raise the stability of the duplex \citep{santalucia2004}; this is the
+purpose of that bound, which excludes over-stable probes, and it still leaves $254$ and $288$ candidates
+for the two genes. The secondary-structure screen removes only $136$ further windows, confirming that
+most structurally problematic candidates are already eliminated by the thermodynamic filters.
 
 \begin{table}[H]
 \begin{center}
@@ -52,19 +57,19 @@ already eliminated by the thermodynamic filters.
 \hline
 \textbf{Gene} & \textbf{Windows} & \textbf{$T_m$} & \textbf{GC} & \textbf{Hairpin} & \textbf{Basic} & \textbf{Seqfold} \\
 \hline
-\emph{nuc}  & 667  & 326  & 154  & 143  & 143  & 138 \\
-\emph{rmpM} & 1867 & 1621 & 1366 & 1251 & 841  & 823 \\
-\emph{lytA} & 1833 & 1274 & 966  & 942  & 820  & 771 \\
-\emph{oprL} & 1360 & 1273 & 990  & 800  & 349  & 309 \\
-\emph{algD} & 1012 & 942  & 763  & 662  & 403  & 389 \\
-\emph{frdB} & 1716 & 932  & 752  & 733  & 522  & 513 \\
+\emph{nuc}  & 667  & 572  & 212  & 197  & 181  & 164 \\
+\emph{rmpM} & 1073 & 893  & 683  & 607  & 322  & 320 \\
+\emph{lytA} & 1833 & 1671 & 1234 & 1153 & 876  & 799 \\
+\emph{oprL} & 1360 & 773  & 669  & 576  & 261  & 254 \\
+\emph{algD} & 1012 & 644  & 580  & 522  & 308  & 288 \\
+\emph{frdB} & 1716 & 1499 & 987  & 923  & 627  & 614 \\
 \hline
-\textbf{Total} & \textbf{8455} & \textbf{6368} & \textbf{4991} & \textbf{4531} & \textbf{3078} & \textbf{2943} \\
+\textbf{Total} & \textbf{7661} & \textbf{6052} & \textbf{4365} & \textbf{3978} & \textbf{2575} & \textbf{2439} \\
 \hline
 \end{tabular}
 \end{center}
-\caption{Screening funnel: candidate windows surviving each successive filter. ``Basic'' is the
-number passing all four thermodynamic criteria; ``Seqfold'' additionally passes the
+\caption{Screening funnel in $1\times$~PBS: candidate windows surviving each successive filter.
+``Basic'' is the number passing all four thermodynamic criteria; ``Seqfold'' additionally passes the
 secondary-structure screen.}
 \label{tab:funnel}
 \end{table}
@@ -166,21 +171,25 @@ of distinct $4$-mers (right), per gene, as a function of the number of subsample
 
 The value of resolving thresholds per organism type and species is clearest when scoring the
 reference panel, which spans bacteria, viruses, a fungus, a protozoan and a human control. When
-the $74$ reference probes were scored with a single global (bacterial) criterion, $29$ passed
+the $74$ reference probes were scored with a single global (bacterial) criterion, $33$ passed
 the basic screen; when instead each was scored by the criteria of its own species and type,
-$39$ passed. The additional probes are precisely those whose genome composition differs from
+$42$ passed. The additional probes are precisely those whose genome composition differs from
 the balanced bacterial case --- for example the AT-rich \emph{Plasmodium} probe, which the
 global GC window would reject but which is appropriate under the protozoan profile. This
 confirms that organism-aware thresholds avoid unfair rejections without loosening the criteria
-for the balanced targets.
+for the balanced targets. The gene-level profiles have the same effect on the designed probes: $10$ of
+the $30$ probes finally selected pass the basic screen only because of the profile of their gene ---
+four of the five \emph{nuc} probes and three each of the \emph{algD} and \emph{frdB} probes --- and would
+have been rejected by the global GC or \acrshort{tm} window although they suit the composition of their
+target.
 
 \section{Comparison with the reference panel}
 
 Scored with identical metrics, the designed probes and the reference panel can be compared
-directly. Among the probes that pass the basic screen, the designed probes have a higher mean
-melting temperature ($59.3$ versus $56.9\,^{\circ}$C) and a very similar mean GC content ($0.52$
-versus $0.53$), while the reference probes have a marginally higher mean No-fold score ($86.0$
-versus $82.9$). Because both sets carry a source label and share every column, they can also be
+directly. Among the probes that pass the basic screen, the designed probes have a slightly higher
+mean melting temperature ($62.6$ versus $61.4\,^{\circ}$C) and a very similar mean GC content ($0.49$
+versus $0.51$), while the reference probes have a slightly higher mean No-fold score ($84.7$ versus
+$81.4$). Because both sets carry a source label and share every column, they can also be
 submitted together to Boltz-2, enabling a like-for-like comparison in three dimensions as well as
 in sequence space.
 
@@ -336,36 +345,91 @@ $\lambda_D$ at $0.1\times$~PBS.}
 \label{tab:debye_class}
 \end{table}
 
-The comparison between buffers should not be read as a recommendation to dilute. Of the three
-electrolytes, $1\times$~PBS is the one whose osmolarity and ion concentration are closest to those
-of physiological body fluids \citep{purwidyantri2021}, and therefore the one that approximates the
-samples a diagnostic device would handle; each tenfold dilution
-lengthens $\lambda_D$ by a factor of $\sqrt{10}$ and mechanically increases the visible fraction of
-every probe, but it does so by moving the measurement away from the composition of the sample it is
-meant to emulate. Operating at physiological ionic strength is precisely the regime in which
-screening is most severe, and the strategies reported to circumvent it transduce a target-induced
-conformational change occurring within the screening length rather than dilute the sample
-\citep{nakatsuka2018}. The $0.01\times$ condition illustrates the limit of the dilution route from
-the design point of view: it makes essentially the entire panel visible and, in doing so, removes
-the very differences between candidates that make the criterion useful. In this work $1\times$~PBS
-is therefore taken as the physiologically meaningful reference and $0.1\times$~PBS as the
-condition in which the geometric criterion discriminates between probes.
-
 This analysis carries two important caveats. First, the probe orientation in these models is the
 one predicted by Boltz-2, preserved by the rigid-body placement and \emph{not} optimised against the
 surface; since single-stranded DNA is known to adsorb flat on graphene through $\pi$--$\pi$
 stacking \citep{green2015}, the orientations adopted after docking or dynamics will differ, and
 with them the exact coverage values. Second, the fraction of atoms within $\lambda_D$ is a
 geometric index derived from the Debye--H\"uckel picture, which overstates the practical penalty of
-a concentrated buffer. In the same study from which the Debye lengths were taken, hybridisation of
-a $25$-nucleotide target was still detected at attomolar concentration in $1\times$~PBS, with a
-sensitivity of $12.67$~mV per decade against $26.69$~mV per decade in $0.01\times$~PBS; the authors
-note that part of the hybridisation occurs outside the double layer at high ionic strength and
-attribute the persisting response to the contribution of the buffer ions to the ionic density of
-the Stern layer \citep{purwidyantri2021}. The numbers above should therefore be read as a relative
+a concentrated buffer (Table~\ref{tab:inl}). The numbers above should therefore be read as a relative
 comparison between candidates and as evidence that interface geometry is an independent axis of
 probe quality worth carrying into the selection, rather than as predictions of whether, or how
 strongly, a device will respond.
+
+\subsection*{Why $1\times$~PBS is kept as the reference}
+
+These coverage values do not argue for diluting the buffer. Figure~\ref{fig:debyescale} sets the
+relevant dimensions side by side. In B-form DNA the base pairs are $0.34$~nm apart along the helix axis
+\citep{watsoncrick1953}, so the $18$- to $26$-nucleotide probes selected in this work form duplexes
+$6.1$ to $8.8$~nm long, whereas $\lambda_D$ is $0.76$~nm in $1\times$~PBS: even with the duplex
+standing on the surface, only about two base pairs lie inside it, and no probe long enough to hybridise
+specifically would fit. The mismatch is general for electronic biosensors, in which the Debye length
+under physiological conditions is below $1$~nm while a $30$-base aptamer extends up to about $10$~nm
+\citep{kesler2020}. Lying mostly outside $\lambda_D$ in $1\times$~PBS is therefore a property of the
+transduction rather than of these particular probes, and shortening them would reduce the stability and
+specificity of the duplex without bringing it inside.
+
+\begin{figure}[H]
+\begin{center}
+\includegraphics[width=0.85\textwidth]{images/debye_scale.png}
+\end{center}
+\caption{Length of a hybridised probe (B-form duplex, $0.34$~nm per base pair \citep{watsoncrick1953})
+for the shortest, median and longest probes selected ($18$, $20$ and $26$ nucleotides), compared on the
+same vertical scale with the Debye length of the three PBS dilutions \citep{purwidyantri2021}. The dark
+segment is the part within $\lambda_D$ in $1\times$~PBS. The geometry is the most favourable one: a
+duplex perpendicular to the surface and touching it, without a linker.}
+\label{fig:debyescale}
+\end{figure}
+
+Several further considerations support keeping $1\times$~PBS as the reference condition. It is the
+medium the device is meant to face: its osmolarity and ion concentration approximate those of
+physiological body fluids \citep{purwidyantri2021}, so optimising the probes for a diluted buffer would
+optimise them for a condition that real samples do not have. Hybridisation is, moreover, still detected
+in $1\times$~PBS. In the study from which the Debye lengths are taken, hybridisation of a
+$25$-nucleotide target was detected at attomolar concentrations in all three dilutions
+(Table~\ref{tab:inl}), and a tenfold increase of $\lambda_D$, from $1\times$ to $0.01\times$~PBS, only
+doubled the sensitivity. The Debye length derives from a simplified model of the double layer, valid
+only for small potentials \citep{kesler2020}, and the authors of that study attribute the response in
+$1\times$~PBS to the contribution of the buffer ions to the ionic density of the Stern layer
+\citep{purwidyantri2021}.
+
+\begin{table}[H]
+\begin{center}
+\begin{tabular}{l c c c}
+\hline
+ & \textbf{$1\times$ PBS} & \textbf{$0.1\times$ PBS} & \textbf{$0.01\times$ PBS} \\
+\hline
+$\lambda_D$ (nm)                            & 0.76  & 2.41  & 7.61  \\
+Base pairs of B-DNA within $\lambda_D$      & $\sim$2 & $\sim$7 & $\sim$22 \\
+Sensitivity (mV per decade)                 & 12.67 & 15.95 & 26.69 \\
+Limit of detection (aM)                     & 22.60 & 7.58  & 5.01  \\
+\hline
+\end{tabular}
+\end{center}
+\caption{Debye length of the three PBS dilutions, the corresponding number of base pairs of a B-form
+duplex ($0.34$~nm per base pair \citep{watsoncrick1953}), and the response of graphene transistors to the
+hybridisation of a $25$-nucleotide target in each dilution, as reported by \citet{purwidyantri2021}.}
+\label{tab:inl}
+\end{table}
+
+Hybridisation itself requires salt: cations screen the electrostatic repulsion between the negatively
+charged backbones, so that a higher ionic strength promotes duplex formation \citep{campos2019}. For the
+$30$ probes selected here, the median \acrshort{tm} predicted by the same nearest-neighbour model falls
+from $58.0\,^{\circ}$C in $1\times$~PBS to $47.0\,^{\circ}$C in $0.1\times$~PBS and to $36.7\,^{\circ}$C
+in $0.01\times$~PBS, below the hybridisation temperature of $37\,^{\circ}$C; the last value is an
+estimate, since it extrapolates the salt correction to a very low ionic strength. Diluting a sample to
+lengthen $\lambda_D$ also dilutes the analyte \citep{kesler2020}. The buffer in which the device is read,
+however, need not be the one in which hybridisation takes place: \citet{campos2019} hybridised in a
+buffer of high ionic strength ($10$~mM phosphate buffer, $150$~mM NaCl and $50$~mM MgCl$_2$) and measured
+in $10$~mM phosphate buffer after a stringency rinse. The probes are therefore designed for
+$1\times$~PBS, and the readout buffer remains a parameter of the device protocol.
+
+Strategies that achieve detection at physiological ionic strength act on the device rather than on the
+probe sequence: a biomolecule-permeable layer of polyethylene glycol on the sensing surface
+\citep{gao2015}, also applied to graphene transistors \citep{gao2016}, or the transduction of a
+target-induced conformational change that occurs within the screening length \citep{nakatsuka2018}.
+Within the scope of probe design, $1\times$~PBS is thus taken as the physiologically meaningful
+reference, and the more dilute buffers as readout scenarios evaluated for sensitivity.
 
 \section{Curated dataset of prioritised candidates}
 

@@ -25,7 +25,7 @@ espécie sem perfil, **pergunta** o tipo e cada limiar, **sugerindo** um valor (
 Enter ou se altera), e guarda em `data/species_params.yaml` para as próximas vezes.
 
 **Resultado.** Ao pontuar as 74 probes IPLEX pelos critérios da **sua** espécie/tipo,
-**29 → 39** passam a triagem básica — ex.: a probe de *Plasmodium* (GC 0,30, AT-rica) **passa
+**33 → 42** passam a triagem básica — ex.: a probe de *Plasmodium* (GC 0,30, AT-rica) **passa
 agora**, o que os critérios bacterianos globais rejeitavam. As referências de cada perfil estão em
 `docs/parametros_referencias.csv` (para a secção de Métodos da tese).
 

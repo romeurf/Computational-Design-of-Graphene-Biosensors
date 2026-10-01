@@ -1,24 +1,24 @@
 # Análise exploratória — pipeline GFET
-Fonte: `FINAL_PROBES_ALL.csv` (8455 probes; 8455 próprias, 0 referência/literatura).
+Fonte: `FINAL_PROBES_ALL.csv` (7735 probes; 7661 próprias, 74 referência/literatura).
 
 ## 1. seqfold — distribuição de ΔG MFE e limiar
-- Probes consideradas (próprias, pass_basic, ΔG definido): **3064**  (15 com ΔG implausível >+50 kcal/mol = artefacto seqfold, excluídos das figuras/estatísticas)
-- ΔG MFE (plausível): min **-5.40**, mediana **-0.20** kcal/mol
-- Percentis de ΔG (cauda mais estável = mais negativa): P1=-3.20, P5=-2.60, P10=-2.10, P25=-1.10, P50=-0.20
+- Probes consideradas (próprias, pass_basic, ΔG definido): **2554**  (26 com ΔG implausível >+50 kcal/mol = artefacto seqfold, excluídos das figuras/estatísticas)
+- ΔG MFE (plausível): min **-5.10**, mediana **0.10** kcal/mol
+- Percentis de ΔG (cauda mais estável = mais negativa): P1=-2.90, P5=-2.10, P10=-1.50, P25=-0.70, P50=0.10
 
 - Aprovação a vários limiares (ΔG ≥ limiar):
 
 | limiar | passam (global) | % | nuc | rmpM | lytA | oprL | algD | frdB |
 |---|---|---|---|---|---|---|---|---|
-| 0 | 1470 | 48.0 | 82 | 413 | 417 | 86 | 155 | 317 |
-| -1 | 2265 | 73.9 | 114 | 630 | 563 | 233 | 269 | 456 |
-| -2 | 2745 | 89.6 | 119 | 762 | 726 | 289 | 348 | 501 |
-| -3 | 3025 | 98.7 | 143 | 841 | 803 | 322 | 400 | 516 |
-| -4 | 3055 | 99.7 | 143 | 841 | 807 | 342 | 403 | 519 |
-| -5 | 3059 | 99.8 | 143 | 841 | 807 | 344 | 403 | 521 |
-| -6 | 3064 | 100.0 | 143 | 841 | 807 | 349 | 403 | 521 |
+| 0 | 1485 | 58.1 | 119 | 172 | 539 | 89 | 131 | 435 |
+| -1 | 2148 | 84.1 | 158 | 295 | 669 | 225 | 217 | 584 |
+| -2 | 2406 | 94.2 | 164 | 320 | 778 | 254 | 276 | 614 |
+| -3 | 2541 | 99.5 | 181 | 322 | 851 | 254 | 308 | 625 |
+| -4 | 2551 | 99.9 | 181 | 322 | 856 | 258 | 308 | 626 |
+| -5 | 2551 | 99.9 | 181 | 322 | 856 | 258 | 308 | 626 |
+| -6 | 2554 | 100.0 | 181 | 322 | 856 | 261 | 308 | 626 |
 
-**Recomendação (para discussão):** limiar atual -2.6 kcal/mol → 96.1% passam (população pass_basic, que já tende a ter pouca estrutura). O P5 da distribuição ≈ **-2.6 kcal/mol** marca as ~5% mais estruturadas; o limiar atual está alinhado com o P5 — defensável estatisticamente. Ajustar conforme discussão com o orientador.
+**Recomendação (para discussão):** limiar atual -2.1 kcal/mol → 95.5% passam (população pass_basic, que já tende a ter pouca estrutura). O P5 da distribuição ≈ **-2.1 kcal/mol** marca as ~5% mais estruturadas; o limiar atual está alinhado com o P5 — defensável estatisticamente. Ajustar conforme discussão com o orientador.
 
 ## 2. Tamanhos & hits por gene + normalidade
 
@@ -33,7 +33,7 @@ Fonte: `FINAL_PROBES_ALL.csv` (8455 probes; 8455 próprias, 0 referência/litera
 
 _Shapiro-Wilk: p < 0.05 ⇒ rejeita normalidade. n/a quando n<3 ou variância nula._
 
-- Comprimento das probes próprias: n=8455, intervalo 18–28 nt, média 22.9 (discreto/limitado 18–28 nt → não-normal por construção).
+- Comprimento das probes próprias: n=7661, intervalo 18–28 nt, média 22.9 (discreto/limitado 18–28 nt → não-normal por construção).
 
 ## 3. Diversidade entre sequências recuperadas (sem alinhamento, k-mer)
 - Vetores de frequência de 4-mers por sequência; medidas complementares (todas **sem alinhamento**): **cosseno** (1−similaridade — média/DP/máx), **Jaccard** (presença/ausência de k-mers) e **% de sequências únicas**.
@@ -63,7 +63,7 @@ _0 = idênticas, →1 = diversas. DP/máx mostram a dispersão da diversidade; %
 **Recomendação de N:** a diversidade/riqueza satura por volta de **N ≈ 50** sequências para o gene mais exigente. Usar N ≈ 50–100 por gene é suficiente (mais do que isso acrescenta pouca informação nova). Genes com poucas sequências no NCBI (ex.: algD) são o fator limitante real, não o cap.
 
 ## 5. Descritores de sequência (alternativa ao PyBioMed)
-- 8455 probes descritas → `output/analysis/probe_descriptors.csv` (29 colunas: composição, GC/AT, purina/pirimidina, entropia, 16 dinucleótidos).
+- 7735 probes descritas → `output/analysis/probe_descriptors.csv` (29 colunas: composição, GC/AT, purina/pirimidina, entropia, 16 dinucleótidos).
 - _Descritores de estruturas 3D: adiados (sem estruturas em disco) — ficam como próximo passo._
 
 ## 6. Parâmetros por gene (revisão / transparência)
@@ -73,7 +73,7 @@ _0 = idênticas, →1 = diversas. DP/máx mostram a dispersão da diversidade; %
 | gene | n seqs | comp. usado | filtro min–max | tol | cons_min | GC | Tm_min |
 |---|---|---|---|---|---|---|---|
 | nuc | 77 | 203–333 | 200–3000 | ±0.25 | 0.85 | 0.38–0.60 | 52.0 |
-| rmpM | 76 | 870–1185 | 100–1200 | ±0.25 | 0.8 | 0.40–0.65 | 53.0 |
+| rmpM | 76 | 870–1185 | 100–1200 | ±0.25 | 0.85 | 0.40–0.60 | 53.0 |
 | lytA | 87 | 700–1132 | 700–1300 | ±0.25 | 0.7 | 0.40–0.60 | 53.0 |
 | oprL | 24 | 413–562 | 300–2000 | ±0.25 | 0.85 | 0.40–0.70 | 53.0 |
 | algD | 12 | 526–657 | 500–2500 | ±0.25 | 0.85 | 0.40–0.70 | 53.0 |

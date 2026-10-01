@@ -33,7 +33,11 @@ sequences.
 \section{Multiple sequence alignment}
 
 The retained sequences are aligned with MAFFT in its automatic mode (\texttt{-{}-auto}). When only one
-sequence is available the alignment step is bypassed and that sequence is used directly.
+sequence is available the alignment step is bypassed and that sequence is used directly. The alignment of
+each gene is stored, and the pipeline can restart from the stored alignments instead of querying
+\acrshort{ncbi} again. Because the content of the database changes over time, this allows the downstream
+parameters to be revised without changing the sequences on which the probes are based; all the results
+reported in this dissertation derive from a single retrieval, processed in this way.
 
 \section{Conservation scoring (PPI)}
 
@@ -58,16 +62,35 @@ conservation is below the target's conservation threshold. The sequence of a sur
 per-column consensus (the most frequent non-gap base).
 
 \section{Thermodynamic screening}
+\label{sec:thermo}
 
-Each candidate is scored with \texttt{primer3-py} under fixed conditions: a monovalent cation concentration
-of $50$~mM, no divalent cations or dNTPs, an oligonucleotide concentration of $250$~nM and a reference
-temperature of $37\,^{\circ}$C. Four quantities are computed: the melting temperature \acrshort{tm}
-(\acrfull{nn} model \citep{santalucia2004}), the GC content (the fraction of G and C bases), the
-hairpin free energy and the homodimer (self-dimer) free energy, the last two reported in kcal/mol and only
-when a structure is found. A candidate passes the basic screen when its \acrshort{tm} and GC content fall
-within the resolved windows and its hairpin and homodimer free energies are no more negative than their
-respective limits (Table~\ref{tab:params}). The \acrshort{tm} window may optionally be derived from the
-hybridisation assay temperature $T$ as $[T+15,\,T+35]\,^{\circ}$C.
+Each candidate is scored with \texttt{primer3-py} under the conditions of the reference buffer,
+$1\times$ \acrfull{pbs}: $137$~mM NaCl, $2.7$~mM KCl, $10$~mM Na$_2$HPO$_4$ and $1.8$~mM KH$_2$PO$_4$
+\citep{cshpbs2006}, that is, $157$~mM Na$^+$ and $4.5$~mM K$^+$, which \texttt{primer3} treats together
+as a monovalent cation concentration of $161.5$~mM. No divalent cations or dNTPs are present, the
+oligonucleotide concentration is $250$~nM and the temperature is $37\,^{\circ}$C. Four quantities are
+computed: the melting temperature \acrshort{tm} (\acrfull{nn} model \citep{santalucia2004}), the GC
+content (the fraction of G and C bases), the hairpin free energy and the homodimer (self-dimer) free
+energy, the last two reported in kcal/mol and only when a structure is found. A candidate passes the
+basic screen when its \acrshort{tm} and GC content fall within the resolved windows and its hairpin and
+homodimer free energies are no more negative than their respective limits (Table~\ref{tab:params}).
+
+The reference conditions are those of the intended application. Among the buffers used for DNA
+detection with graphene transistors, $1\times$~PBS is the one whose osmolarity and ion concentration
+approximate those of physiological body fluids \citep{purwidyantri2021}, and $37\,^{\circ}$C is the
+physiological temperature; for the stability of the probe--target duplex it is also a more demanding
+condition than room temperature. Computing every thermodynamic quantity under these conditions gives
+each threshold a direct meaning. The \acrshort{tm} window is a margin over the hybridisation temperature
+$T$: its default, $53$--$72\,^{\circ}$C, places the \acrshort{tm} between $16$ and $35\,^{\circ}$C above
+$37\,^{\circ}$C, and for another assay temperature it can be derived as $[T+15,\,T+35]\,^{\circ}$C. The
+lower bound keeps the duplex stable well above the hybridisation temperature; the upper bound excludes
+probes so stable that hybridisation at that temperature would no longer discriminate imperfectly
+matched targets \citep{wetmur1991}. The hairpin and homodimer limits are absolute free energies of
+self-structure, so that, evaluated in the reference buffer, they refer to the stability of that structure
+in the solution in which the probe is used. Because a higher ionic strength stabilises every
+base-paired structure \citep{santalucia2004}, the same limits are more demanding in $1\times$~PBS than
+at lower ionic strength, which is the intended consequence of evaluating the probes under their
+conditions of use.
 
 \begin{table}[H]
 \begin{center}
@@ -75,19 +98,21 @@ hybridisation assay temperature $T$ as $[T+15,\,T+35]\,^{\circ}$C.
 \hline
 \textbf{Parameter} & \textbf{Default value} & \textbf{Basis} \\
 \hline
+Ionic conditions        & $1\times$ PBS (161.5 mM Na$^+$+K$^+$) & \citet{purwidyantri2021}; \citet{cshpbs2006} \\
+Temperature             & 37 $^{\circ}$C         & physiological \\
 Probe length            & 18--28 nt              & \citet{wetmur1991} \\
-Melting temperature $T_m$ & 53--72 $^{\circ}$C   & \citet{santalucia2004}; assay-derivable \\
+Melting temperature $T_m$ & 53--72 $^{\circ}$C   & $T+16$ to $T+35$ at $T=37\,^{\circ}$C; \citet{santalucia2004} \\
 GC content              & 40--60\%               & IDT OligoAnalyzer \citep{idtoligo} \\
 Hairpin $\Delta G$      & $\geq -2.0$ kcal/mol   & \citet{idtoligo}; primer3 \citep{untergasser2012} \\
 Homodimer $\Delta G$    & $\geq -5.0$ kcal/mol   & IDT OligoAnalyzer \citep{idtoligo} \\
 Conservation (\acrshort{ppi}) & $\geq 0.85$      & pan-strain detection \citep{viruscope} \\
 Alignment gap fraction  & $\leq 20\%$            & alignment quality \\
-Secondary structure $\Delta G_{\text{MFE}}$ & $\geq -2.6$ kcal/mol & 5th percentile of the data \\
+Secondary structure $\Delta G_{\text{MFE}}$ & $\geq -2.1$ kcal/mol & 5th percentile in $1\times$ PBS \\
 \hline
 \end{tabular}
 \end{center}
-\caption{Global default thresholds. Values are overridden per organism type, species or gene where
-justified (Section~\ref{sec:params}).}
+\caption{Global default thresholds, all evaluated in $1\times$~PBS at $37\,^{\circ}$C. Values are
+overridden per organism type, species or gene where justified (Section~\ref{sec:params}).}
 \label{tab:params}
 \end{table}
 
@@ -96,16 +121,21 @@ justified (Section~\ref{sec:params}).}
 The single-strand secondary structure of each candidate that passed the basic screen is computed with
 \texttt{seqfold}, which returns the \acrfull{mfe} at $37\,^{\circ}$C and the fraction of paired bases. A
 candidate passes the secondary-structure screen when its \acrshort{mfe} is no more negative than
-$-2.6$~kcal/mol; this value is the fifth percentile of the observed \acrshort{mfe} distribution
-(Figure~\ref{fig:seqfold}), and fixing it keeps the criterion reproducible across runs rather than always
-cutting a fixed fraction of the data.
+$-2.1$~kcal/mol. This value is the fifth percentile of the \acrshort{mfe} distribution of the candidates
+that pass the basic screen in the reference buffer (Figure~\ref{fig:seqfold}). The \texttt{seqfold}
+energies do not take the ionic strength as an input, but the population over which the percentile is
+taken does depend on it, because the hairpin and homodimer filters that precede this screen are
+evaluated in $1\times$~PBS; deriving the threshold from that population keeps it consistent with the
+other criteria. Once derived, the value is fixed, so that the criterion remains reproducible across runs
+rather than always removing a fixed fraction of the data.
 
 \begin{figure}[H]
 \begin{center}
 \includegraphics[width=0.7\textwidth]{images/seqfold_hist.png}
 \end{center}
 \caption{Distribution of the \texttt{seqfold} secondary-structure free energy ($\Delta G_{\text{MFE}}$)
-over the candidate probes, from which the $-2.6$~kcal/mol threshold (fifth percentile) is taken.}
+of the candidates that pass the basic screen in $1\times$~PBS, overall (left) and per gene (right), with
+the $-2.1$~kcal/mol threshold (fifth percentile).}
 \label{fig:seqfold}
 \end{figure}
 
@@ -163,6 +193,41 @@ the user for the organism type and for each threshold, proposing a suggested val
 overridden; the resulting profile is stored and reused in later runs. When run non-interactively, it applies
 the suggested values without prompting.
 
+\paragraph{Gene profiles.} At the most specific layer, each gene of the panel has a profile that departs
+from the global defaults only where its sequences require it (Table~\ref{tab:geneprofiles}). The GC
+windows follow the measured composition of each target: the AT-rich \emph{nuc} and \emph{frdB} sequences
+($35.5$ and $39.2\%$ GC) accept probes down to $38\%$ GC, and \emph{nuc} also a \acrshort{tm} down to
+$52\,^{\circ}$C, since A--T pairs contribute less duplex stability than G--C pairs \citep{santalucia2004};
+the GC-rich \emph{oprL} and \emph{algD} sequences ($63.5$ and $64.6\%$ GC, in line with the $\sim$67\%
+GC of the \emph{P.\ aeruginosa} genome \citep{stover2000}) accept probes up to $70\%$ GC. The relaxed
+conservation and gap limits of \emph{lytA} follow its allelic diversity \citep{obregon2002}, which also
+makes it the most diverse gene of the panel (Table~\ref{tab:diversity}), and \emph{algD} is allowed up to
+$200$ records because only $19$ are available in \acrshort{ncbi}. \emph{rmpM}, whose sequences have a
+balanced composition ($52.2\%$ GC) and which is well represented in the database, uses the global
+defaults. The GC, conservation, gap and length criteria are properties of the sequences and of the
+alignment and do not depend on the buffer; the \acrshort{tm} and free-energy criteria are evaluated in
+the reference buffer (Section~\ref{sec:thermo}).
+
+\begin{table}[H]
+\begin{center}
+\begin{tabular}{l l c l}
+\hline
+\textbf{Gene} & \textbf{Profile} & \textbf{GC of the sequences} & \textbf{Basis} \\
+\hline
+\emph{nuc}  & $T_m \geq 52\,^{\circ}$C; GC 38--60\%            & 35.5\% & AT-rich target \\
+\emph{rmpM} & global defaults                                  & 52.2\% & balanced composition \\
+\emph{lytA} & \acrshort{ppi} $\geq 0.70$; gaps $\leq 40\%$     & 44.9\% & allelic diversity \citep{obregon2002} \\
+\emph{oprL} & GC $\leq 70\%$                                   & 63.5\% & GC-rich target \citep{stover2000} \\
+\emph{algD} & GC $\leq 70\%$; up to 200 records                & 64.6\% & GC-rich target; 19 records \\
+\emph{frdB} & GC 38--60\%                                      & 39.2\% & AT-rich target \\
+\hline
+\end{tabular}
+\end{center}
+\caption{Gene-level profiles. The GC content is the mean over the retrieved sequences of each gene, gaps
+excluded. Parameters not listed take the global defaults of Table~\ref{tab:params}.}
+\label{tab:geneprofiles}
+\end{table}
+
 \section{Quality-based selection}
 
 Because three-dimensional prediction is comparatively expensive, only the best candidates per gene are
@@ -185,6 +250,11 @@ primarily for proteins, the overall confidence and the \acrshort{plddt} are used
 independent indicators of the structural soundness of the short probes. The predictions are merged with the
 sequence metadata to produce a final ranked shortlist combining sequence quality (conservation and No-fold)
 with the 3D confidence.
+
+Each selected probe was also predicted in its hybridised state, as a duplex with its full complementary
+target of the same length (probe as chain A, target as chain B). This is the target format used in the
+graphene-transistor studies that define the experimental context of this work, in which a
+$25$-nucleotide probe was hybridised to its $25$-nucleotide complement \citep{campos2019,purwidyantri2021}.
 
 \section{Assembly of probe--graphene models}
 \label{sec:complex}
@@ -286,19 +356,41 @@ molecular docking or force-field refinement, but no interaction energy is comput
 \subsection{Measurement of the Debye coverage of the models}
 \label{sec:debyemethod}
 
-From each assembled model, a single device-relevant quantity was measured: the fraction of the probe
-that lies close enough to the graphene to escape electrostatic screening. The mean $z$ of the chain
-\texttt{G} atoms defines the graphene plane, the height of every chain \texttt{D} atom above that
-plane is computed, and the coverage is the percentage of probe atoms whose height does not exceed
-the Debye length $\lambda_D$.
+From each model, the part of the probe that lies close enough to the graphene to escape electrostatic
+screening was measured. The mean $z$ of the graphene atoms defines the plane of the sheet, and the height
+of every probe atom above it is computed. Two quantities are reported: the percentage of probe atoms whose
+height does not exceed the Debye length $\lambda_D$, and the number of phosphorus atoms within it. The
+second is the more direct measure of what the transistor senses, since the charge of DNA is carried by its
+phosphate groups, one negative charge each.
 
 The values of $\lambda_D$ were taken from a study of DNA-hybridisation detection with graphene
 transistors that used these same buffers, where they were calculated with the Debye--H\"uckel
 approximation \citep{purwidyantri2021}: $0.76$~nm for $1\times$~PBS, $2.41$~nm for
-$0.1\times$~PBS and $7.61$~nm for $0.01\times$~PBS. The three were evaluated for every model, and
-the results aggregated by Boltz-2 confidence class (Section~\ref{sec:complexres}). Because the
-coverage depends on the orientation of the probe, which here is the predicted one preserved by the
-rigid-body placement, these values describe the assembled models and not a refined adsorbed state.
+$0.1\times$~PBS and $7.61$~nm for $0.01\times$~PBS.
+
+Three geometries were measured. The first is the rigid placement described above, which keeps the
+orientation predicted by Boltz-2. The second reproduces the immobilisation used in the graphene-transistor
+studies that define the experimental context of this work, in which the probe carries an amino
+modification at its $3'$ end and is bound through \acrfull{pbse}, a linker whose pyrene group adsorbs on
+graphene by $\pi$--$\pi$ stacking \citep{campos2019,purwidyantri2021}: the probe is tethered by its $3'$
+end. To sample the orientations such a tether allows, each predicted structure was given $20\,000$
+orientations, drawn as directions distributed uniformly on the sphere; for a flat sheet, the height of
+every atom depends only on which direction of the molecule points away from the surface, so rotations
+about that direction need not be sampled. In each orientation the lowest atom is placed at the contact
+distance of $3.2$~\AA{} \citep{tayo2023}, and the orientation is retained only if that atom belongs to
+the $3'$-terminal nucleotide, that is, if the probe touches the sheet with its $3'$ end. No linker length
+is added, so the $3'$ end sits as close to the surface as possible. The median and the maximum over the
+retained orientations are reported. The third geometry applies the same procedure to the probe--target
+duplex, anchored by the $3'$ end of the probe, and counts the phosphates of the target strand within
+$\lambda_D$: the charge that hybridisation brings into the sensing volume. As a check on the predicted
+duplex geometry, its rise per base pair was computed from the midpoints of the C1$'$ atoms of the paired
+nucleotides and compared with the $0.34$~nm of B-form DNA \citep{watsoncrick1953}.
+
+The probes of each gene were finally compared on two independent axes, the Boltz-2 confidence and the
+median number of phosphates within $\lambda_D$ in $1\times$~PBS for the anchored probe. The probes on the
+Pareto front of the two --- those for which no other probe of the same gene is at least as good on both
+axes and better on one --- form the final selection. Using the front rather than a weighted sum avoids an
+arbitrary weighting of two quantities of different nature.
 
 \section{Integration of a reference probe panel}
 

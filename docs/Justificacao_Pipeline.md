@@ -63,12 +63,13 @@ tempo de cálculo gasto em más candidatas.
 | Parâmetro | Valor | Fundamento |
 |---|---|---|
 | Comprimento da probe | 18–28 nt | Wetmur 1991; GFET usam tipicamente 20-mer ssDNA |
-| Tm | 53–72 °C (52 para AT-rich) | SantaLucia & Hicks 2004; deriva auto da T do ensaio via `--assay-temp` (T+15…+35) |
+| Condições termodinâmicas | 1× PBS: 157 mM Na⁺ + 4,5 mM K⁺ (161,5 mM monovalente), oligo 250 nM, 37 °C | tampão de referência, de composição iónica próxima dos fluidos fisiológicos (Purwidyantri et al. 2021); receita padrão do PBS (Cold Spring Harbor Protocols 2006) |
+| Tm | 53–72 °C (52 para AT-rich) | margem de 16–35 °C acima da hibridação a 37 °C, calculada em 1× PBS; SantaLucia & Hicks 2004; deriva auto da T do ensaio via `--assay-temp` (T+15…+35) |
 | GC | 40–60% (38–60 AT-rich; ≤70 P. aeruginosa) | janela ótima 40–60% (PremierBiosoft/UNLV); P. aeruginosa ~67% GC genómico (Stover 2000) |
 | Hairpin ΔG | > −2.0 kcal/mol | guias IDT/primer3 (−1.5 a −3) |
 | Homodímero ΔG | > −5.0 kcal/mol | guias IDT (self-dimer ~−6) |
-| Conservação (PPI) | ≥ 0.85 (rmpM 0.80; lytA 0.70) | regiões conservadas para deteção pan-estirpe; lytA relaxado por diversidade alélica (Whatmore 2000) |
-| seqfold ΔG MFE | ≥ −2.6 kcal/mol | **P5 da distribuição observada** (fixo/reprodutível); coincide com a guia "hairpin −3"; recalibrado de −6.0 (que deixava passar 100%) |
+| Conservação (PPI) | ≥ 0.85 (lytA 0.70) | regiões conservadas para deteção pan-estirpe; lytA relaxado por diversidade alélica (Obregón et al. 2002) |
+| seqfold ΔG MFE | ≥ −2.1 kcal/mol | **P5 da distribuição observada em 1× PBS** (sondas que passam a triagem básica; fixo/reprodutível) |
 
 *Decisão:* Tm/GC/conservação são **defaults biológicos fixos** (com override por gene
 quando justificado) — **não** são auto-derivados dos dados, para não baixar a fasquia em
@@ -90,7 +91,7 @@ deixaram de ser só bacterianos. A resolução tem três camadas (`cfg`/`cfg_spe
 - **Espécies novas:** o programa **pergunta ao utilizador em tempo real** (sugere o tipo e cada
   limiar; o utilizador aceita/altera) e guarda em `data/species_params.yaml`.
 
-Efeito nas 74 probes IPLEX: com critérios por tipo, **29 → 39** passam a triagem básica — ex.: a
+Efeito nas 74 probes IPLEX: com critérios por tipo, **33 → 42** passam a triagem básica — ex.: a
 probe de *Plasmodium* (GC 0,30, AT-rica) passa agora, o que os critérios bacterianos rejeitariam.
 Referências de cada perfil em `docs/parametros_referencias.csv`.
 
@@ -107,15 +108,15 @@ real são os genes com poucas sequências no NCBI (algD ~19, oprL ~24), não o l
 
 - **Conservação = só PPI** (sem PPI3) — probes não são estendidas por polimerase.
 - **Comprimento automático** por cluster dominante — sem afinação manual por gene.
-- **Limiares recalibrados a partir dos dados/literatura** (gc_max 0.60; seqfold −2.6),
+- **Limiares recalibrados a partir dos dados/literatura** (gc_max 0.60; seqfold −2.1, P5 em 1× PBS),
   mantidos **fixos** (reprodutíveis) em vez de recalculados a cada corrida.
 - **Janela Tm derivável** da temperatura do ensaio (`--assay-temp`); por defeito 53–72 °C.
 - **Seleção para Boltz por qualidade** (PPI+No-fold), não por Tm.
 - **Merge de probes de referência é opcional** (`--with-reference`) — o core corre sobre as probes próprias.
 
-## 7. Resultados (corrida N=100, 2026-06-16)
+## 7. Resultados (corrida N=100, termodinâmica em 1× PBS)
 
-Funil global: **8455 janelas candidatas → 3078 passam triagem básica → 2943 passam
+Funil global: **7661 janelas candidatas → 2575 passam triagem básica → 2439 passam
 seqfold → 30 selecionadas para Boltz** (top 5/gene por qualidade).
 
 Validação 3D (Boltz-2): **4 GOOD, 11 MODERATE, 15 LOW** (confidence). Melhores candidatas

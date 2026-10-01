@@ -123,7 +123,7 @@ Each stage is a function in `pipeline.py`:
 ### Configuration (in `pipeline.py`)
 
 - `DEFAULTS` — global thresholds (length 18–28 nt, Tm 53–72 °C, GC 40–60%, hairpin ≥ −2.0,
-  homodimer ≥ −5.0, PPI ≥ 0.85, gap ≤ 20%, seqfold MFE ≥ −2.6 kcal/mol).
+  homodimer ≥ −5.0, PPI ≥ 0.85, gap ≤ 20%, seqfold MFE ≥ −2.1 kcal/mol), all computed in 1× PBS.
 - `TYPE_DEFAULTS` — five organism profiles (bacteria / virus / fungus / protozoa / host).
 - `SPECIES_PARAMS` — per-species overrides tuned by genome GC content.
 - `TARGETS` — the six target genes and their NCBI queries.

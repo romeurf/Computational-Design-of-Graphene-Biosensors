@@ -106,9 +106,9 @@ Corrida completa de ponta a ponta, sem erros:
 | Etapa | Resultado |
 |---|---|
 | Genes recuperados do NCBI | 6/6 (nuc, rmpM, lytA, oprL, algD, frdB) |
-| Funil global | 8455 janelas → **3078** passam triagem básica → **2943** passam seqfold |
-| Probes IPLEX pontuadas | **74** (pelos critérios da sua espécie) → **38 passam** |
-| Tabela consolidada | `FINAL_PROBES_ALL.csv` — **8529 probes** (8455 minhas + 74 IPLEX) |
+| Funil global | 7661 janelas → **2575** passam triagem básica → **2439** passam seqfold |
+| Probes IPLEX pontuadas | **74** (pelos critérios da sua espécie) → **41 passam** |
+| Tabela consolidada | `FINAL_PROBES_ALL.csv` — **7735 probes** (7661 minhas + 74 IPLEX) |
 | Input Boltz | `boltz2_inputs.zip` — **68 probes** (30 minhas top-5/gene + 38 IPLEX) |
 
 As 17 espécies do painel IPLEX estão todas pré-definidas, por isso esta corrida não precisou de perguntar
