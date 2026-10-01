@@ -43,8 +43,9 @@ reported in this dissertation derive from a single retrieval, processed in this 
 
 Conservation is scored per alignment column using the \acrfull{ppi}, adopted from the \emph{ViruScope}
 tool \citep{viruscope}. For a column, the \acrshort{ppi} is the average identity over all pairs of
-non-gap bases, computed from the base counts; pairs of ambiguous \acrshort{iupac} bases contribute a partial weight
-(for example a purine code $R$ scores $0.5$ against $A$ or $G$, and $N$ scores $0.25$ against any base).
+non-gap bases, computed from the base counts; pairs of ambiguous \acrshort{iupac} bases contribute a
+partial weight (for example a purine code $R$ scores $0.5$ against $A$ or $G$, and $N$ scores $0.25$
+against any base).
 Columns in which fewer than $30\%$ of the sequences have a non-gap base are assigned zero, and only
 columns with at least two non-gap bases are counted. Because the per-column \acrshort{ppi} is independent
 of the window, it is pre-computed once per alignment, which is essential for hundreds of sequences. The
@@ -98,10 +99,10 @@ conditions of use.
 \hline
 \textbf{Parameter} & \textbf{Default value} & \textbf{Basis} \\
 \hline
-Ionic conditions        & $1\times$ PBS (161.5 mM Na$^+$+K$^+$) & \citet{purwidyantri2021}; \citet{cshpbs2006} \\
-Temperature             & 37 $^{\circ}$C         & physiological \\
-Probe length            & 18--28 nt              & \citet{wetmur1991} \\
-Melting temperature $T_m$ & 53--72 $^{\circ}$C   & $T+16$ to $T+35$ at $T=37\,^{\circ}$C; \citet{santalucia2004} \\
+Ionic conditions        & $1\times$ PBS         & \citet{purwidyantri2021}; \citet{cshpbs2006} \\
+Temperature             & 37 $^{\circ}$C        & physiological \\
+Probe length            & 18--28 nt             & \citet{wetmur1991} \\
+Melting temperature $T_m$ & 53--72 $^{\circ}$C  & $T+16$ to $T+35$ \citep{santalucia2004} \\
 GC content              & 40--60\%               & IDT OligoAnalyzer \citep{idtoligo} \\
 Hairpin $\Delta G$      & $\geq -2.0$ kcal/mol   & \citet{idtoligo}; primer3 \citep{untergasser2012} \\
 Homodimer $\Delta G$    & $\geq -5.0$ kcal/mol   & IDT OligoAnalyzer \citep{idtoligo} \\
@@ -111,8 +112,9 @@ Secondary structure $\Delta G_{\text{MFE}}$ & $\geq -2.1$ kcal/mol & 5th percent
 \hline
 \end{tabular}
 \end{center}
-\caption{Global default thresholds, all evaluated in $1\times$~PBS at $37\,^{\circ}$C. Values are
-overridden per organism type, species or gene where justified (Section~\ref{sec:params}).}
+\caption{Global default thresholds, all evaluated in $1\times$~PBS ($161.5$~mM Na$^+$ and K$^+$) at
+$37\,^{\circ}$C. Values are overridden per organism type, species or gene where justified
+(Section~\ref{sec:params}).}
 \label{tab:params}
 \end{table}
 
@@ -212,19 +214,19 @@ the reference buffer (Section~\ref{sec:thermo}).
 \begin{center}
 \begin{tabular}{l l c l}
 \hline
-\textbf{Gene} & \textbf{Profile} & \textbf{GC of the sequences} & \textbf{Basis} \\
+\textbf{Gene} & \textbf{Profile} & \textbf{GC} & \textbf{Basis} \\
 \hline
-\emph{nuc}  & $T_m \geq 52\,^{\circ}$C; GC 38--60\%            & 35.5\% & AT-rich target \\
-\emph{rmpM} & global defaults                                  & 52.2\% & balanced composition \\
-\emph{lytA} & \acrshort{ppi} $\geq 0.70$; gaps $\leq 40\%$     & 44.9\% & allelic diversity \citep{obregon2002} \\
-\emph{oprL} & GC $\leq 70\%$                                   & 63.5\% & GC-rich target \citep{stover2000} \\
-\emph{algD} & GC $\leq 70\%$; up to 200 records                & 64.6\% & GC-rich target; 19 records \\
-\emph{frdB} & GC 38--60\%                                      & 39.2\% & AT-rich target \\
+\emph{nuc}  & $T_m \geq 52\,^{\circ}$C; GC 38--60\%        & 35.5\% & AT-rich target \\
+\emph{rmpM} & global defaults                              & 52.2\% & balanced composition \\
+\emph{lytA} & \acrshort{ppi} $\geq 0.70$; gaps $\leq 40\%$ & 44.9\% & allelic diversity \citep{obregon2002} \\
+\emph{oprL} & GC $\leq 70\%$                               & 63.5\% & GC-rich \citep{stover2000} \\
+\emph{algD} & GC $\leq 70\%$; up to 200 records            & 64.6\% & GC-rich; 19 records \\
+\emph{frdB} & GC 38--60\%                                  & 39.2\% & AT-rich target \\
 \hline
 \end{tabular}
 \end{center}
-\caption{Gene-level profiles. The GC content is the mean over the retrieved sequences of each gene, gaps
-excluded. Parameters not listed take the global defaults of Table~\ref{tab:params}.}
+\caption{Gene-level profiles. ``GC'' is the mean GC content of the retrieved sequences of each gene,
+gaps excluded. Parameters not listed take the global defaults of Table~\ref{tab:params}.}
 \label{tab:geneprofiles}
 \end{table}
 

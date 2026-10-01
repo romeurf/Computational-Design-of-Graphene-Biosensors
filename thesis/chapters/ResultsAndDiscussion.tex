@@ -82,9 +82,9 @@ From the candidates that passed screening, the five highest-quality per gene ($3
 were selected by the quality score and submitted to Boltz-2, each both as a single strand and as a
 duplex with its complementary target. All $60$ predictions completed successfully.
 
-\paragraph{Single strands.} By the overall confidence, $4$ probes were classified as \textsc{good}
-($\geq 0.70$), $13$ as \textsc{moderate} ($0.60$--$0.70$) and $13$ as \textsc{low} (below $0.60$),
-with confidences between $0.487$ and $0.752$ and a mean of $0.610$. The four \textsc{good} probes
+\paragraph{Single strands.} By the overall confidence, $4$ probes were classified as GOOD
+($\geq 0.70$), $13$ as MODERATE ($0.60$--$0.70$) and $13$ as LOW (below $0.60$),
+with confidences between $0.487$ and $0.752$ and a mean of $0.610$. The four GOOD probes
 belong to four different genes (Table~\ref{tab:boltz}), so the panel does not concentrate its
 best-predicted structures in a single target. These values are modest in absolute terms, which is
 expected: the confidence of Boltz-2, like that of AlphaFold~3 on which its metrics are modelled
@@ -106,7 +106,7 @@ p2571 & \emph{lytA} & 0.879 & 97.2 & 0.725 & 0.866 \\
 \hline
 \end{tabular}
 \end{center}
-\caption{The four probes classified as \textsc{good} by the Boltz-2 confidence, with their
+\caption{The four probes classified as GOOD by the Boltz-2 confidence, with their
 sequence-level conservation and No-fold score.}
 \label{tab:boltz}
 \end{table}
@@ -126,9 +126,9 @@ of the sequence-level quality that was used to select these probes: across the $
 Pearson correlation between the confidence and the quality score is $r = -0.01$, and the confidence
 is likewise unrelated to the conservation ($r = 0.05$) and to the No-fold score ($r = -0.10$). The
 structure prediction therefore does not restate the sequence ranking: it contributes information of
-its own. This is the reason it is carried into the final selection as a separate axis
-(Section~\ref{sec:final}) instead of being folded into the quality score, where it would have been
-diluted by two signals it does not correlate with.
+its own. That is why it enters the final selection as a separate axis (Section~\ref{sec:final})
+rather than being folded into the quality score, where it would have been diluted by two signals
+with which it does not correlate.
 
 \paragraph{Reproducibility of the predictions.} Because the change of reference buffer altered part
 of the selection (Section~\ref{sec:funnel}), $9$ probe sequences were predicted in both the
@@ -136,7 +136,7 @@ preliminary and the final run, which allows the run-to-run variability of Boltz-
 directly. For those sequences the confidence changed by $-0.003$ on average, and by at most
 $0.052$; the predictions are therefore stable, and differences of this order between probes should
 not be interpreted. Over the whole panel, the final selection has a slightly higher mean confidence
-than the preliminary one ($0.610$ against $0.603$) and the same number of \textsc{good} probes,
+than the preliminary one ($0.610$ against $0.603$) and the same number of GOOD probes,
 which indicates that screening in the reference buffer did not degrade the structural quality of the
 candidates it selects.
 
@@ -283,7 +283,7 @@ dimension of the probe, which determined the sheet size; ``height'' is its verti
 \label{tab:complexes}
 \end{table}
 
-Figure~\ref{fig:complex} shows the assembled models of the \textsc{good} probes of \emph{algD} and
+Figure~\ref{fig:complex} shows the assembled models of the GOOD probes of \emph{algD} and
 \emph{frdB}, drawn directly from the atomic coordinates of the output files. The side view makes the
 assembly geometry explicit --- the planar graphene lattice, the probe resting above it and the
 $3.2$~\AA{} separation --- while the top view shows the probe footprint contained well within the
@@ -310,7 +310,7 @@ affinity or preferred orientation; what they establish is that the whole panel c
 clash-free, physically sensible interface models by an automated procedure, and that the resulting
 models are suitable inputs for the refinement stages that follow.
 
-\section{Why $1\times$~PBS is kept as the reference}
+\section{Why \texorpdfstring{$1\times$}{1x}~PBS is kept as the reference}
 \label{sec:buffer}
 
 These coverage values do not argue for diluting the buffer. Figure~\ref{fig:debyescale} sets the
@@ -409,9 +409,9 @@ sheet, well inside the $76.1$~\AA{} of $\lambda_D$ at that dilution.
 
 Table~\ref{tab:debyeclass} breaks these values down by Boltz-2 confidence class. Three observations
 follow. At $1\times$~PBS no model of any class reaches even $15\%$ coverage, and the class medians
-are ordered \emph{against} the confidence (\textsc{low} 8.5\%,
-\textsc{moderate} 6.2\%,
-\textsc{good} 5.6\%). At $0.1\times$~PBS the models
+are ordered \emph{against} the confidence (LOW 8.5\%,
+MODERATE 6.2\%,
+GOOD 5.6\%). At $0.1\times$~PBS the models
 separate, from 23.2\% to 97.8\%, and it is in
 this buffer that the criterion is most informative: 22 of
 the $30$ models place at least half of their atoms inside the screening length. At $0.01\times$~PBS
@@ -425,9 +425,9 @@ the criterion saturates, assigning $100\%$ to every candidate and therefore dist
 \textbf{Class} & \textbf{$n$} & \textbf{(\AA)} & \textbf{$1\times$} & \textbf{$0.1\times$} &
 \textbf{$0.1\times$, $\geq 50\%$} & \textbf{$0.01\times$} \\
 \hline
-\textsc{good} & 4 & 47.6 & 5.6\% & 53.9\% & 2/4 & 100.0\% \\
-\textsc{moderate} & 13 & 40.1 & 6.2\% & 56.5\% & 10/13 & 100.0\% \\
-\textsc{low} & 13 & 33.4 & 8.5\% & 73.4\% & 10/13 & 100.0\% \\
+GOOD & 4 & 47.6 & 5.6\% & 53.9\% & 2/4 & 100.0\% \\
+MODERATE & 13 & 40.1 & 6.2\% & 56.5\% & 10/13 & 100.0\% \\
+LOW & 13 & 33.4 & 8.5\% & 73.4\% & 10/13 & 100.0\% \\
 \hline
 \textbf{All} & \textbf{30} & \textbf{38.2} & \textbf{7.4\%} & \textbf{58.9\%} & \textbf{22/30} & \textbf{100.0\%} \\
 \hline
@@ -523,17 +523,17 @@ least one candidate, and the probes selected on confidence are unaffected.
 \multicolumn{2}{c}{\textbf{Phosphates within $\lambda_D$}} & \textbf{Orientations} \\
  & & & & \textbf{median} & \textbf{max.} & \\
 \hline
-\emph{nuc} & p598 & \textsc{good} & 0.752 & 1 & 6 & 6293 \\
-\emph{nuc} & p104 & \textsc{low} & 0.582 & 2 & 5 & 2337 \\
-\emph{rmpM} & p1631 & \textsc{moderate} & 0.626 & 1 & 5 & 5413 \\
-\emph{rmpM} & p1307 & \textsc{low} & 0.564 & 2 & 5 & 1779 \\
-\emph{lytA} & p2571 & \textsc{good} & 0.725 & 1 & 6 & 5675 \\
-\emph{lytA} & p2331 & \textsc{low} & 0.487 & 5 & 7 & 98 \\
-\emph{oprL} & p4032 & \textsc{low} & 0.569 & 1 & 5 & 5941 \\
-\emph{oprL} & p4016 & \textsc{low} & 0.554 & 2 & 5 & 1623 \\
-\emph{oprL} & p4010 & \textsc{low} & 0.522 & 4 & 5 & 542 \\
-\emph{algD} & p5178 & \textsc{good} & 0.738 & 2 & 6 & 4010 \\
-\emph{frdB} & p6922 & \textsc{good} & 0.727 & 2 & 6 & 3959 \\
+\emph{nuc} & p598 & GOOD & 0.752 & 1 & 6 & 6293 \\
+\emph{nuc} & p104 & LOW & 0.582 & 2 & 5 & 2337 \\
+\emph{rmpM} & p1631 & MODERATE & 0.626 & 1 & 5 & 5413 \\
+\emph{rmpM} & p1307 & LOW & 0.564 & 2 & 5 & 1779 \\
+\emph{lytA} & p2571 & GOOD & 0.725 & 1 & 6 & 5675 \\
+\emph{lytA} & p2331 & LOW & 0.487 & 5 & 7 & 98 \\
+\emph{oprL} & p4032 & LOW & 0.569 & 1 & 5 & 5941 \\
+\emph{oprL} & p4016 & LOW & 0.554 & 2 & 5 & 1623 \\
+\emph{oprL} & p4010 & LOW & 0.522 & 4 & 5 & 542 \\
+\emph{algD} & p5178 & GOOD & 0.738 & 2 & 6 & 4010 \\
+\emph{frdB} & p6922 & GOOD & 0.727 & 2 & 6 & 3959 \\
 \hline
 \end{tabular}
 \end{center}
