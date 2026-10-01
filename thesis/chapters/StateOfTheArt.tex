@@ -1,21 +1,34 @@
 \chapter{State of the Art}
 
-This chapter reviews the background needed to frame the work. It covers DNA aptamers and probes as
-recognition elements, graphene \acrshort{gfet} biosensors for nucleic-acid detection, the physics of the
-DNA--graphene interface, and the computational methods used to design and validate probe sequences.
+This chapter reviews the background needed to frame the work. It covers the recognition elements used
+in nucleic-acid biosensing, graphene \acrshort{gfet} biosensors for DNA detection, the physics
+of the DNA--graphene interface, and the computational methods used to design and validate probe
+sequences.
 
-\section{DNA aptamers and probes as recognition elements}
+\section{Recognition elements for nucleic-acid biosensing}
 
-DNA aptamers are short single-stranded nucleic acids, selected \emph{in vitro} by \acrfull{selex}
-\citep{tuerk1990,ellington1990}, that fold into defined structures capable of high-affinity,
-high-specificity recognition of a target \citep{stephens2025,sun2022}. Cell-\acrshort{selex} and related variants allow aptamers to be raised
-against whole microbial cells and complex targets, yielding recognition elements for bacterial surface
-antigens, toxins and viral components \citep{kolm2020,hu2024}. Because they are chemically synthesised,
-aptamers and DNA probes are inexpensive, reproducible and easily modified, which makes them well suited
-to solid-state biosensors and to \emph{in silico} optimisation \citep{sun2022}. For the
-detection of a known microbial DNA sequence, a complementary hybridisation probe is the natural
-recognition element: it targets a defined genomic region and is captured by Watson--Crick pairing, which is
-the mechanism exploited throughout this work.
+Two families of single-stranded DNA recognition element are used in solid-state biosensors,
+and they differ in how they recognise their target. Aptamers are short oligonucleotides selected
+\emph{in vitro} by \acrfull{selex} \citep{tuerk1990,ellington1990} that fold into defined
+three-dimensional structures and bind a target by shape complementarity, with high affinity and
+specificity \citep{stephens2025,sun2022}. Cell-\acrshort{selex} and related variants extend the approach
+to whole microbial cells and complex targets, yielding recognition elements for bacterial surface
+antigens, toxins and viral components \citep{kolm2020,hu2024}. Hybridisation probes, by contrast,
+recognise a target by Watson--Crick base pairing with a complementary sequence, so their specificity
+follows directly from the sequence itself rather than from a selection experiment.
+
+The choice between them is dictated by the nature of the target. Aptamers are the appropriate element
+when no complementary sequence can be written --- for proteins, small molecules or whole cells.
+When the target is a known stretch of microbial DNA, as it is throughout this work, a
+complementary hybridisation probe is the natural choice: it can be designed directly from the genome of
+the pathogen, its affinity is predictable from nearest-neighbour thermodynamics, and it requires no
+selection campaign. The design problem then becomes one of choosing \emph{which} region of the genome to
+target and \emph{which} window within it, which is the problem this dissertation addresses. The two
+families also impose opposite structural requirements, a contrast that matters for the design criteria of
+Chapter~3: an aptamer must fold to function, whereas a hybridisation probe must remain unfolded and
+available to pair with its target. Both, being chemically synthesised, are inexpensive, reproducible and
+easily modified, which makes them well suited to solid-state biosensors and to \emph{in silico}
+optimisation \citep{sun2022}.
 
 \section{Graphene GFET biosensors for DNA detection}
 
@@ -55,9 +68,8 @@ The behaviour of a \acrshort{gfet} DNA sensor is governed by how DNA interacts w
 Single-stranded DNA adsorbs strongly and flat onto graphene through $\pi$--$\pi$ stacking of its exposed
 nucleobases, whereas double-stranded DNA binds much more weakly because base pairing sequesters the
 bases \citep{green2015,krishnan2023}. This contrast is the basis of many transduction schemes: for
-example, graphene-oxide \acrfull{fret} aptasensors, in which a single-stranded
-aptamer adsorbed on \acrfull{go} is desorbed upon target binding, restoring fluorescence
-\citep{lu2009,zhu2015}.
+example, graphene-oxide \acrfull{fret} sensors, in which a single strand adsorbed on
+\acrfull{go} is desorbed upon target binding, restoring fluorescence \citep{lu2009,zhu2015}.
 Adsorption can, however, perturb DNA folding and kinetics, which matters especially for structured
 recognition elements: a useful probe must retain its ability to hybridise its target while still producing a
 detectable electronic perturbation at the surface \citep{green2015}.
