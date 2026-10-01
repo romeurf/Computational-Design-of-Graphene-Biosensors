@@ -37,6 +37,7 @@ respectively), which, as shown below, is reflected in their behaviour through th
 \end{table}
 
 \section{Screening funnel}
+\label{sec:funnel}
 
 Across the six genes, the pipeline generated $7661$ candidate windows and filtered them down to
 $2439$ that passed both the thermodynamic screen and the secondary-structure screen
@@ -75,17 +76,22 @@ secondary-structure screen.}
 \end{table}
 
 \section{Three-dimensional validation}
+\label{sec:boltz}
 
-From the candidates that passed screening, the five highest-quality per gene ($30$ probes in
-total) were selected by the quality score and validated with Boltz-2. Of these, $4$ were
-classified as \textsc{good}, $11$ as \textsc{moderate} and $15$ as \textsc{low} by the overall
-confidence. The best candidates, strong \emph{both} in sequence quality and in
-3D, are listed in Table~\ref{tab:boltz}; they come from \emph{algD} and \emph{frdB}. The
-selected probes are strongly conserved (\acrshort{ppi} up to $1.00$) and essentially free of
-self-structure (No-fold above $96$), which coincides with the highest structure-prediction
-confidence and \acrshort{plddt} among the $30$ validated probes. The agreement between the
-sequence-level signals and the independent 3D prediction provides an internal consistency check
-on the ranking.
+From the candidates that passed screening, the five highest-quality per gene ($30$ probes in total)
+were selected by the quality score and submitted to Boltz-2, each both as a single strand and as a
+duplex with its complementary target. All $60$ predictions completed successfully.
+
+\paragraph{Single strands.} By the overall confidence, $4$ probes were classified as \textsc{good}
+($\geq 0.70$), $13$ as \textsc{moderate} ($0.60$--$0.70$) and $13$ as \textsc{low} (below $0.60$),
+with confidences between $0.487$ and $0.752$ and a mean of $0.610$. The four \textsc{good} probes
+belong to four different genes (Table~\ref{tab:boltz}), so the panel does not concentrate its
+best-predicted structures in a single target. These values are modest in absolute terms, which is
+expected: the confidence of Boltz-2, like that of AlphaFold~3 on which its metrics are modelled
+\citep{abramson2024,wohlwend2024}, is calibrated primarily on proteins, and a short unpaired
+\acrshort{ssdna} strand has no single well-defined fold to predict. They are therefore used here as
+relative indicators among probes of comparable length, not as absolute measures of structural
+correctness.
 
 \begin{table}[H]
 \begin{center}
@@ -93,16 +99,46 @@ on the ranking.
 \hline
 \textbf{Probe} & \textbf{Gene} & \textbf{\acrshort{ppi}} & \textbf{No-fold} & \textbf{Confidence} & \textbf{\acrshort{plddt}} \\
 \hline
-p5972 & \emph{algD} & 0.93 & 98.4 & 0.731 & 0.901 \\
-p7716 & \emph{frdB} & 0.99 & 99.6 & 0.723 & 0.822 \\
-p5938 & \emph{algD} & 0.90 & 96.2 & 0.721 & 0.887 \\
-p8448 & \emph{frdB} & 1.00 & 98.2 & 0.716 & 0.845 \\
+p598 & \emph{nuc} & 0.995 & 96.1 & 0.752 & 0.896 \\
+p5178 & \emph{algD} & 0.929 & 91.7 & 0.738 & 0.909 \\
+p6922 & \emph{frdB} & 0.993 & 99.2 & 0.727 & 0.828 \\
+p2571 & \emph{lytA} & 0.879 & 97.2 & 0.725 & 0.866 \\
 \hline
 \end{tabular}
 \end{center}
-\caption{Top probe candidates, strong in both sequence quality and 3D confidence.}
+\caption{The four probes classified as \textsc{good} by the Boltz-2 confidence, with their
+sequence-level conservation and No-fold score.}
 \label{tab:boltz}
 \end{table}
+
+\paragraph{Duplexes.} Predicted with their complementary targets, the same probes reach
+substantially higher confidences, from $0.845$ to $0.949$ (\acrshort{plddt} $0.855$--$0.985$), and
+all $30$ fall in the highest class. The contrast with the single strands is itself informative: a
+fully complementary duplex has a defined, canonical structure, whereas an unpaired strand does not,
+and the model reflects that difference. The predicted duplexes are indeed canonical, with a rise of
+$3.20$--$3.43$~\AA{} per base pair (median $3.28$~\AA{}), in agreement with the $3.4$~\AA{} of
+B-form DNA \citep{watsoncrick1953}. This is a useful internal check: the structures used in the
+interface analysis of Section~\ref{sec:complexres} reproduce the geometry of real DNA rather than an
+artefact of the prediction.
+
+\paragraph{Relation to the sequence-level ranking.} The 3D confidence is statistically independent
+of the sequence-level quality that was used to select these probes: across the $30$ probes, the
+Pearson correlation between the confidence and the quality score is $r = -0.01$, and the confidence
+is likewise unrelated to the conservation ($r = 0.05$) and to the No-fold score ($r = -0.10$). The
+structure prediction therefore does not restate the sequence ranking: it contributes information of
+its own. This is the reason it is carried into the final selection as a separate axis
+(Section~\ref{sec:final}) instead of being folded into the quality score, where it would have been
+diluted by two signals it does not correlate with.
+
+\paragraph{Reproducibility of the predictions.} Because the change of reference buffer altered part
+of the selection (Section~\ref{sec:funnel}), $9$ probe sequences were predicted in both the
+preliminary and the final run, which allows the run-to-run variability of Boltz-2 to be measured
+directly. For those sequences the confidence changed by $-0.003$ on average, and by at most
+$0.052$; the predictions are therefore stable, and differences of this order between probes should
+not be interpreted. Over the whole panel, the final selection has a slightly higher mean confidence
+than the preliminary one ($0.610$ against $0.603$) and the same number of \textsc{good} probes,
+which indicates that screening in the reference buffer did not degrade the structural quality of the
+candidates it selects.
 
 \section{Genetic diversity of the targets}
 
@@ -196,36 +232,32 @@ in sequence space.
 \section{Probe--graphene models}
 \label{sec:complexres}
 
-All $30$ probes validated in 3D were combined with a graphene sheet to obtain atomistic models of
+All $30$ probes predicted in 3D were combined with a graphene sheet to obtain atomistic models of
 the sensing interface (Section~\ref{sec:complex}). The predicted probe structures contain between
-$359$ and $585$ atoms (median $416$), consistent with single strands of $18$--$28$ nucleotides.
+$357$ and $529$ atoms (median $403$), consistent with single strands of $18$--$26$ nucleotides.
 
-\paragraph{Sizing the sheet.} The lateral dimensions of the sheet were set from the probes
-themselves. Measuring, for each predicted structure, its largest extent in the plane gives a
-median of $42.0$~\AA{} but a range that reaches $82.9$~\AA{} (Table~\ref{tab:complexes}): the
-probes are predicted in a variety of extended and compact conformations, and the most extended are
-nearly twice the median. A $4 \times 4$~nm sheet would therefore have been too small for $16$ of
-the $30$ probes, whose atoms would overhang the edges --- an artefact that the fit check built
-into the assembly script rejects. A $121.6 \times 119.8$~\AA{} sheet ($5700$ carbon atoms) was used
-instead, which accommodates all $30$ probes, the most extended one still leaving a margin of
-$19.3$~\AA{} on each side.
+\paragraph{Sizing the sheet.} The sheet has to hold every probe without overhang, and its lateral
+dimensions were therefore set from the probes themselves. The largest in-plane extent of each
+predicted structure has a median of 44.6~\AA{} and reaches 67.1~\AA{}
+(Table~\ref{tab:complexes}), the probes being predicted in a range of extended and compact
+conformations. A $4 \times 4$~nm sheet, a size that would suffice for a nucleotide-scale model,
+would have been too small for 19 of the $30$ probes, whose atoms would
+protrude beyond the edges --- an artefact that the fit check built into the assembly script rejects
+rather than writing a model that is geometrically wrong. The $121.6 \times 119.8$~\AA{} sheet
+($5700$ carbon atoms) accommodates all $30$, the most extended still leaving a margin of
+27.2~\AA{} on each side.
 
-\paragraph{Assembled models.} The complete set of $30$ probe--graphene models was built, each
-comprising $6059$--$6285$ atoms. Table~\ref{tab:complexes} summarises their geometry by gene. Two
-observations follow. First, no model contains a steric clash: the closest probe--sheet atom pair
-lies between $3.20$ and $3.47$~\AA{} (median $3.25$~\AA{}) across all $30$ systems, that is, within
-the physisorption regime reported for nucleobases on graphene \citep{tayo2023} and never below it.
-The small spread above the nominal $3.2$~\AA{} separation arises because the probe atom closest to
-the surface is generally offset laterally from the graphene atoms beneath it, so the true
-interatomic distance slightly exceeds the vertical one.
-
-Second, the probes stand well above the surface: their vertical extent ranges from $20.6$ to
-$80.4$~\AA{}. This is relevant to the transduction context of Chapter~2, since in an
-electrolyte-gated device the charge carried far from the graphene plane is screened, and only the
-portion of the probe within the Debye length contributes appreciably to the signal
-\citep{purwidyantri2021}. The models therefore make explicit a property that the sequence-level
-metrics cannot capture: probes of identical length may present very different amounts of their
-structure close to the sensing surface.
+\paragraph{Assembled models.} The complete set of $30$ probe--graphene models was built in a single
+automated run, each model comprising $6057$--$6229$ atoms; Table~\ref{tab:complexes} summarises their
+geometry by gene. No model contains a steric clash: across all $30$ systems the closest probe--sheet
+atom pair lies between 3.21 and 3.42~\AA{}, that is,
+within the physisorption regime reported for nucleobases on graphene \citep{tayo2023} and never
+below it. The small spread above the nominal $3.2$~\AA{} separation arises because the probe atom
+closest to the surface is generally offset laterally from the graphene atoms beneath it, so the true
+interatomic distance slightly exceeds the vertical one. The probes stand well above the surface,
+their vertical extent ranging from 23.3 to 59.2~\AA{}; probes of
+similar length therefore present very different amounts of their structure close to the sensing
+surface, which is the property quantified in Section~\ref{sec:debyeres}.
 
 \begin{table}[H]
 \begin{center}
@@ -234,37 +266,37 @@ structure close to the sensing surface.
 \textbf{Gene} & \textbf{Models} & \textbf{Median extent (\AA)} & \textbf{Max.\ extent (\AA)}
  & \textbf{Height (\AA)} & \textbf{Closest contact (\AA)} \\
 \hline
-\emph{nuc}  & 5 & 45.0 & 82.9 & 23.0--80.4 & 3.21--3.40 \\
-\emph{rmpM} & 5 & 54.9 & 56.1 & 20.6--48.2 & 3.22--3.27 \\
-\emph{lytA} & 5 & 38.2 & 66.7 & 23.0--47.5 & 3.24--3.35 \\
-\emph{oprL} & 5 & 46.6 & 63.2 & 25.4--44.2 & 3.20--3.45 \\
-\emph{algD} & 5 & 32.9 & 47.7 & 20.6--42.9 & 3.26--3.38 \\
-\emph{frdB} & 5 & 39.0 & 55.6 & 27.7--51.4 & 3.20--3.47 \\
+\emph{nuc} & 5 & 46.1 & 51.9 & 25.3--59.2 & 3.24--3.36 \\
+\emph{rmpM} & 5 & 45.3 & 46.1 & 27.5--45.9 & 3.22--3.26 \\
+\emph{lytA} & 5 & 51.4 & 67.1 & 27.2--51.3 & 3.21--3.42 \\
+\emph{oprL} & 5 & 44.0 & 58.6 & 23.8--54.7 & 3.21--3.32 \\
+\emph{algD} & 5 & 42.3 & 61.0 & 23.3--49.0 & 3.21--3.36 \\
+\emph{frdB} & 5 & 33.1 & 46.8 & 34.5--37.6 & 3.23--3.28 \\
 \hline
-\textbf{All} & \textbf{30} & \textbf{42.0} & \textbf{82.9} & \textbf{20.6--80.4} & \textbf{3.20--3.47} \\
+\textbf{All} & \textbf{30} & \textbf{44.6} & \textbf{67.1} & \textbf{23.3--59.2} & \textbf{3.21--3.42} \\
 \hline
 \end{tabular}
 \end{center}
 \caption{Geometry of the $30$ assembled probe--graphene models. ``Extent'' is the largest in-plane
-dimension of the probe (which determined the sheet size), ``height'' its vertical extent above the
-sheet, and ``closest contact'' the shortest probe--sheet interatomic distance.}
+dimension of the probe, which determined the sheet size; ``height'' is its vertical extent; and
+``closest contact'' the shortest probe--sheet interatomic distance.}
 \label{tab:complexes}
 \end{table}
 
-Figure~\ref{fig:complex} shows the assembled model of the highest-confidence probe of each of the
-two best-performing genes, drawn directly from the atomic coordinates of the output files. The side
-view makes the assembly geometry explicit --- the planar graphene lattice, the probe resting above
-it, and the $3.2$~\AA{} separation --- while the top view shows the probe footprint contained well
-within the sheet. The two panels also illustrate the conformational contrast noted above:
-\emph{p5972} is compact, reaching about $20$~\AA{} in height, whereas \emph{p7716} is extended and
-reaches beyond $40$~\AA{}, so a much larger fraction of its structure lies far from the surface.
+Figure~\ref{fig:complex} shows the assembled models of the \textsc{good} probes of \emph{algD} and
+\emph{frdB}, drawn directly from the atomic coordinates of the output files. The side view makes the
+assembly geometry explicit --- the planar graphene lattice, the probe resting above it and the
+$3.2$~\AA{} separation --- while the top view shows the probe footprint contained well within the
+sheet. The two panels also illustrate the conformational contrast noted above: \emph{p5178} is
+compact, with a vertical extent of 23.3~\AA{}, whereas \emph{p6922} reaches
+37.6~\AA{}.
 
 \begin{figure}[H]
 \begin{center}
 \includegraphics[width=\textwidth]{images/complex_p5178_algD.png}\\[0.6em]
 \includegraphics[width=\textwidth]{images/complex_p6922_frdB.png}
 \end{center}
-\caption{Assembled probe--graphene models for \emph{p5972} (\emph{algD}, top) and \emph{p7716}
+\caption{Assembled probe--graphene models for \emph{p5178} (\emph{algD}, top) and \emph{p6922}
 (\emph{frdB}, bottom), rendered from the model coordinates. Left: side view, with the graphene
 plane, the probe above it and the $3.2$~\AA{} separation indicated. Right: top view, showing the
 probe footprint within the $121.6 \times 119.8$~\AA{} sheet. Probe atoms are coloured by element;
@@ -273,95 +305,18 @@ graphene carbons are grey.}
 \end{figure}
 
 These assembled structures are starting geometries for subsequent docking or force-field
-refinement. No interaction energy is computed at this stage, so they support no claim about
-binding affinity or preferred orientation; what they establish is that the whole validated panel
-can be assembled into clash-free, physically sensible interface models by an automated procedure.
+refinement. No interaction energy is computed at this stage, so they support no claim about binding
+affinity or preferred orientation; what they establish is that the whole panel can be assembled into
+clash-free, physically sensible interface models by an automated procedure, and that the resulting
+models are suitable inputs for the refinement stages that follow.
 
-\subsection*{What the models already indicate}
-
-Although the models are unrefined, they make one device-relevant quantity measurable that no
-sequence-level metric captures: how much of the probe sits close enough to the graphene to be
-electrically visible. In an electrolyte-gated device the signal from charges beyond the Debye
-length is screened, and that length depends strongly on the buffer: for the electrolytes
-used in a study of DNA detection with graphene transistors it ranges from $0.76$~nm in
-$1\times$~PBS to $2.41$~nm in $0.1\times$~PBS and $7.61$~nm in $0.01\times$~PBS
-\citep{purwidyantri2021}. Taking the first two as
-reference, the fraction of probe atoms lying within the Debye length of the sheet varies markedly
-across the panel: from $2.0$ to $14.3\%$ (median $6.9\%$) at $1\times$~PBS, and from $22$ to
-$100\%$ at $0.1\times$~PBS. In other words, at physiological ionic strength the great majority of
-every probe would be screened, whereas in dilute buffer some probes become almost fully visible and
-others remain largely hidden --- a spread that is a property of their predicted conformation, not
-of their sequence.
-
-Two consequences follow for the candidates themselves. First, this geometric criterion is
-\emph{not} aligned with the 3D confidence used to rank them: across the $30$ models the correlation
-between the Boltz-2 confidence and the fraction of the probe within $0.76$~nm is weak and slightly
-negative ($r = -0.19$). A probe can therefore be well predicted and still present little of itself
-to the sensing surface. Second, and more usefully, the two criteria can be combined. The probe
-\emph{p5972} (\emph{algD}) is the only candidate that is simultaneously the best-scoring in 3D
-(confidence $0.731$, \textsc{good}) and among the most compact, with a vertical extent of only $20.6$~\AA{} and
-\emph{all} of its atoms within $2.41$~nm of the surface; \emph{p2392} (\emph{rmpM}) shows the same
-favourable geometry with a more modest confidence. By contrast \emph{p7716} and \emph{p8448}
-(\emph{frdB}), despite ranking \textsc{good} in 3D, are extended structures with only $38$ and
-$22\%$ of their atoms within $2.41$~nm, so a large part of them would fall outside the sensing
-volume.
-
-\subsection*{Coverage by confidence class and by buffer}
-
-Because the panel is already stratified by the Boltz-2 confidence class, the coverage was
-tabulated per class and per buffer (Table~\ref{tab:debye_class}), extending the comparison to the
-$0.01\times$~PBS electrolyte. Three observations follow. At $1\times$~PBS no model in any class
-reaches even $15\%$ coverage, and the class medians ($5.6$, $6.7$ and $7.5\%$ for \textsc{good},
-\textsc{moderate} and \textsc{low}) are ordered \emph{against} the confidence, confirming at the
-level of the classes what the correlation showed for the individual models. At $0.1\times$~PBS the
-models separate: $2$ of $4$ \textsc{good}, $6$ of $11$ \textsc{moderate} and $11$ of $15$
-\textsc{low} models place at least half of their atoms inside the screening length, so it is in
-this buffer that the criterion is most informative. At $0.01\times$~PBS the criterion saturates:
-$29$ of the $30$ models are entirely within $\lambda_D$, the single exception being \emph{p129},
-the tallest model of the panel at $83.6$~\AA{} above the sheet, at $91.7\%$. The correlation with
-the Boltz-2 confidence remains weak and slightly negative in all three electrolytes ($r = -0.19$,
-$-0.26$ and $-0.22$ respectively), so the independence of the two criteria is not an artefact of
-the particular buffer chosen.
-
-\begin{table}[H]
-\begin{center}
-\begin{tabular}{l c c c c c c}
-\hline
- & & \textbf{Height} & \multicolumn{4}{c}{\textbf{Probe atoms within $\lambda_D$}} \
-\textbf{Class} & \textbf{$n$} & \textbf{(\AA)} & \textbf{$1\times$} & \textbf{$0.1\times$} &
-\textbf{$0.1\times$, $\geq 50\%$} & \textbf{$0.01\times$} \
-\hline
-\textsc{good}     & 4  & 41.4 & 5.6\% & 51.8\% & 2/4   & 100\% \
-\textsc{moderate} & 11 & 44.3 & 6.7\% & 50.9\% & 6/11  & 100\% \
-\textsc{low}      & 15 & 33.7 & 7.5\% & 76.9\% & 11/15 & 100\% \
-\hline
-\end{tabular}
-\end{center}
-\caption{Debye coverage of the $30$ graphene--probe models by Boltz-2 confidence class. Height is
-the median height of the probe above the graphene plane; the coverage columns give the median
-percentage of probe atoms lying within the Debye length of the three PBS dilutions, and the fourth
-column the number of models of each class in which at least half of the probe is inside
-$\lambda_D$ at $0.1\times$~PBS.}
-\label{tab:debye_class}
-\end{table}
-
-This analysis carries two important caveats. First, the probe orientation in these models is the
-one predicted by Boltz-2, preserved by the rigid-body placement and \emph{not} optimised against the
-surface; since single-stranded DNA is known to adsorb flat on graphene through $\pi$--$\pi$
-stacking \citep{green2015}, the orientations adopted after docking or dynamics will differ, and
-with them the exact coverage values. Second, the fraction of atoms within $\lambda_D$ is a
-geometric index derived from the Debye--H\"uckel picture, which overstates the practical penalty of
-a concentrated buffer (Table~\ref{tab:inl}). The numbers above should therefore be read as a relative
-comparison between candidates and as evidence that interface geometry is an independent axis of
-probe quality worth carrying into the selection, rather than as predictions of whether, or how
-strongly, a device will respond.
-
-\subsection*{Why $1\times$~PBS is kept as the reference}
+\section{Why $1\times$~PBS is kept as the reference}
+\label{sec:buffer}
 
 These coverage values do not argue for diluting the buffer. Figure~\ref{fig:debyescale} sets the
 relevant dimensions side by side. In B-form DNA the base pairs are $0.34$~nm apart along the helix axis
 \citep{watsoncrick1953}, so the $18$- to $26$-nucleotide probes selected in this work form duplexes
-$6.1$ to $8.8$~nm long, whereas $\lambda_D$ is $0.76$~nm in $1\times$~PBS: even with the duplex
+$6.1$ to $8.8$~nm long (Section~\ref{sec:debyeres} measures the consequence directly), whereas $\lambda_D$ is $0.76$~nm in $1\times$~PBS: even with the duplex
 standing on the surface, only about two base pairs lie inside it, and no probe long enough to hybridise
 specifically would fit. The mismatch is general for electronic biosensors, in which the Debye length
 under physiological conditions is below $1$~nm while a $30$-base aptamer extends up to about $10$~nm
@@ -430,6 +385,184 @@ probe sequence: a biomolecule-permeable layer of polyethylene glycol on the sens
 target-induced conformational change that occurs within the screening length \citep{nakatsuka2018}.
 Within the scope of probe design, $1\times$~PBS is thus taken as the physiologically meaningful
 reference, and the more dilute buffers as readout scenarios evaluated for sensitivity.
+
+\section{Debye coverage of the interface models}
+\label{sec:debyeres}
+
+The models make measurable a device-relevant quantity that no sequence-level metric captures: how
+much of the probe, and of its charge, lies close enough to the graphene to be electrically visible
+(Section~\ref{sec:debyemethod}). Three geometries were measured --- the rigid placement, the probe
+anchored by its $3'$ end, and the anchored duplex --- in the three electrolytes, whose Debye lengths
+differ by an order of magnitude.
+
+\subsection{Rigid placement}
+
+In the placement that preserves the predicted orientation, the fraction of probe atoms within
+$\lambda_D$ ranges from 2.3 to 14.2\%
+(median 7.4\%) in $1\times$~PBS, which corresponds to between
+0 and 4 of the
+$18$--$26$ phosphates of each probe (median 3). In
+$0.1\times$~PBS the fraction rises to 23.2--97.8\%
+(median 58.9\%), and in $0.01\times$~PBS it reaches $100\%$ for
+every model: the tallest probe stands 62.4~\AA{} above the
+sheet, well inside the $76.1$~\AA{} of $\lambda_D$ at that dilution.
+
+Table~\ref{tab:debyeclass} breaks these values down by Boltz-2 confidence class. Three observations
+follow. At $1\times$~PBS no model of any class reaches even $15\%$ coverage, and the class medians
+are ordered \emph{against} the confidence (\textsc{low} 8.5\%,
+\textsc{moderate} 6.2\%,
+\textsc{good} 5.6\%). At $0.1\times$~PBS the models
+separate, from 23.2\% to 97.8\%, and it is in
+this buffer that the criterion is most informative: 22 of
+the $30$ models place at least half of their atoms inside the screening length. At $0.01\times$~PBS
+the criterion saturates, assigning $100\%$ to every candidate and therefore distinguishing none.
+
+\begin{table}[H]
+\begin{center}
+\begin{tabular}{l c c c c c c}
+\hline
+ & & \textbf{Height} & \multicolumn{4}{c}{\textbf{Probe atoms within $\lambda_D$}} \\
+\textbf{Class} & \textbf{$n$} & \textbf{(\AA)} & \textbf{$1\times$} & \textbf{$0.1\times$} &
+\textbf{$0.1\times$, $\geq 50\%$} & \textbf{$0.01\times$} \\
+\hline
+\textsc{good} & 4 & 47.6 & 5.6\% & 53.9\% & 2/4 & 100.0\% \\
+\textsc{moderate} & 13 & 40.1 & 6.2\% & 56.5\% & 10/13 & 100.0\% \\
+\textsc{low} & 13 & 33.4 & 8.5\% & 73.4\% & 10/13 & 100.0\% \\
+\hline
+\textbf{All} & \textbf{30} & \textbf{38.2} & \textbf{7.4\%} & \textbf{58.9\%} & \textbf{22/30} & \textbf{100.0\%} \\
+\hline
+\end{tabular}
+\end{center}
+\caption{Debye coverage of the $30$ models by Boltz-2 confidence class. ``Height'' is the median
+height of the probe above the graphene plane; the coverage columns give the median percentage of
+probe atoms within $\lambda_D$ in each buffer, and the sixth column the number of models of each
+class with at least half of the probe inside $\lambda_D$ at $0.1\times$~PBS.}
+\label{tab:debyeclass}
+\end{table}
+
+The correlation between coverage and 3D confidence is weak and slightly negative in both buffers in
+which it can be computed ($r = -0.19$ at $1\times$~PBS and
+$r = -0.14$ at $0.1\times$~PBS; at $0.01\times$~PBS the
+coverage is the same for every probe, so no correlation is defined). A well-predicted probe is thus
+not a more visible one. This is consistent with the independence already observed between the 3D
+confidence and the sequence-level quality (Section~\ref{sec:boltz}), and it is what makes interface
+geometry worth carrying as a criterion of its own: it orders the candidates along an axis that
+neither the sequence screening nor the structure prediction captures.
+
+\subsection{Anchored probe and hybridised duplex}
+
+The rigid placement inherits the orientation predicted for the free probe, which is arbitrary with
+respect to the surface. The anchored geometry removes that arbitrariness by reproducing the
+immobilisation used experimentally --- the probe tethered by its $3'$ end
+\citep{campos2019,purwidyantri2021} --- and by averaging over the orientations such a tether allows.
+Of the $20\,000$ orientations sampled per probe, those retained (median
+5339 per probe) place a median of $1$ to $2$ phosphates
+within $\lambda_D$ in $1\times$~PBS for 28 of
+the $30$ probes, and at most 8 in the most
+favourable orientation of any probe. Anchoring therefore reduces the charge inside the screening
+length relative to the unconstrained placement, as expected: the probe can no longer present
+whichever face happens to be closest to the surface.
+
+The number of retained orientations varies widely between probes, from $98$ to $6331$, and it is
+itself informative. It measures how exposed the $3'$ terminus is in the predicted conformation: an
+orientation is retained only when that terminus is the part of the molecule closest to the surface,
+which is rare when it is tucked into the body of the structure. Across the panel the retained count
+is strongly and negatively related to the anchored charge ($r = -0.89$; Spearman $\rho = -0.85$),
+and the relation has a geometric reading rather than being an artefact of sampling. When the $3'$
+end protrudes, many orientations qualify, but in them the rest of the probe extends away from the
+contact point and few phosphates remain within $\lambda_D$. When it is buried, few orientations
+qualify, and in those few the molecule is necessarily folded around its own anchor, so more of it
+stays close to the surface. The two probes with fewest retained orientations, \emph{p2331} ($98$)
+and \emph{p4010} ($542$), are accordingly those with the highest anchored charge ($5$ and $4$
+phosphates), while the probes with more than $4000$ retained orientations have a median of $1$.
+
+Two consequences follow. The anchored metric is not a property of the sequence alone: it is governed
+largely by where the $3'$ terminus happens to sit in the predicted conformation, which is itself a
+prediction. And the estimates for probes with few retained orientations rest on a small sample, so
+their values are the least reliable of the panel --- a caveat that applies precisely to the probes
+the metric favours.
+
+The hybridised state is the one the device actually senses, since it is the arrival of the target
+that changes the charge at the surface. Measured on the anchored duplexes, the result is
+unambiguous: in $1\times$~PBS the median number of target phosphates within $\lambda_D$ is zero for
+all $30$ probes, and even the most favourable orientation places only
+4--7
+of them inside. In $0.1\times$~PBS the median rises to $8$ target phosphates, and in $0.01\times$~PBS
+the entire target lies inside $\lambda_D$ for every probe. The charge that hybridisation brings into
+the sensing volume is thus set by the screening length and by the geometry of the duplex, not by the
+length of the probe: a longer probe captures a longer target, but the additional charge is added
+beyond $\lambda_D$, where it is screened. This is the quantitative counterpart, within this panel, of
+the dimensional mismatch discussed in Section~\ref{sec:buffer}.
+
+\subsection{Final selection}
+\label{sec:final}
+
+Because the Boltz-2 confidence and the anchored charge within $\lambda_D$ are independent, the
+candidates of each gene were compared on both axes at once and those on the Pareto front retained
+(Section~\ref{sec:debyemethod}). The front contains 11 of the $30$ probes
+(Table~\ref{tab:final}), between one and three per gene. Its composition shows why neither axis alone
+would suffice: it includes the probes with the highest confidence of their gene, such as
+\emph{p598} (\emph{nuc}) and \emph{p5178} (\emph{algD}), but also probes of low confidence that
+present appreciably more charge at the interface, such as \emph{p4010} (\emph{oprL}) and
+\emph{p2331} (\emph{lytA}). Ranking by confidence alone would have discarded the latter; ranking by
+coverage alone would have discarded the former.
+
+The two probes admitted on charge alone, \emph{p4010} and \emph{p2331}, are those whose anchored
+values rest on the fewest sampled orientations, for the reason given above. Restricting the front to
+the $28$ probes with at least $1000$ retained orientations leaves $9$ probes and removes exactly
+those two, without changing any other entry. Both lists are defensible, and the difference between
+them is reported here rather than resolved: the longer list is the one the stated criterion
+produces, while the shorter one is the more conservative reading. Either way, every gene keeps at
+least one candidate, and the probes selected on confidence are unaffected.
+
+\begin{table}[H]
+\begin{center}
+\begin{tabular}{l l l c c c c}
+\hline
+\textbf{Gene} & \textbf{Probe} & \textbf{Class} & \textbf{Confidence} &
+\multicolumn{2}{c}{\textbf{Phosphates within $\lambda_D$}} & \textbf{Orientations} \\
+ & & & & \textbf{median} & \textbf{max.} & \\
+\hline
+\emph{nuc} & p598 & \textsc{good} & 0.752 & 1 & 6 & 6293 \\
+\emph{nuc} & p104 & \textsc{low} & 0.582 & 2 & 5 & 2337 \\
+\emph{rmpM} & p1631 & \textsc{moderate} & 0.626 & 1 & 5 & 5413 \\
+\emph{rmpM} & p1307 & \textsc{low} & 0.564 & 2 & 5 & 1779 \\
+\emph{lytA} & p2571 & \textsc{good} & 0.725 & 1 & 6 & 5675 \\
+\emph{lytA} & p2331 & \textsc{low} & 0.487 & 5 & 7 & 98 \\
+\emph{oprL} & p4032 & \textsc{low} & 0.569 & 1 & 5 & 5941 \\
+\emph{oprL} & p4016 & \textsc{low} & 0.554 & 2 & 5 & 1623 \\
+\emph{oprL} & p4010 & \textsc{low} & 0.522 & 4 & 5 & 542 \\
+\emph{algD} & p5178 & \textsc{good} & 0.738 & 2 & 6 & 4010 \\
+\emph{frdB} & p6922 & \textsc{good} & 0.727 & 2 & 6 & 3959 \\
+\hline
+\end{tabular}
+\end{center}
+\caption{Final selection: the probes on the Pareto front of Boltz-2 confidence and anchored
+phosphates within $\lambda_D$ in $1\times$~PBS, by gene. ``Orientations'' is the number of sampled
+orientations retained for the probe.}
+\label{tab:final}
+\end{table}
+
+\subsection{Caveats}
+
+Three limitations bound the interpretation of these values. First, the rigid placement preserves the
+orientation predicted by Boltz-2 and is not optimised against the surface; since single-stranded DNA
+is known to adsorb flat on graphene through $\pi$--$\pi$ stacking \citep{green2015}, the
+orientations adopted after docking or molecular dynamics will differ, and with them the exact
+coverage. The anchored geometry is less exposed to this objection, as it averages over orientations
+instead of trusting one, but it also idealises the tether: no linker length is added, so the $3'$
+end sits as close to the sheet as it can, and the reported coverage is an upper bound. It is,
+besides, sensitive to the predicted position of the $3'$ terminus, as shown above.
+
+Second, the coverage is a geometric index derived from the Debye--H\"uckel picture, and that picture
+overstates the practical penalty of a concentrated buffer, as the experimental response of the same
+devices shows (Section~\ref{sec:buffer}). The values should therefore be used to compare candidates
+with one another, which is how they enter the selection, and not to predict whether a device will
+respond.
+
+Third, the structures themselves are predictions. The confidences of the single strands are modest
+(Section~\ref{sec:boltz}), and although the duplexes are predicted with high confidence and
+canonical geometry, no experimental structure of these probes exists against which to verify them.
 
 \section{Curated dataset of prioritised candidates}
 
