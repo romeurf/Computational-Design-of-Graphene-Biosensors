@@ -95,17 +95,17 @@ conditions of use.
 
 \begin{table}[H]
 \begin{center}
-\begin{tabular}{l l l}
+\begin{tabular}{@{}l l p{6.1cm}@{}}
 \hline
 \textbf{Parameter} & \textbf{Default value} & \textbf{Basis} \\
 \hline
-Ionic conditions        & $1\times$ PBS         & \citet{purwidyantri2021}; \citet{cshpbs2006} \\
-Temperature             & 37 $^{\circ}$C        & physiological \\
-Probe length            & 18--28 nt             & \citet{wetmur1991} \\
-Melting temperature $T_m$ & 53--72 $^{\circ}$C  & $T+16$ to $T+35$ \citep{santalucia2004} \\
-GC content              & 40--60\%               & IDT OligoAnalyzer \citep{idtoligo} \\
-Hairpin $\Delta G$      & $\geq -2.0$ kcal/mol   & \citet{idtoligo}; primer3 \citep{untergasser2012} \\
-Homodimer $\Delta G$    & $\geq -5.0$ kcal/mol   & IDT OligoAnalyzer \citep{idtoligo} \\
+Ionic conditions        & $1\times$ PBS          & \citep{purwidyantri2021,cshpbs2006} \\
+Temperature             & 37 $^{\circ}$C         & physiological \\
+Probe length            & 18--28 nt              & \citep{wetmur1991} \\
+Melting temperature $T_m$ & 53--72 $^{\circ}$C   & $T+16$ to $T+35$ \citep{santalucia2004} \\
+GC content              & 40--60\%               & OligoAnalyzer \citep{idtoligo} \\
+Hairpin $\Delta G$      & $\geq -2.0$ kcal/mol   & OligoAnalyzer \citep{idtoligo}; primer3 \citep{untergasser2012} \\
+Homodimer $\Delta G$    & $\geq -5.0$ kcal/mol   & OligoAnalyzer \citep{idtoligo} \\
 Conservation (\acrshort{ppi}) & $\geq 0.85$      & pan-strain detection \citep{viruscope} \\
 Alignment gap fraction  & $\leq 20\%$            & alignment quality \\
 Secondary structure $\Delta G_{\text{MFE}}$ & $\geq -2.1$ kcal/mol & 5th percentile in $1\times$ PBS \\
@@ -212,7 +212,7 @@ the reference buffer (Section~\ref{sec:thermo}).
 
 \begin{table}[H]
 \begin{center}
-\begin{tabular}{l l c l}
+\begin{tabular}{@{}l l c p{4.3cm}@{}}
 \hline
 \textbf{Gene} & \textbf{Profile} & \textbf{GC} & \textbf{Basis} \\
 \hline
