@@ -216,11 +216,15 @@ def main(out_dir=RESULTS):
     print()
     print(agg.to_string(index=False))
     print()
+    def pearson(col):
+        # a coverage that is the same for every probe (e.g. all inside lambda_D) has no correlation
+        if cov[col].nunique() < 2:
+            return "n/a (no variation)"
+        return f"{cov[col].corr(cov['confidence']):+.2f}"
+
     for name in BUFFERS:
-        r1 = cov[f"f_{name}"].corr(cov["confidence"])
-        r2 = cov[f"P_anchored_{name}"].corr(cov["confidence"])
-        print(f"  Pearson r with Boltz confidence at {name:9s}: rigid atoms {r1:+.2f}, "
-              f"anchored phosphates {r2:+.2f}")
+        print(f"  Pearson r with Boltz confidence at {name:9s}: rigid atoms {pearson(f'f_{name}')}, "
+              f"anchored phosphates {pearson(f'P_anchored_{name}')}")
     print(f"\n  final shortlist (Pareto, confidence x {key}): "
           f"{int(cov['final_shortlist'].sum())} of {len(cov)} probes")
 

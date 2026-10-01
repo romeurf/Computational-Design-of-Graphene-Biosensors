@@ -1,4 +1,4 @@
-boltz_class;n;height_median;height_min;height_max;1x PBS median %;1x PBS min %;1x PBS max %;1x PBS n>=50%;0.1x PBS median %;0.1x PBS min %;0.1x PBS max %;0.1x PBS n>=50%;0.01x PBS median %;0.01x PBS min %;0.01x PBS max %;0.01x PBS n>=50%
-GOOD;4;41.4;23.8;54.6;5.6;2.5;7.3;0;51.8;22.0;100.0;2;100.0;100.0;100.0;4
-MODERATE;11;44.3;23.8;83.6;6.7;2.0;14.2;0;50.9;24.0;100.0;6;100.0;91.7;100.0;11
-LOW;15;33.7;26.2;47.4;7.5;2.6;14.3;0;76.9;41.7;98.8;11;100.0;100.0;100.0;15
+boltz_class;n;height_median;height_min;height_max;1x PBS median %;1x PBS min %;1x PBS max %;1x PBS n>=50%;1x PBS P median;1x PBS P anchored median;1x PBS P target median;0.1x PBS median %;0.1x PBS min %;0.1x PBS max %;0.1x PBS n>=50%;0.1x PBS P median;0.1x PBS P anchored median;0.1x PBS P target median;0.01x PBS median %;0.01x PBS min %;0.01x PBS max %;0.01x PBS n>=50%;0.01x PBS P median;0.01x PBS P anchored median;0.01x PBS P target median
+GOOD;4;47.6;26.5;62.4;5.6;3.9;11.5;0;2.0;1.5;0.0;53.9;38.0;97.8;2;13.0;10.5;8.0;100.0;100.0;100.0;4;20.5;20.5;20.5
+MODERATE;13;40.1;28.0;52.2;6.2;2.3;14.2;0;3.0;1.0;0.0;56.5;29.1;92.1;10;11.0;8.0;8.0;100.0;100.0;100.0;13;19.0;19.0;19.0
+LOW;13;33.4;27.0;57.9;8.5;4.8;13.3;0;3.0;1.0;0.0;73.4;23.2;96.1;10;14.0;10.0;8.0;100.0;100.0;100.0;13;20.0;20.0;20.0
