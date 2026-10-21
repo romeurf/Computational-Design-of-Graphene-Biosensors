@@ -10,3 +10,4 @@ MAFFT/
 # Editor / session junk
 .Rhistory
 *.Rhistory
+.omc/

@@ -56,7 +56,7 @@ procedure of Chapter~3 and its effect on the candidate pool can be read together
 
 \begin{figure}[H]
 \begin{center}
-\includegraphics[width=0.84\textwidth]{images/pipeline_funnel.png}
+\includegraphics[width=0.84\textwidth]{images/pipeline_funnel.pdf}
 \end{center}
 \caption{Stages of the pipeline and the number of candidates surviving each one. The first four
 stages act on sequences rather than on candidate windows, so no count is given for them; the bars
@@ -92,8 +92,7 @@ secondary-structure screen.}
 \label{sec:boltz}
 
 The funnel leaves far more candidates than can reasonably be predicted in three dimensions, which
-is what the quality ranking is for: it concentrates that effort on the sequences most likely to
-repay it.
+is what the quality ranking is for: it decides which sequences receive it.
 
 From the candidates that passed screening, the five highest-quality per gene ($30$ probes in total)
 were selected by the quality score and submitted to Boltz-2, each both as a single strand and as a
@@ -238,21 +237,20 @@ the $74$ reference probes were scored with a single global (bacterial) criterion
 the basic screen; when instead each was scored by the criteria of its own species and type,
 $42$ passed. That net gain of nine is the result of two opposite movements, shown in
 Figure~\ref{fig:refpanel}: ten probes are recovered and one is rejected. The ten recovered are
-those whose genome composition departs from the balanced bacterial case --- six from the GC-rich
+those whose genome composition departs from the balanced bacterial case: six from the GC-rich
 \emph{P.\ aeruginosa}, two from \emph{K.\ pneumoniae}, one from the AT-rich \emph{S.\ aureus}
-and one from \emph{P.\ falciparum}, the last of which the global GC window rejects although it is
+and one from \emph{P.\ falciparum}. The global GC window rejects the last of these although it is
 unremarkable for a genome of $19\%$ GC \citep{gardner2002}. The probe that is lost is the
 \emph{A.\ fumigatus} one, whose species profile ($42$--$58\%$ GC) is narrower than the global
 window it replaces.
 
-That the criterion can also reject is the more informative half of this result. Organism-aware
-thresholds are not a relaxation granted to awkward targets; they substitute a
-composition-appropriate criterion for a generic one, and a substitution can tighten as well as
-loosen.
+The rejection matters as much as the recoveries. It shows that the layered scheme is not a
+relaxation applied to awkward targets, but the replacement of a generic criterion by one matched to
+the composition of each genome, which can tighten the requirement as readily as loosen it.
 
 \begin{figure}[H]
 \begin{center}
-\includegraphics[width=\textwidth]{images/reference_panel.png}
+\includegraphics[width=\textwidth]{images/reference_panel.pdf}
 \end{center}
 \caption{The $74$ reference probes under a single global criterion and under the criteria of each
 probe's own species and type, by organism type (left), and the probes whose outcome changes
@@ -277,9 +275,9 @@ in sequence space.
 \section{Probe--graphene models}
 \label{sec:complexres}
 
-The results reported so far concern the probes as sequences and as isolated structures. What
-remains is the property none of those criteria can reach: how the probe sits against the graphene,
-and how much of it ends up where the transistor can sense it.
+The results reported so far concern the probes as sequences and as isolated structures. None of
+those criteria describes how a probe sits against the graphene, or how much of it lies where the
+transistor can sense it, which is what the interface models were built to measure.
 
 All $30$ probes predicted in 3D were combined with a graphene sheet to obtain atomistic models of
 the sensing interface (Section~\ref{sec:complex}). The predicted probe structures contain between
@@ -453,7 +451,7 @@ with the measured counts that the following sections report.
 
 \begin{figure}[H]
 \begin{center}
-\includegraphics[width=\textwidth]{images/debye_geometries.png}
+\includegraphics[width=\textwidth]{images/debye_geometries.pdf}
 \end{center}
 \caption{The three geometries in which the Debye coverage is measured, drawn against the screening
 length at $1\times$~PBS (shaded band). Left: the rigid placement, which preserves the orientation
@@ -613,32 +611,10 @@ orientations retained for the probe.}
 \label{tab:final}
 \end{table}
 
-\subsection{Caveats}
-
-Three limitations bound the interpretation of these values. First, the rigid placement preserves the
-orientation predicted by Boltz-2 and is not optimised against the surface; since single-stranded DNA
-is known to adsorb flat on graphene through $\pi$--$\pi$ stacking \citep{green2015}, the
-orientations adopted after docking or molecular dynamics will differ, and with them the exact
-coverage. The anchored geometry is less exposed to this objection, as it averages over orientations
-instead of trusting one, but it also idealises the tether: no linker length is added, so the $3'$
-end sits as close to the sheet as it can, and the reported coverage is an upper bound. It is,
-besides, sensitive to the predicted position of the $3'$ terminus, as shown above.
-
-Second, the coverage is a geometric index derived from the Debye--H\"uckel picture, and that picture
-overstates the practical penalty of a concentrated buffer, as the experimental response of the same
-devices shows (Section~\ref{sec:buffer}). The values should therefore be used to compare candidates
-with one another, which is how they enter the selection, and not to predict whether a device will
-respond.
-
-Third, the structures themselves are predictions. The confidences of the single strands are modest
-(Section~\ref{sec:boltz}), and although the duplexes are predicted with high confidence and
-canonical geometry, no experimental structure of these probes exists against which to verify them.
-
 \section{Limitations}
 \label{sec:limitations}
 
-Three limitations of the Debye measurement were set out in Section~\ref{sec:debyeres}. Four
-further ones bound the work as a whole.
+The following considerations bound how far the results reported above can be taken.
 
 \paragraph{Specificity is not verified.} The selection is driven by conservation, which is a
 criterion of sensitivity: it requires that a probe match every strain of its target. It never asks
@@ -653,18 +629,30 @@ future work.
 no device was functionalised and no hybridisation was measured. The experimental quantities that
 appear in this dissertation are taken from published work on comparable devices
 \citep{campos2019,purwidyantri2021} and serve to frame the computational results, not to confirm
-them.
+them. The structures are likewise predictions: the confidences obtained for the single strands are
+modest (Section~\ref{sec:boltz}), and although the duplexes are predicted with high confidence and
+canonical geometry, no experimental structure of these probes exists against which to check them.
 
 \paragraph{The sequence sample is what \acrshort{ncbi} contains.} Conservation is measured over
 deposited records, with the sampling bias described in Section~\ref{sec:diversityres}, and the
 retrieval depends on queries by gene name and organism, which will miss records annotated
 differently. Both affect which regions are judged conserved.
 
-\paragraph{The interface model omits the immobilisation chemistry.} The models place the probe
-directly on pristine graphene. The pyrene linker, the surface density of probes --- high enough in
-practice for neighbouring probes to interact --- and the blocking agent used to passivate
-unreacted linker are all absent. The anchored geometry approximates the tether but adds no linker
-length, which is why its coverage is reported as an upper bound.
+\paragraph{The interface models are idealised.} The rigid placement keeps the orientation
+predicted by Boltz-2 and is not optimised against the surface. Since single-stranded DNA adsorbs
+flat on graphene through $\pi$--$\pi$ stacking \citep{green2015}, the orientations reached after
+docking or molecular dynamics will differ, and so will the coverage. The anchored geometry is less
+exposed to that objection, because it averages over orientations rather than trusting one, but it
+idealises the tether in turn: no linker length is added, so the $3'$ end sits as close to the sheet
+as it can, and the coverage is an upper bound. It also depends on where the $3'$ terminus falls in
+the predicted conformation, as Section~\ref{sec:debyeres} shows. The models further omit the
+pyrene linker itself, the surface density of probes, which in practice is high enough for
+neighbours to interact, and the blocking agent used to passivate unreacted linker.
+
+\paragraph{The coverage is a geometric index.} It follows from the Debye--H\"uckel picture, which
+overstates the practical penalty of a concentrated buffer, as the measured response of the same
+devices shows (Section~\ref{sec:buffer}). The values serve to compare candidates with one another,
+which is how they enter the selection, and not to predict whether a device will respond.
 
 \section{Curated dataset of prioritised candidates}
 

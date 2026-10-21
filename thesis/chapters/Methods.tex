@@ -179,8 +179,8 @@ with conservation, to rank the candidates rather than merely to filter them.
 
 Both screens just described were expressed in terms of the windows into which a candidate's
 melting temperature and GC content must fall, without saying where those windows come from. This
-section defines how they are resolved, which is where the generality of the method across
-organisms resides.
+section defines how they are resolved, which is what allows the method to transfer between
+organisms.
 
 Because the intended application spans pathogens with very different genomes, a single global set of
 thresholds is inadequate: criteria appropriate for a balanced bacterial genome would unfairly reject an
@@ -270,9 +270,9 @@ export larger curated sets (for example the top $25$ per gene) together with the
 \section{Three-dimensional validation}
 
 Every criterion applied so far judges a probe by its sequence. None of them says what that
-sequence looks like once folded, nor how compact or extended the resulting molecule is --- properties
-that matter at a surface, where only what lies close to it can be sensed. The next stage therefore
-predicts the structure itself.
+sequence looks like once folded, or how compact the resulting molecule is. Those properties matter
+at a surface, where only what lies close to it can be sensed, so the next stage predicts the
+structure itself.
 
 The selected probes are written one per file in the native Boltz-2 input format and submitted to Boltz-2
 \citep{wohlwend2024}, run on a \acrshort{gpu}, which predicts the three-dimensional structure of each single-stranded
@@ -462,8 +462,8 @@ alongside, since it detects exact duplicate records.
 
 The sampling depth follows from a rarefaction analysis. For each gene and each $N$ in a fixed
 schedule, $N$ sequences are drawn at random without replacement, five times independently; the
-mean pairwise cosine distance and the richness --- the number of distinct $4$-mers present in the
-subsample --- are averaged over the five draws. Plotting both against $N$ shows the value beyond
+mean pairwise cosine distance and the richness, meaning the number of distinct $4$-mers present in
+the subsample, are averaged over the five draws. Plotting both against $N$ shows the value beyond
 which further sequences add little, which is the value the retrieval step needs.
 
 \section{Implementation and reproducibility}

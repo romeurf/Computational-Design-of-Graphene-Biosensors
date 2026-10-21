@@ -32,7 +32,16 @@ RAMP = ["#cde2fb", "#86b6ef", "#5598e7", "#256abf", "#104281"]
 PALE, MID, DARK = "#cde2fb", "#86b6ef", "#256abf"
 INK, INK2, MUTED, LINE = "#0b0b0b", "#52514e", "#898781", "#c3c2b7"
 FONT = "DejaVu Sans"
-plt.rcParams.update({"font.family": FONT, "font.size": 9})
+plt.rcParams.update({"font.family": FONT, "font.size": 9,
+                     "pdf.fonttype": 42, "svg.fonttype": "none"})
+
+
+def save(fig, name):
+    """Vector PDF for the dissertation, raster copy for quick viewing."""
+    fig.savefig(OUT / f"{name}.pdf", bbox_inches="tight")
+    fig.savefig(FIGDIR / f"{name}.png", dpi=300, bbox_inches="tight")
+    plt.close(fig)
+    print(f"  {name}.pdf")
 
 
 # ----------------------------------------------------------------- figure 1
@@ -90,10 +99,8 @@ def pipeline_funnel():
     ax.set_ylim(-0.02, top + 0.055)
     ax.axis("off")
     fig.tight_layout()
-    for d in (OUT, FIGDIR):
-        fig.savefig(d / "pipeline_funnel.png", dpi=200, bbox_inches="tight")
+    save(fig, "pipeline_funnel")
     plt.close(fig)
-    print("  pipeline_funnel.png")
 
 
 # ----------------------------------------------------------------- figure 2
@@ -140,10 +147,8 @@ def reference_panel():
              fontsize=7.9, color=INK2, va="top", linespacing=1.5)
     ax2.set_xlim(0, 1); ax2.set_ylim(-0.12, 1.06); ax2.axis("off")
     fig.tight_layout()
-    for d in (OUT, FIGDIR):
-        fig.savefig(d / "reference_panel.png", dpi=200, bbox_inches="tight")
+    save(fig, "reference_panel")
     plt.close(fig)
-    print("  reference_panel.png")
 
 
 # ----------------------------------------------------------------- figure 3
@@ -214,10 +219,8 @@ def debye_geometries():
                loc="lower center", ncol=2, frameon=False, fontsize=8.2,
                bbox_to_anchor=(0.5, -0.03))
     fig.tight_layout(rect=(0, 0.06, 1, 1))
-    for d in (OUT, FIGDIR):
-        fig.savefig(d / "debye_geometries.png", dpi=200, bbox_inches="tight")
+    save(fig, "debye_geometries")
     plt.close(fig)
-    print("  debye_geometries.png")
 
 
 if __name__ == "__main__":
