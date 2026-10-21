@@ -58,10 +58,45 @@ rather than of these particular sequences, and it is consistent with the experim
 that such devices still detect hybridisation in $1\times$~PBS, at roughly half the sensitivity
 obtained in dilute buffer.
 
-Overall, the work delivers a solid, extensible foundation for the computational stage of
-\acrshort{gfet} biosensor development: it produces prioritised, structurally sound probe candidates,
-under conditions that match the intended application, and generalises to new genes and organisms
-with minimal configuration.
+\subsection*{Objectives}
+
+Measured against the six specific objectives set out in Section~\ref{sec:objectives}, the outcome
+is as follows.
+
+\begin{itemize}
+  \item \textbf{A panel of targets, with automated retrieval and curation.} Met. Six marker genes
+        from six species were defined, and their sequences are retrieved from \acrshort{ncbi} and
+        curated by automatic length clustering without per-gene tuning.
+  \item \textbf{Conserved regions identified by alignment and per-column scoring.} Met. Alignment
+        is performed with MAFFT and conservation scored by the \acrshort{ppi}, which drove the
+        selection of all candidates reported here.
+  \item \textbf{Screening on well-founded biophysical criteria, combined into transparent
+        scores.} Met, and strengthened relative to the original formulation: every criterion is
+        evaluated in $1\times$~PBS at $37\,^{\circ}$C, so that each threshold refers to the solution
+        in which the probe is meant to work, and the folding energies are combined into a single
+        continuous No-fold score.
+  \item \textbf{Organism-aware design criteria.} Met. Thresholds resolve through a layered scheme,
+        which recovered ten reference probes that a global rule rejects and rejected one that it
+        accepts.
+  \item \textbf{Prioritisation and validation by three-dimensional prediction.} Met, with a
+        qualification. The candidates were predicted as single strands and as duplexes, and the
+        predictions proved stable between runs; but the confidence of a short single strand is a
+        relative indicator rather than a validation, and the structures remain unverified against
+        experiment.
+  \item \textbf{Curated, feature-rich datasets of the prioritised candidates.} Met. A set of
+        $150$ probes with their sequence-level features, the $30$ predicted structures and the
+        $30$ interface models are all produced by the workflow.
+\end{itemize}
+
+Beyond these, the work produced a result that was not among the original objectives: a measure of
+how much of a probe, and of its hybridised target, lies within the sensing volume of the device,
+and the finding that this quantity is independent of both the sequence-level ranking and the
+structural confidence.
+
+Overall, the work delivers an extensible foundation for the computational stage of
+\acrshort{gfet} biosensor development. It produces prioritised probe candidates under conditions
+that match the intended application and generalises to new genes and organisms with minimal
+configuration, within the limits set out in Section~\ref{sec:limitations}.
 
 \section{Prospects for future work}
 

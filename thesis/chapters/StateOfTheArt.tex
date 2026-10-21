@@ -22,13 +22,25 @@ when no complementary sequence can be written --- for proteins, small molecules 
 When the target is a known stretch of microbial DNA, as it is throughout this work, a
 complementary hybridisation probe is the natural choice: it can be designed directly from the genome of
 the pathogen, its affinity is predictable from nearest-neighbour thermodynamics, and it requires no
-selection campaign. The design problem then becomes one of choosing \emph{which} region of the genome to
-target and \emph{which} window within it, which is the problem this dissertation addresses. The two
+selection campaign. Choosing a hybridisation probe is therefore not a search for a sequence that binds, since any
+complement will bind, but a search for the right position in the genome. Two questions have to be
+answered: which gene of the pathogen to target, and which window within that gene to copy. The
+first determines whether the probe identifies the species at all; the second determines whether it
+recognises every clinical strain of it and whether it behaves well as an oligonucleotide. Both
+are addressed in this dissertation. The two
 families also impose opposite structural requirements, a contrast that matters for the design criteria of
 Chapter~3: an aptamer must fold to function, whereas a hybridisation probe must remain unfolded and
-available to pair with its target. Both, being chemically synthesised, are inexpensive, reproducible and
-easily modified, which makes them well suited to solid-state biosensors and to \emph{in silico}
-optimisation \citep{sun2022}.
+available to pair with its target. The two also differ in what it costs to obtain them, and the difference does not lie in the
+synthesis. Once a sequence is known, both are made by the same solid-phase chemistry, which is
+reproducible and allows terminal modifications to be introduced at will; on that basis aptamers
+are routinely described as inexpensive by comparison with antibodies \citep{stephens2025}. The
+expense of an aptamer lies upstream, in the selection campaign that discovers the sequence:
+\citet{kolm2020} required eleven rounds of cell-\acrshort{selex}, with repeated counter-selection
+against non-target species, to obtain a single aptamer against \emph{Enterococcus faecalis}, and
+such campaigns are not always successful. A hybridisation probe incurs none of that, because its
+sequence is read from the genome of the target. This asymmetry, rather than the cost of synthesis,
+is what makes probes the practical choice when the target is a known nucleic-acid sequence, and it
+is also what makes them amenable to \emph{in silico} optimisation \citep{sun2022}.
 
 \section{Graphene GFET biosensors for DNA detection}
 

@@ -8,6 +8,15 @@ three-dimensional validation is run separately with Boltz-2 on a \acrfull{gpu}. 
 through a layered scheme that can be overridden per gene, per species and per organism type
 (Section~\ref{sec:params}).
 
+The description follows the order in which the stages run, and falls into three parts. The
+sequence stages take a gene name and return a ranked list of candidate sequences, by retrieving
+public records, aligning them, scoring their conservation and screening the resulting windows on
+biophysical criteria. The best of those candidates are then predicted in three dimensions.
+Finally, the predicted structures are placed on a graphene sheet and the resulting interface is
+measured. Three shorter sections close the chapter: the scoring of an existing probe panel by the
+same metrics, the diversity analysis that justifies the sampling depth, and the handling of
+intermediate results.
+
 \section{Sequence retrieval from NCBI}
 
 For each target, sequences are retrieved from the \acrshort{ncbi} nucleotide database through the Entrez
@@ -41,6 +50,10 @@ reported in this dissertation derive from a single retrieval, processed in this 
 
 \section{Conservation scoring (PPI)}
 
+With the sequences aligned, the first design criterion can be applied. A probe is useless if the
+region it targets is present in only part of the strains of the pathogen, since the strains it
+misses become false negatives; the alignment is what makes that measurable, column by column.
+
 Conservation is scored per alignment column using the \acrfull{ppi}, adopted from the \emph{ViruScope}
 tool \citep{viruscope}. For a column, the \acrshort{ppi} is the average identity over all pairs of
 non-gap bases, computed from the base counts; pairs of ambiguous \acrshort{iupac} bases contribute a
@@ -65,14 +78,21 @@ per-column consensus (the most frequent non-gap base).
 \section{Thermodynamic screening}
 \label{sec:thermo}
 
+Conservation establishes that a region is shared across strains. It says nothing about whether an
+oligonucleotide copied from that region would hybridise usefully, which depends on the stability
+of the duplex it forms and on whether the strand instead pairs with itself. Those are
+thermodynamic questions, and they are answered under the conditions in which the probe is meant
+to work.
+
 Each candidate is scored with \texttt{primer3-py} under the conditions of the reference buffer,
 $1\times$ \acrfull{pbs}: $137$~mM NaCl, $2.7$~mM KCl, $10$~mM Na$_2$HPO$_4$ and $1.8$~mM KH$_2$PO$_4$
 \citep{cshpbs2006}, that is, $157$~mM Na$^+$ and $4.5$~mM K$^+$, which \texttt{primer3} treats together
 as a monovalent cation concentration of $161.5$~mM. No divalent cations or dNTPs are present, the
-oligonucleotide concentration is $250$~nM and the temperature is $37\,^{\circ}$C. Four quantities are
-computed: the melting temperature \acrshort{tm} (\acrfull{nn} model \citep{santalucia2004}), the GC
-content (the fraction of G and C bases), the hairpin free energy and the homodimer (self-dimer) free
-energy, the last two reported in kcal/mol and only when a structure is found. A candidate passes the
+oligonucleotide concentration is $250$~nM and the temperature is $37\,^{\circ}$C. Four parameters are
+computed for every candidate: (i) the melting temperature \acrshort{tm}, from the \acrfull{nn}
+thermodynamic model \citep{santalucia2004}; (ii) the GC content, the fraction of G and C bases;
+(iii) the hairpin free energy; and (iv) the homodimer, or self-dimer, free energy. The last two are
+reported in kcal/mol and only when a structure is found. A candidate passes the
 basic screen when its \acrshort{tm} and GC content fall within the resolved windows and its hairpin and
 homodimer free energies are no more negative than their respective limits (Table~\ref{tab:params}).
 
@@ -156,6 +176,11 @@ with conservation, to rank the candidates rather than merely to filter them.
 
 \section{Organism-aware parameters}
 \label{sec:params}
+
+Both screens just described were expressed in terms of the windows into which a candidate's
+melting temperature and GC content must fall, without saying where those windows come from. This
+section defines how they are resolved, which is where the generality of the method across
+organisms resides.
 
 Because the intended application spans pathogens with very different genomes, a single global set of
 thresholds is inadequate: criteria appropriate for a balanced bacterial genome would unfairly reject an
@@ -244,6 +269,11 @@ export larger curated sets (for example the top $25$ per gene) together with the
 
 \section{Three-dimensional validation}
 
+Every criterion applied so far judges a probe by its sequence. None of them says what that
+sequence looks like once folded, nor how compact or extended the resulting molecule is --- properties
+that matter at a surface, where only what lies close to it can be sensed. The next stage therefore
+predicts the structure itself.
+
 The selected probes are written one per file in the native Boltz-2 input format and submitted to Boltz-2
 \citep{wohlwend2024}, run on a \acrshort{gpu}, which predicts the three-dimensional structure of each single-stranded
 sequence together with confidence estimates: an overall confidence, the \acrfull{plddt} and the \acrfull{pae}
@@ -260,6 +290,11 @@ $25$-nucleotide probe was hybridised to its $25$-nucleotide complement \citep{ca
 
 \section{Assembly of probe--graphene models}
 \label{sec:complex}
+
+The structures predicted above are of the probe alone, free in solution. In a device the probe is
+held against a graphene surface, and it is the geometry of that interface, not of the free
+molecule, which determines how much of the probe's charge the transistor can register. Building
+that interface requires a model of the surface as well as of the probe.
 
 To obtain atomistic models of the sensing interface, the predicted probe structures were combined
 with a graphene sheet.
@@ -396,6 +431,10 @@ arbitrary weighting of two quantities of different nature.
 
 \section{Integration of a reference probe panel}
 
+The pipeline described so far designs probes from scratch. It can also score probes that already
+exist, which provides a point of comparison external to the method and a test of whether the
+thresholds behave sensibly on sequences they did not select.
+
 An existing experimental probe panel was integrated into the same workflow for comparison. Each reference
 probe, supplied as a (\texttt{job\_name}, \texttt{sequence}, \texttt{species}) record, is cleaned (uracil
 converted to thymine, non-ACGT characters removed) and scored with exactly the same metrics as the designed
@@ -407,16 +446,31 @@ columns.
 \section{Diversity and rarefaction analysis}
 \label{sec:diversity}
 
-To characterise each target and to justify the sampling depth, an alignment-free analysis based on $4$-mer
-composition is performed on the retrieved sequences. Each sequence is represented by its vector of $4$-mer
-frequencies, and pairwise cosine distances (on the frequency vectors) and Jaccard distances (on $4$-mer
-presence/absence) are computed, together with the fraction of unique sequences, which detects exact
-duplicates. A rarefaction analysis subsamples $N$ sequences per gene and measures the mean $4$-mer
-diversity and the richness (number of distinct $4$-mers), to determine the value of $N$ beyond which little
-new information is gained.
+One parameter has so far been stated without justification: the number of sequences requested per
+gene. Choosing it requires knowing how much variation each gene actually contains, which is also
+worth knowing in its own right, since it governs how demanding the conservation criterion can be.
+
+The analysis is alignment-free, so that it does not inherit the assumptions of the alignment it is
+meant to characterise. Each retrieved sequence is reduced to its vector of $4$-mer counts over the
+$256$ possible $4$-mers, normalised to frequencies. Two distances are then computed for every pair
+of sequences of a gene: the cosine distance, $1 - \cos\theta$ between the two frequency vectors,
+which is sensitive to how often each word occurs; and the Jaccard distance, one minus the ratio of
+the number of $4$-mers shared by the two sequences to the number present in either, which ignores
+frequency and registers only which words occur. The two therefore measure different things, and
+agreement between them is informative. The fraction of sequences that are distinct is reported
+alongside, since it detects exact duplicate records.
+
+The sampling depth follows from a rarefaction analysis. For each gene and each $N$ in a fixed
+schedule, $N$ sequences are drawn at random without replacement, five times independently; the
+mean pairwise cosine distance and the richness --- the number of distinct $4$-mers present in the
+subsample --- are averaged over the five draws. Plotting both against $N$ shows the value beyond
+which further sequences add little, which is the value the retrieval step needs.
 
 \section{Implementation and reproducibility}
 
 All intermediate and final results are written as CSV files. Because \acrshort{ncbi} does not always return
 an identical set of records, per-gene counts may vary by a few percent between runs; for strict
 reproducibility the accession identifiers can be frozen.
+
+The next chapter applies this method to the six-gene panel and reports, stage by stage, what it
+produced.

@@ -51,6 +51,19 @@ window also removes many windows ($583$ of the $1360$ of \emph{oprL} and $368$ o
 purpose of that bound, which excludes over-stable probes, and it still leaves $254$ and $288$ candidates
 for the two genes. The secondary-structure screen removes only $136$ further windows, confirming that
 most structurally problematic candidates are already eliminated by the thermodynamic filters.
+Figure~\ref{fig:funnel} places these counts against the stages of the method, so that the
+procedure of Chapter~3 and its effect on the candidate pool can be read together.
+
+\begin{figure}[H]
+\begin{center}
+\includegraphics[width=0.84\textwidth]{images/pipeline_funnel.png}
+\end{center}
+\caption{Stages of the pipeline and the number of candidates surviving each one. The first four
+stages act on sequences rather than on candidate windows, so no count is given for them; the bars
+begin with the windows produced by the sliding window and end with the final selection. The counts
+are those of Table~\ref{tab:funnel}, obtained in $1\times$~PBS.}
+\label{fig:funnel}
+\end{figure}
 
 \begin{table}[H]
 \begin{center}
@@ -77,6 +90,10 @@ secondary-structure screen.}
 
 \section{Three-dimensional validation}
 \label{sec:boltz}
+
+The funnel leaves far more candidates than can reasonably be predicted in three dimensions, which
+is what the quality ranking is for: it concentrates that effort on the sequences most likely to
+repay it.
 
 From the candidates that passed screening, the five highest-quality per gene ($30$ probes in total)
 were selected by the quality score and submitted to Boltz-2, each both as a single strand and as a
@@ -141,9 +158,12 @@ which indicates that screening in the reference buffer did not degrade the struc
 candidates it selects.
 
 \section{Genetic diversity of the targets}
+\label{sec:diversityres}
 
-The alignment-free diversity analysis (Table~\ref{tab:diversity}) explains much of the
-behaviour observed above. \emph{lytA} is by far the most diverse gene (mean cosine distance
+The genes did not behave uniformly through retrieval and screening, and part of that is a
+property of the targets themselves rather than of the thresholds applied to them: how variable
+each gene is across the strains deposited in \acrshort{ncbi}. The alignment-free diversity
+analysis (Table~\ref{tab:diversity}) measures that directly. \emph{lytA} is by far the most diverse gene (mean cosine distance
 $0.187$ and $93\%$ unique sequences), consistent with its known allelic diversity in
 \emph{S.\ pneumoniae} \citep{obregon2002}; this justifies the relaxed conservation threshold
 applied to it. At the opposite extreme, \emph{frdB} is the most conserved and most redundant
@@ -155,6 +175,13 @@ allowance of more sequences. The cosine and Jaccard distances are complementary 
 weighs $4$-mer frequencies, the latter only their presence or absence --- and they concur in
 identifying \emph{frdB} as the most conserved and redundant gene, giving an alignment-independent
 reading of diversity.
+
+These values describe the sequences deposited in \acrshort{ncbi}, not the strains circulating
+clinically. Public records accumulate from sequencing efforts that are themselves uneven: outbreak
+isolates and reference strains are over-represented, and some entries duplicate one another, as
+the fraction of unique sequences shows directly for \emph{frdB}. The diversity measured here is
+therefore a lower bound on the diversity a probe would meet in practice, and the conservation
+thresholds should be read in that light.
 
 \begin{table}[H]
 \begin{center}
@@ -209,11 +236,29 @@ The value of resolving thresholds per organism type and species is clearest when
 reference panel, which spans bacteria, viruses, a fungus, a protozoan and a human control. When
 the $74$ reference probes were scored with a single global (bacterial) criterion, $33$ passed
 the basic screen; when instead each was scored by the criteria of its own species and type,
-$42$ passed. The additional probes are precisely those whose genome composition differs from
-the balanced bacterial case --- for example the AT-rich \emph{Plasmodium} probe, which the
-global GC window would reject but which is appropriate under the protozoan profile. This
-confirms that organism-aware thresholds avoid unfair rejections without loosening the criteria
-for the balanced targets. The gene-level profiles have the same effect on the designed probes: $10$ of
+$42$ passed. That net gain of nine is the result of two opposite movements, shown in
+Figure~\ref{fig:refpanel}: ten probes are recovered and one is rejected. The ten recovered are
+those whose genome composition departs from the balanced bacterial case --- six from the GC-rich
+\emph{P.\ aeruginosa}, two from \emph{K.\ pneumoniae}, one from the AT-rich \emph{S.\ aureus}
+and one from \emph{P.\ falciparum}, the last of which the global GC window rejects although it is
+unremarkable for a genome of $19\%$ GC \citep{gardner2002}. The probe that is lost is the
+\emph{A.\ fumigatus} one, whose species profile ($42$--$58\%$ GC) is narrower than the global
+window it replaces.
+
+That the criterion can also reject is the more informative half of this result. Organism-aware
+thresholds are not a relaxation granted to awkward targets; they substitute a
+composition-appropriate criterion for a generic one, and a substitution can tighten as well as
+loosen.
+
+\begin{figure}[H]
+\begin{center}
+\includegraphics[width=\textwidth]{images/reference_panel.png}
+\end{center}
+\caption{The $74$ reference probes under a single global criterion and under the criteria of each
+probe's own species and type, by organism type (left), and the probes whose outcome changes
+(right).}
+\label{fig:refpanel}
+\end{figure} The gene-level profiles have the same effect on the designed probes: $10$ of
 the $30$ probes finally selected pass the basic screen only because of the profile of their gene ---
 four of the five \emph{nuc} probes and three each of the \emph{algD} and \emph{frdB} probes --- and would
 have been rejected by the global GC or \acrshort{tm} window although they suit the composition of their
@@ -231,6 +276,10 @@ in sequence space.
 
 \section{Probe--graphene models}
 \label{sec:complexres}
+
+The results reported so far concern the probes as sequences and as isolated structures. What
+remains is the property none of those criteria can reach: how the probe sits against the graphene,
+and how much of it ends up where the transistor can sense it.
 
 All $30$ probes predicted in 3D were combined with a graphene sheet to obtain atomistic models of
 the sensing interface (Section~\ref{sec:complex}). The predicted probe structures contain between
@@ -331,8 +380,14 @@ specificity of the duplex without bringing it inside.
 \caption{Length of a hybridised probe (B-form duplex, $0.34$~nm per base pair \citep{watsoncrick1953})
 for the shortest, median and longest probes selected ($18$, $20$ and $26$ nucleotides), compared on the
 same vertical scale with the Debye length of the three PBS dilutions \citep{purwidyantri2021}. The dark
-segment is the part within $\lambda_D$ in $1\times$~PBS. The geometry is the most favourable one: a
-duplex perpendicular to the surface and touching it, without a linker.}
+segment is the part within $\lambda_D$ in $1\times$~PBS. The geometry drawn is the most favourable
+one the duplex could adopt, so the dark segment is an upper bound: the duplex stands perpendicular
+to the surface and touches it, and no linker is interposed. Any departure from that arrangement
+lifts the duplex further away. Tilting it raises every base pair above the first, their height
+becoming the rise along the helix multiplied by the cosine of the tilt; the pyrene linker used to
+immobilise the probe adds its own length between the surface and the first nucleotide; and a
+strand adsorbed flat rather than standing, as single-stranded DNA tends to be on graphene
+\citep{green2015}, would lie within $\lambda_D$ but would no longer be free to hybridise.}
 \label{fig:debyescale}
 \end{figure}
 
@@ -393,7 +448,22 @@ The models make measurable a device-relevant quantity that no sequence-level met
 much of the probe, and of its charge, lies close enough to the graphene to be electrically visible
 (Section~\ref{sec:debyemethod}). Three geometries were measured --- the rigid placement, the probe
 anchored by its $3'$ end, and the anchored duplex --- in the three electrolytes, whose Debye lengths
-differ by an order of magnitude.
+differ by an order of magnitude. Figure~\ref{fig:geometries} shows what each geometry represents,
+with the measured counts that the following sections report.
+
+\begin{figure}[H]
+\begin{center}
+\includegraphics[width=\textwidth]{images/debye_geometries.png}
+\end{center}
+\caption{The three geometries in which the Debye coverage is measured, drawn against the screening
+length at $1\times$~PBS (shaded band). Left: the rigid placement, which preserves the orientation
+predicted by Boltz-2 and rests the lowest atom at the contact distance. Centre: the probe tethered
+by its $3'$ end, as it is immobilised experimentally. Right: the probe hybridised to its target,
+the target running antiparallel so that its first phosphate sits one helical rise above the
+anchor. The conformations are schematic; the counts beneath each panel are the medians measured
+over the $30$ models.}
+\label{fig:geometries}
+\end{figure}
 
 \subsection{Rigid placement}
 
@@ -563,6 +633,38 @@ respond.
 Third, the structures themselves are predictions. The confidences of the single strands are modest
 (Section~\ref{sec:boltz}), and although the duplexes are predicted with high confidence and
 canonical geometry, no experimental structure of these probes exists against which to verify them.
+
+\section{Limitations}
+\label{sec:limitations}
+
+Three limitations of the Debye measurement were set out in Section~\ref{sec:debyeres}. Four
+further ones bound the work as a whole.
+
+\paragraph{Specificity is not verified.} The selection is driven by conservation, which is a
+criterion of sensitivity: it requires that a probe match every strain of its target. It never asks
+the complementary question, whether the probe also matches something it should not. A region may
+be perfectly conserved within \emph{S.\ aureus} and still be shared with a related species, or
+with the human genome that is present in any clinical sample, and nothing in the pipeline would
+detect it. The candidates reported here are therefore candidates for specificity testing rather
+than a panel ready for use, and the automated check that would close this gap is the first item of
+future work.
+
+\paragraph{No experimental validation.} Every result is computational. No probe was synthesised,
+no device was functionalised and no hybridisation was measured. The experimental quantities that
+appear in this dissertation are taken from published work on comparable devices
+\citep{campos2019,purwidyantri2021} and serve to frame the computational results, not to confirm
+them.
+
+\paragraph{The sequence sample is what \acrshort{ncbi} contains.} Conservation is measured over
+deposited records, with the sampling bias described in Section~\ref{sec:diversityres}, and the
+retrieval depends on queries by gene name and organism, which will miss records annotated
+differently. Both affect which regions are judged conserved.
+
+\paragraph{The interface model omits the immobilisation chemistry.} The models place the probe
+directly on pristine graphene. The pyrene linker, the surface density of probes --- high enough in
+practice for neighbouring probes to interact --- and the blocking agent used to passivate
+unreacted linker are all absent. The anchored geometry approximates the tether but adds no linker
+length, which is why its coverage is reported as an upper bound.
 
 \section{Curated dataset of prioritised candidates}
 
