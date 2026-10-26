@@ -4,7 +4,7 @@ This chapter reports the results obtained by applying the pipeline to the six-ge
 $100$ sequences requested per gene (and a per-gene override of $200$ for the data-limited
 \emph{algD}), with every thermodynamic quantity computed in $1\times$~PBS at $37\,^{\circ}$C
 (Section~\ref{sec:thermo}). It follows the flow of the method: sequence retrieval and
-curation, the screening funnel, three-dimensional validation, the diversity and rarefaction
+curation, the screening funnel, three-dimensional structure prediction, the diversity and rarefaction
 analyses, the effect of the organism-aware parameters, the comparison with the reference panel,
 the assembly of probe--graphene models, and the curated dataset of prioritised candidates.
 
@@ -88,7 +88,7 @@ secondary-structure screen.}
 \label{tab:funnel}
 \end{table}
 
-\section{Three-dimensional validation}
+\section{Three-dimensional structure prediction}
 \label{sec:boltz}
 
 The funnel leaves far more candidates than can reasonably be predicted in three dimensions, which
@@ -583,6 +583,11 @@ them is reported here rather than resolved: the longer list is the one the state
 produces, while the shorter one is the more conservative reading. Either way, every gene keeps at
 least one candidate, and the probes selected on confidence are unaffected.
 
+Neither list has been screened for cross-hybridisation with organisms outside the target panel.
+The probes on it are conserved within their own gene, which is a criterion of sensitivity; whether
+they also match sequences they should not is a separate question that this work does not answer,
+and it is set out in Section~\ref{sec:limitations}.
+
 \begin{table}[H]
 \begin{center}
 \begin{tabular}{l l l c c c c}
@@ -622,8 +627,8 @@ the complementary question, whether the probe also matches something it should n
 be perfectly conserved within \emph{S.\ aureus} and still be shared with a related species, or
 with the human genome that is present in any clinical sample, and nothing in the pipeline would
 detect it. The candidates reported here are therefore candidates for specificity testing rather
-than a panel ready for use, and the automated check that would close this gap is the first item of
-future work.
+than a panel ready for use, and a BLAST-based specificity screen against non-target genomes and
+the host is the first item of future work.
 
 \paragraph{No experimental validation.} Every result is computational. No probe was synthesised,
 no device was functionalised and no hybridisation was measured. The experimental quantities that
@@ -659,5 +664,5 @@ which is how they enter the selection, and not to predict whether a device will 
 Finally, the same quality ranking was used to export a larger curated dataset: the top $25$
 probes per gene ($150$ probes in total), each with its sequence-level features (\acrshort{tm},
 GC, conservation, No-fold and folding energies). This dataset extends the set of $30$ probes
-validated in 3D to a broader, biophysically annotated selection of the highest-quality
+predicted in 3D to a broader, biophysically annotated selection of the highest-quality
 candidates per gene.

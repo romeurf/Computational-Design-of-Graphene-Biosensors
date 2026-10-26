@@ -5,20 +5,20 @@
 This dissertation set out to design, \emph{in silico}, high-quality \acrshort{ssdna} capture
 probes for \acrshort{gfet} biosensors targeting a panel of clinically relevant bacterial
 pathogens. The main outcome is a single, reproducible computational pipeline that turns a
-target gene into a small set of ranked, biophysically validated probe candidates, with every
+target gene into a small set of ranked, biophysically screened probe candidates, with every
 design decision grounded in the literature.
 
 The pipeline integrates, in one automated workflow, the stages that are usually performed
 separately or by hand: retrieval and curation of sequences from \acrshort{ncbi}, automatic
 length clustering, multiple sequence alignment and \acrshort{ppi}-based conservation scoring,
 nearest-neighbour thermodynamic screening, secondary-structure evaluation with a continuous
-No-fold score, and a final three-dimensional validation with Boltz-2. Two design choices give
+No-fold score, and a final three-dimensional structure prediction with Boltz-2. Two design choices give
 the method its generality and rigour. First, thresholds are resolved through a layered,
 \emph{organism-aware} scheme (gene\,$\rightarrow$\,species\,$\rightarrow$\,type\,$\rightarrow$\,
 global), so that pathogens with very different genome composition are judged by fair criteria;
 this was shown to recover candidates --- such as AT-rich probes --- that a single global rule
 would wrongly discard. Second, candidates are prioritised by a transparent quality score
-combining conservation and the No-fold score, which concentrates the expensive 3D validation on
+combining conservation and the No-fold score, which concentrates the expensive 3D prediction on
 the most promising sequences.
 
 Applied to the six-gene panel, with every thermodynamic quantity computed in $1\times$~PBS at
@@ -65,7 +65,7 @@ is as follows.
 
 \begin{itemize}
   \item \textbf{A panel of targets, with automated retrieval and curation.} Met. Six marker genes
-        from six species were defined, and their sequences are retrieved from \acrshort{ncbi} and
+        from five species were defined, and their sequences are retrieved from \acrshort{ncbi} and
         curated by automatic length clustering without per-gene tuning.
   \item \textbf{Conserved regions identified by alignment and per-column scoring.} Met. Alignment
         is performed with MAFFT and conservation scored by the \acrshort{ppi}, which drove the
@@ -78,7 +78,7 @@ is as follows.
   \item \textbf{Organism-aware design criteria.} Met. Thresholds resolve through a layered scheme,
         which recovered ten reference probes that a global rule rejects and rejected one that it
         accepts.
-  \item \textbf{Prioritisation and validation by three-dimensional prediction.} Met, with a
+  \item \textbf{Prioritisation by three-dimensional structure prediction.} Met, with a
         qualification. The candidates were predicted as single strands and as duplexes, and the
         predictions proved stable between runs; but the confidence of a short single strand is a
         relative indicator rather than a validation, and the structures remain unverified against

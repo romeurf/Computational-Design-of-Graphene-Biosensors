@@ -4,7 +4,7 @@ The probe-discovery method was implemented as a single, reproducible Python pipe
 gene, the pipeline proceeds through the stages described below. It is built on Biopython (\acrshort{ncbi}
 access and sequence handling), an external MAFFT executable (alignment), \texttt{primer3-py}
 (thermodynamics), \texttt{seqfold} (secondary structure) and \texttt{pandas} (tabular output); the
-three-dimensional validation is run separately with Boltz-2 on a \acrfull{gpu}. Every design threshold is resolved
+three-dimensional structure prediction is run separately with Boltz-2 on a \acrfull{gpu}. Every design threshold is resolved
 through a layered scheme that can be overridden per gene, per species and per organism type
 (Section~\ref{sec:params}).
 
@@ -264,10 +264,10 @@ indicative of sequence quality:
 \[
 \text{quality} \;=\; \tfrac{1}{2}\left(\text{\acrshort{ppi}} + \tfrac{\text{No-fold}}{100}\right).
 \]
-The top-ranked candidates of each gene are exported for 3D validation, and the same ranking is used to
+The top-ranked candidates of each gene are exported for 3D structure prediction, and the same ranking is used to
 export larger curated sets (for example the top $25$ per gene) together with their sequence-level features.
 
-\section{Three-dimensional validation}
+\section{Three-dimensional structure prediction}
 
 Every criterion applied so far judges a probe by its sequence. None of them says what that
 sequence looks like once folded, or how compact the resulting molecule is. Those properties matter

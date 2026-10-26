@@ -19,18 +19,21 @@ screened with nearest-neighbour thermodynamics (melting temperature, GC content,
 homodimer free energies) and evaluated for secondary structure, condensed into a continuous ``No-fold''
 score. All thresholds are resolved through an organism-aware, layered scheme (gene, species and
 organism type), so that pathogens with very different genome composition are judged fairly. The
-highest-quality candidates are prioritised and validated three-dimensionally, and a curated, feature-rich
-dataset of the best candidates per gene is produced.
+highest-quality candidates are prioritised and their structures predicted in three dimensions, and a
+curated, feature-rich dataset of the best candidates per gene is produced.
 
 Applied to the six-gene panel, with every thermodynamic quantity computed in $1\times$
 phosphate-buffered saline, the buffer whose ionic composition is closest to that of physiological fluids,
 the pipeline reduced 7661 candidate windows to 2439 that passed thermodynamic and structural
-screening, from which the best probes per gene were validated in 3D.
+screening, from which the best probes per gene were predicted in 3D.
 Alignment-free diversity and rarefaction analyses characterised each target and
 justified the sampling depth. The result is a prioritised, biophysically sound set of probe candidates and a
 reproducible framework that provides the sequence-level foundation for the rational design of
 DNA probe--graphene GFET biosensors, and that generalises to new genes and organisms with minimal
-configuration.
+configuration. The pipeline identifies regions conserved within each target gene but does not
+screen candidates against other organisms; cross-hybridisation with non-target sequences therefore
+remains to be excluded by a BLAST-based specificity step, and the candidates reported here are
+candidates for specificity testing rather than a finished panel.
 
 \paragraph{Keywords} DNA probe, graphene biosensor, graphene field-effect transistor
 (GFET), label-free detection, microbial DNA detection, point-of-care diagnostics, probe design,
@@ -62,18 +65,23 @@ mais próximos (temperatura de fusão, conteúdo em GC, energias de hairpin e ho
 quanto à estrutura secundária, condensada num score contínuo ``No-fold''. Todos os limiares são
 resolvidos através de um esquema em camadas e sensível ao organismo (gene, espécie e tipo de
 organismo), para que agentes patogénicos com composição genómica muito distinta sejam avaliados de
-forma justa. As candidatas de maior qualidade são priorizadas e validadas tridimensionalmente, e é
-produzido um conjunto de dados curado e rico em atributos com as melhores candidatas por gene.
+forma justa. As candidatas de maior qualidade são priorizadas e as suas estruturas previstas em três
+dimensões, e é produzido um conjunto de dados curado e rico em atributos com as melhores candidatas
+por gene.
 
 Aplicado ao painel de seis genes, com todas as grandezas termodinâmicas calculadas em tampão
 fosfato-salino $1\times$, o de composição iónica mais próxima da dos fluidos fisiológicos, o pipeline
 reduziu 7661 janelas candidatas a 2439 que passaram a triagem termodinâmica e estrutural, a partir das
-quais as melhores sondas por gene foram validadas em 3D. Análises de diversidade sem alinhamento e de rarefação
+quais as melhores sondas por gene foram previstas em 3D. Análises de diversidade sem alinhamento e de rarefação
 caracterizaram cada alvo e justificaram a profundidade de amostragem. O resultado é um conjunto
 priorizado e biofisicamente sólido de sondas candidatas e uma estrutura reprodutível que constitui o
 alicerce, ao nível da sequência, para o desenho racional de biossensores GFET de sonda de
 DNA--grafeno,
-generalizável a novos genes e organismos com configuração mínima.
+generalizável a novos genes e organismos com configuração mínima. O pipeline identifica regiões
+conservadas dentro de cada gene-alvo, mas não compara as candidatas com outros organismos; a
+hibridação cruzada com sequências não-alvo fica, por isso, por excluir através de uma etapa de
+especificidade baseada em BLAST, e as candidatas aqui reportadas são candidatas a teste de
+especificidade e não um painel terminado.
 
 \paragraph{Palavras-chave} sonda de DNA, biossensor de grafeno, transístor de
 efeito de campo de grafeno (GFET), deteção sem marcação, deteção de DNA microbiano, diagnóstico no

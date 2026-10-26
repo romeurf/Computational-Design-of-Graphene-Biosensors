@@ -82,7 +82,7 @@ that scales across many genes and organisms of very different genome composition
 \label{sec:objectives}
 
 The main objective is to build a reproducible computational pipeline that turns a target gene into a small
-set of ranked, biophysically validated \acrshort{ssdna} probe candidates for \acrshort{gfet} biosensing.
+set of ranked, biophysically screened \acrshort{ssdna} probe candidates for \acrshort{gfet} biosensing.
 This decomposes into the following specific objectives:
 
 \begin{itemize}
@@ -95,14 +95,16 @@ This decomposes into the following specific objectives:
         scores;
   \item make the design criteria \emph{organism-aware}, so that targets with very different genome
         composition (AT-rich or GC-rich) are evaluated fairly;
-  \item prioritise and validate the most promising candidates by three-dimensional structure prediction; and
+  \item prioritise the most promising candidates and characterise them by three-dimensional structure
+        prediction; and
   \item produce curated, feature-rich datasets of the prioritised probe candidates.
 \end{itemize}
 
 \section{Target panel}
 
-Six marker genes from six clinically important bacterial species were used as the working panel throughout
-this work (Table~\ref{tab:targets}). Several are established targets for the molecular detection of their
+Six marker genes from five clinically important bacterial species (two of them from
+\emph{Pseudomonas aeruginosa}) were used as the working panel throughout this work
+(Table~\ref{tab:targets}). Several are established targets for the molecular detection of their
 species: the thermonuclease gene \emph{nuc} for \emph{Staphylococcus aureus} \citep{brakstad1992}, the
 autolysin gene \emph{lytA} for \emph{Streptococcus pneumoniae} \citep{carvalho2007}, and the
 outer-membrane lipoprotein gene \emph{oprL} for \emph{Pseudomonas aeruginosa} \citep{devos1997}. The panel
@@ -134,8 +136,9 @@ method.
 
 The remainder of this dissertation is organised as follows. Chapter~2 reviews the state of the art in DNA
 recognition elements for nucleic-acid biosensing, in graphene \acrshort{gfet} biosensors, and in the
-computational methods used to design and validate probe sequences. Chapter~3 describes the methods,
+computational methods used to design and evaluate probe sequences. Chapter~3 describes the methods,
 detailing every stage of the pipeline and the rationale for each design decision and threshold. Chapter~4
 presents and discusses the results for the target panel --- the screening funnel, the three-dimensional
-validation, the diversity and rarefaction analyses, and the comparison with a reference probe panel.
+structure prediction, the diversity and rarefaction analyses, and the comparison with a reference
+probe panel.
 Chapter~5 draws the main conclusions and outlines future work.
