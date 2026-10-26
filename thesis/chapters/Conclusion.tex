@@ -27,8 +27,9 @@ the pipeline reduced $7661$ candidate windows to $2439$ that passed screening, f
 best candidates per gene were carried into three-dimensional prediction. Alignment-free diversity and
 rarefaction analyses characterised each target and justified the sampling depth in a principled,
 non-arbitrary way. An existing experimental probe panel was folded into the same workflow and scored
-with identical metrics, enabling a direct comparison, and a curated $150$-probe dataset of the
-highest-quality candidates per gene was produced. Screening in the reference buffer changed which
+with identical metrics, which placed the designed probes against sequences the method did not
+select, and a curated $150$-probe dataset of the highest-quality candidates per gene was
+produced. Screening in the reference buffer changed which
 candidates survive, and it is what gives the melting temperature, hairpin and homodimer thresholds
 a defensible meaning, since they then refer to the solution in which the probes are meant to
 work.
@@ -37,7 +38,7 @@ The selected probes were predicted with Boltz-2 both as single strands and as du
 complementary targets, and assembled with a graphene sheet into atomistic models of the sensing
 interface, using a pristine layer built with GOPY and a placement set at the equilibrium
 physisorption distance reported for nucleobases on graphene. All $30$ models are free of steric
-clashes. Three findings follow from them.
+clashes, and three findings emerged from them.
 
 First, the three-dimensional prediction is not a restatement of the sequence ranking: across the
 $30$ probes its confidence is uncorrelated with the quality score used to select them
@@ -113,8 +114,8 @@ Several directions follow naturally from this work:
         geometries. Molecular docking and force-field refinement would relax the probe against
         the surface and replace the orientation sampling used here by energetically weighted
         poses, from which the Debye coverage could be recomputed.
-  \item \textbf{Data-driven modelling.} The curated feature dataset opens the way to a machine-
-        learning model that predicts probe quality directly, potentially accelerating or
+  \item \textbf{Data-driven modelling.} The curated feature dataset opens the way to a
+        machine-learning model that predicts probe quality directly, potentially accelerating or
         refining the ranking.
   \item \textbf{Broader panels.} As the framework already supports viral, fungal, protozoan and
         host profiles, extending the panel to further genes and non-bacterial pathogens is

@@ -2,7 +2,6 @@
 \newacronym{gfet}{GFET}{Graphene Field-Effect Transistor}
 \newacronym{fet}{FET}{Field-Effect Transistor}
 \newacronym{ssdna}{ssDNA}{single-stranded DNA}
-\newacronym{dsdna}{dsDNA}{double-stranded DNA}
 \newacronym{selex}{SELEX}{Systematic Evolution of Ligands by EXponential enrichment}
 \newacronym{msa}{MSA}{Multiple Sequence Alignment}
 \newacronym{ppi}{PPI}{Percentage of Pairwise Identity}
@@ -22,6 +21,7 @@
 \newacronym{nn}{NN}{Nearest-Neighbour}
 \newacronym{pbs}{PBS}{Phosphate-Buffered Saline}
 \newacronym{pbse}{PBSE}{1-Pyrenebutyric Acid Succinimidyl Ester}
+\newacronym{who}{WHO}{World Health Organization}
 
 \chapter{Introduction}
 
@@ -32,7 +32,7 @@ is steadily eroding the ability to treat them: an estimated $4.95$~million death
 bacterial \acrshort{amr} in $2019$, of which $1.27$~million were directly attributable to it
 \citep{murray2022}. Rapid identification of the infecting pathogen, and increasingly of its resistance
 determinants, is therefore central to guiding therapy, to infection control and to public-health
-surveillance; several of the species targeted in this work feature on the {WHO} Bacterial Priority
+surveillance; several of the species targeted in this work feature on the \acrshort{who} Bacterial Priority
 Pathogens List \citep{who2024bppl}.
 
 The fast identification of microbial DNA underpins the diagnosis of infection and the tracking of
@@ -117,18 +117,20 @@ method.
 \begin{center}
 \begin{tabular}{l l c l}
 \hline
-\textbf{Gene} & \textbf{Organism} & \textbf{Group} & \textbf{Function} \\
+\textbf{Gene} & \textbf{Organism} & \textbf{GC} & \textbf{Function} \\
 \hline
-\emph{nuc}  & \emph{Staphylococcus aureus}    & A & thermonuclease \\
-\emph{rmpM} & \emph{Neisseria meningitidis}   & A & class-4 outer-membrane protein \\
-\emph{lytA} & \emph{Streptococcus pneumoniae} & B & autolysin \\
-\emph{oprL} & \emph{Pseudomonas aeruginosa}   & B & peptidoglycan-associated lipoprotein \\
-\emph{algD} & \emph{Pseudomonas aeruginosa}   & B & GDP-mannose 6-dehydrogenase \\
-\emph{frdB} & \emph{Haemophilus influenzae}   & B & fumarate reductase Fe--S subunit \\
+\emph{nuc}  & \emph{Staphylococcus aureus}    & 35.5\% & thermonuclease \\
+\emph{rmpM} & \emph{Neisseria meningitidis}   & 52.2\% & class-4 outer-membrane protein \\
+\emph{lytA} & \emph{Streptococcus pneumoniae} & 44.9\% & autolysin \\
+\emph{oprL} & \emph{Pseudomonas aeruginosa}   & 63.5\% & peptidoglycan-associated lipoprotein \\
+\emph{algD} & \emph{Pseudomonas aeruginosa}   & 64.6\% & GDP-mannose 6-dehydrogenase \\
+\emph{frdB} & \emph{Haemophilus influenzae}   & 39.2\% & fumarate reductase Fe--S subunit \\
 \hline
 \end{tabular}
 \end{center}
-\caption{Target genes and their host organisms used as the working panel.}
+\caption[Target panel]{Target genes and their host organisms used as the working panel. ``GC'' is
+the mean GC content of the sequences retrieved for each gene, which spans $29$ percentage points
+across the panel and is what the organism-aware thresholds of Section~\ref{sec:params} respond to.}
 \label{tab:targets}
 \end{table}
 

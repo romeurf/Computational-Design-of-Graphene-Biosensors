@@ -17,6 +17,15 @@ for the genes with the most heterogeneous records. Two genes, \emph{oprL} and \e
 are intrinsically data-limited in \acrshort{ncbi} (only 24 and 12 sequences survive
 respectively), which, as shown below, is reflected in their behaviour through the pipeline.
 
+The clustering removed between $0$ and $37\%$ of the records depending on the gene. It discarded
+nothing at all for \emph{frdB}, whose $82$ records all fall within the dominant length band, and
+most for \emph{algD}, which lost seven of its nineteen. The alignment widths that result differ by
+a factor of five, from the $489$ columns of \emph{frdB} to the $2594$ of \emph{lytA}: an alignment
+is as wide as the longest record plus every insertion, so a gene whose records are uniform in
+length yields a compact alignment, while one with divergent alleles yields a sparse and much wider
+one. These two extremes recur throughout the chapter, and Section~\ref{sec:diversityres} shows
+that they are a property of the genes rather than of the retrieval.
+
 \begin{table}[H]
 \begin{center}
 \begin{tabular}{l c c c}
@@ -131,9 +140,9 @@ sequence-level conservation and No-fold score.}
 
 \paragraph{Duplexes.} Predicted with their complementary targets, the same probes reach
 substantially higher confidences, from $0.845$ to $0.949$ (\acrshort{plddt} $0.855$--$0.985$), and
-all $30$ fall in the highest class. The contrast with the single strands is itself informative: a
-fully complementary duplex has a defined, canonical structure, whereas an unpaired strand does not,
-and the model reflects that difference. The predicted duplexes are indeed canonical, with a rise of
+all $30$ fall in the highest class. The contrast with the single strands follows from what is being
+predicted: a fully complementary duplex has a defined, canonical structure, whereas an unpaired
+strand does not. The predicted duplexes are indeed canonical, with a rise of
 $3.20$--$3.43$~\AA{} per base pair (median $3.28$~\AA{}), in agreement with the $3.4$~\AA{} of
 B-form DNA \citep{watsoncrick1953}. This is a useful internal check: the structures used in the
 interface analysis of Section~\ref{sec:complexres} reproduce the geometry of real DNA rather than an
@@ -175,7 +184,8 @@ instability at low sampling and motivates the automatic length-clustering and th
 allowance of more sequences. The cosine and Jaccard distances are complementary --- the former
 weighs $4$-mer frequencies, the latter only their presence or absence --- and they concur in
 identifying \emph{frdB} as the most conserved and redundant gene, giving an alignment-independent
-reading of diversity.
+reading of diversity. Figure~\ref{fig:diversity} shows the same comparison pair by pair: the
+near-uniform dark field of \emph{frdB} against the mottled one of \emph{lytA}.
 
 These values describe the sequences deposited in \acrshort{ncbi}, not the strains circulating
 clinically. Public records accumulate from sequencing efforts that are themselves uneven: outbreak
@@ -216,12 +226,21 @@ distance between two retrieved sequences of the gene.}
 
 \section{Choice of sampling depth}
 
-The rarefaction analysis showed that both the $4$-mer diversity and the $4$-mer richness
-saturate at around $N \approx 50$ sequences for the most demanding gene (\emph{nuc}), and much
-earlier for the others. Requesting up to $100$ sequences per gene therefore captures essentially
+The rarefaction analysis (Figure~\ref{fig:rarefaction}) showed that both the $4$-mer diversity
+and the $4$-mer richness saturate at around $N \approx 50$ sequences for the most demanding gene
+(\emph{nuc}), and much earlier for the others. Requesting up to $100$ sequences per gene therefore captures essentially
 all of the available diversity with a comfortable margin, while additional sequences add little
 new information. The true limiting factor is not this cap but the small number of records
 available in \acrshort{ncbi} for the data-limited genes.
+
+The distinction matters for how the conservation values of each gene should be read. For
+\emph{nuc}, \emph{rmpM}, \emph{lytA} and \emph{frdB}, between $76$ and $87$ sequences survive
+curation, comfortably past the saturation point, so their conservation scores rest on a sample
+that further records would not materially change. For \emph{oprL} ($24$) and \emph{algD} ($12$)
+they do not reach it, and the per-gene allowance of $200$ records for \emph{algD} changes nothing,
+because the database holds only $19$. The conservation measured for those two genes is therefore
+the less firmly established of the panel, and this is a limitation of the public record rather
+than of the sampling strategy.
 
 \begin{figure}[H]
 \begin{center}
@@ -248,9 +267,9 @@ unremarkable for a genome of $19\%$ GC \citep{gardner2002}. The probe that is lo
 \emph{A.\ fumigatus} one, whose species profile ($42$--$58\%$ GC) is narrower than the global
 window it replaces.
 
-The rejection matters as much as the recoveries. It shows that the layered scheme is not a
-relaxation applied to awkward targets, but the replacement of a generic criterion by one matched to
-the composition of each genome, which can tighten the requirement as readily as loosen it.
+The rejection is as informative as the recoveries, because it shows that the layered scheme is not
+a relaxation applied to awkward targets, but the replacement of a generic criterion by one matched
+to the composition of each genome, which can tighten the requirement as readily as loosen it.
 
 \begin{figure}[H]
 \begin{center}
@@ -261,7 +280,9 @@ panel: the $74$ reference probes under a single global criterion and under the c
 probe's own species and type, by organism type (left), and the probes whose outcome changes
 (right).}
 \label{fig:refpanel}
-\end{figure} The gene-level profiles have the same effect on the designed probes: $10$ of
+\end{figure}
+
+The gene-level profiles have the same effect on the designed probes: $10$ of
 the $30$ probes finally selected pass the basic screen only because of the profile of their gene ---
 four of the five \emph{nuc} probes and three each of the \emph{algD} and \emph{frdB} probes --- and would
 have been rejected by the global GC or \acrshort{tm} window although they suit the composition of their
@@ -273,9 +294,18 @@ Scored with identical metrics, the designed probes and the reference panel can b
 directly. Among the probes that pass the basic screen, the designed probes have a slightly higher
 mean melting temperature ($62.6$ versus $61.4\,^{\circ}$C) and a very similar mean GC content ($0.49$
 versus $0.51$), while the reference probes have a slightly higher mean No-fold score ($84.7$ versus
-$81.4$). Because both sets carry a source label and share every column, they can also be
-submitted together to Boltz-2, enabling a like-for-like comparison in three dimensions as well as
-in sequence space.
+$81.4$).
+
+None of these differences is large, and that is the useful outcome. The reference probes were
+selected experimentally, by criteria external to this pipeline, so the fact that the designed
+probes fall in the same region of melting temperature and composition indicates that the
+thresholds are not drifting away from what works in practice. The No-fold comparison is the more
+pointed of the three: the designed probes are screened and ranked partly on that very score, so
+one would expect them to lead on it, and they do not. Experimentally selected probes are at least
+as free of self-structure as the ones this method produces, which means the score is measuring a
+property real probes possess rather than rewarding the output of the method that uses it.
+Conservation cannot enter the comparison at all, since it is defined only for a probe derived
+from an alignment, and the reference probes are not.
 
 \section{Probe--graphene models}
 \label{sec:complexres}
@@ -367,8 +397,9 @@ models are suitable inputs for the refinement stages that follow.
 \section{Why \texorpdfstring{$1\times$}{1x}~PBS is kept as the reference}
 \label{sec:buffer}
 
-These coverage values do not argue for diluting the buffer. Figure~\ref{fig:debyescale} sets the
-relevant dimensions side by side. In B-form DNA the base pairs are $0.34$~nm apart along the helix axis
+A probe designed for $1\times$~PBS will lie largely outside the screening length of that buffer,
+as Section~\ref{sec:debyeres} measures. That is not an argument for diluting it, and the reason is
+dimensional. Figure~\ref{fig:debyescale} sets the relevant lengths side by side. In B-form DNA the base pairs are $0.34$~nm apart along the helix axis
 \citep{watsoncrick1953}, so the $18$- to $26$-nucleotide probes selected in this work form duplexes
 $6.1$ to $8.8$~nm long (Section~\ref{sec:debyeres} measures the consequence directly), whereas $\lambda_D$ is $0.76$~nm in $1\times$~PBS: even with the duplex
 standing on the surface, only about two base pairs lie inside it, and no probe long enough to hybridise
@@ -485,8 +516,8 @@ $0.1\times$~PBS the fraction rises to 23.2--97.8\%
 every model: the tallest probe stands 62.4~\AA{} above the
 sheet, well inside the $76.1$~\AA{} of $\lambda_D$ at that dilution.
 
-Table~\ref{tab:debyeclass} breaks these values down by Boltz-2 confidence class. Three observations
-follow. At $1\times$~PBS no model of any class reaches even $15\%$ coverage, and the class medians
+Table~\ref{tab:debyeclass} breaks these values down by Boltz-2 confidence class. At
+$1\times$~PBS no model of any class reaches even $15\%$ coverage, and the class medians
 are ordered \emph{against} the confidence (LOW 8.5\%,
 MODERATE 6.2\%,
 GOOD 5.6\%). At $0.1\times$~PBS the models
@@ -522,8 +553,8 @@ class with at least half of the probe inside $\lambda_D$ at $0.1\times$~PBS.}
 The correlation between coverage and 3D confidence is weak and slightly negative in both buffers in
 which it can be computed ($r = -0.19$ at $1\times$~PBS and
 $r = -0.14$ at $0.1\times$~PBS; at $0.01\times$~PBS the
-coverage is the same for every probe, so no correlation is defined). A well-predicted probe is thus
-not a more visible one. This is consistent with the independence already observed between the 3D
+coverage is the same for every probe, so no correlation is defined), so a probe that is better
+predicted is not thereby more visible to the device. This is consistent with the independence already observed between the 3D
 confidence and the sequence-level quality (Section~\ref{sec:boltz}), and it is what makes interface
 geometry worth carrying as a criterion of its own: it orders the candidates along an axis that
 neither the sequence screening nor the structure prediction captures.
@@ -555,15 +586,14 @@ stays close to the surface. The two probes with fewest retained orientations, \e
 and \emph{p4010} ($542$), are accordingly those with the highest anchored charge ($5$ and $4$
 phosphates), while the probes with more than $4000$ retained orientations have a median of $1$.
 
-Two consequences follow. The anchored metric is not a property of the sequence alone: it is governed
+This has two consequences. The anchored metric is not a property of the sequence alone: it is governed
 largely by where the $3'$ terminus happens to sit in the predicted conformation, which is itself a
 prediction. And the estimates for probes with few retained orientations rest on a small sample, so
 their values are the least reliable of the panel --- a caveat that applies precisely to the probes
 the metric favours.
 
 The hybridised state is the one the device actually senses, since it is the arrival of the target
-that changes the charge at the surface. Measured on the anchored duplexes, the result is
-unambiguous: in $1\times$~PBS the median number of target phosphates within $\lambda_D$ is zero for
+that changes the charge at the surface. Measured on the anchored duplexes, in $1\times$~PBS the median number of target phosphates within $\lambda_D$ is zero for
 all $30$ probes, and even the most favourable orientation places only
 4--7
 of them inside. In $0.1\times$~PBS the median rises to $8$ target phosphates, and in $0.01\times$~PBS
@@ -593,6 +623,21 @@ those two, without changing any other entry. Both lists are defensible, and the 
 them is reported here rather than resolved: the longer list is the one the stated criterion
 produces, while the shorter one is the more conservative reading. Either way, every gene keeps at
 least one candidate, and the probes selected on confidence are unaffected.
+Figure~\ref{fig:pareto} shows the front of each gene against the candidates it dominates.
+
+\begin{figure}[H]
+\begin{center}
+\includegraphics[width=\textwidth]{images/pareto_front.pdf}
+\end{center}
+\caption[Pareto front per gene]{Boltz-2 confidence against the median number of anchored
+phosphates within $\lambda_D$ in $1\times$~PBS, for the five candidates of each gene. Filled
+points lie on the Pareto front and enter the final selection; hollow points are dominated, that is,
+another candidate of the same gene is at least as good on both axes and better on one. The dashed
+line traces the front. Because the two axes are uncorrelated across the panel
+(Section~\ref{sec:boltz}), the fronts are not single points: \emph{oprL} retains three candidates
+and \emph{algD} and \emph{frdB} one each.}
+\label{fig:pareto}
+\end{figure}
 
 Neither list has been screened for cross-hybridisation with organisms outside the target panel.
 The probes on it are conserved within their own gene, which is a criterion of sensitivity; whether
@@ -678,3 +723,12 @@ probes per gene ($150$ probes in total), each with its sequence-level features (
 GC, conservation, No-fold and folding energies). This dataset extends the set of $30$ probes
 predicted in 3D to a broader, biophysically annotated selection of the highest-quality
 candidates per gene.
+
+Its purpose is to keep the work usable beyond the eleven probes finally selected. The structural
+and interface analyses are expensive and were therefore applied to five candidates per gene, but
+the selection narrows at every stage and a candidate can fail for reasons this pipeline does not
+test, specificity above all (Section~\ref{sec:limitations}). A ranked pool of $150$ annotated
+candidates means that the next one in line for a gene is already characterised at the sequence
+level and can be carried forward without rerunning the retrieval, the alignment or the screening.
+The same table is also the feature matrix that a data-driven model of probe quality would be
+trained on, which is among the directions set out in Chapter~5.

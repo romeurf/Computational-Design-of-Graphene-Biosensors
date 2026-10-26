@@ -48,12 +48,26 @@ Graphene combines very high carrier mobility with a fully surface-exposed conduc
 charges binding at its surface strongly modulate its conductance \citep{novoselov2004}; the adsorption of
 even a single molecule can be resolved electrically \citep{schedin2007}, making it an outstanding
 transducer for label-free sensing \citep{krishnan2023,green2015}, including for nucleic acids at very low
-concentrations \citep{hwang2020}. In a \acrfull{gfet}, the graphene channel is gated
+concentrations \citep{hwang2020}. In a \acrshort{gfet}, the graphene channel is gated
 electrolytically, and the hybridisation of a target strand to an immobilised probe shifts the transfer
 characteristic through the added backbone charge. Electrolyte-gated \acrshort{gfet}s functionalised with
 DNA probes have reached attomolar, label-free detection of hybridisation \citep{campos2019}, back-gated
 architectures have enabled scalable device production \citep{ping2016}, and microfluidic integration has
 turned such devices into programmable lab-on-chip DNA sensors \citep{purwidyantri2022}.
+Figure~\ref{fig:gfet} shows the arrangement and the quantity that is measured.
+
+\begin{figure}[H]
+\begin{center}
+\includegraphics[width=\textwidth]{images/gfet_schematic.pdf}
+\end{center}
+\caption[GFET sensing principle]{Sensing principle of an electrolyte-gated \acrshort{gfet}.
+Left: the probe is held on the graphene channel by a pyrene linker and captures its complementary
+target, forming a duplex that carries one negative charge per phosphate. The vertical axis is drawn
+to scale, so the screening length of $1\times$~PBS ($\lambda_D = 0.76$~nm, shaded) can be compared
+with the $6.8$~nm of a $20$-base-pair duplex. Right: hybridisation displaces the charge-neutrality
+point of the transfer characteristic, and that displacement is the signal.}
+\label{fig:gfet}
+\end{figure}
 
 A key operating constraint of any electrolyte-gated \acrshort{fet} biosensor is the screening of
 charge by the ions of the solution. Mobile ions in the electrolyte rearrange around any fixed
@@ -82,9 +96,23 @@ nucleobases, whereas double-stranded DNA binds much more weakly because base pai
 bases \citep{green2015,krishnan2023}. This contrast is the basis of many transduction schemes: for
 example, graphene-oxide \acrfull{fret} sensors, in which a single strand adsorbed on
 \acrfull{go} is desorbed upon target binding, restoring fluorescence \citep{lu2009,zhu2015}.
-Adsorption can, however, perturb DNA folding and kinetics, which matters especially for structured
-recognition elements: a useful probe must retain its ability to hybridise its target while still producing a
-detectable electronic perturbation at the surface \citep{green2015}.
+The contact is close and non-covalent: van der Waals-corrected density-functional calculations
+place the four nucleobases at $3.16$--$3.22$~\AA{} above the plane, in a regime of strong
+physisorption \citep{tayo2023}, consistent with the picture established for the bases on graphene
+and on hexagonal boron nitride \citep{lee2013}.
+
+This creates the tension that governs the design of the sensing interface. Charge is only
+detectable within the screening length, so a strand lying flat on the sheet would place its entire
+backbone where the transistor can register it; but a strand whose bases are stacked against the
+graphene has those bases unavailable for Watson--Crick pairing, and therefore cannot capture its
+target. Adsorption also perturbs folding and kinetics, which matters most for structured
+recognition elements \citep{green2015}. The practical resolution is to immobilise the probe
+through a linker rather than let it adsorb: in the devices that define the experimental context of
+this work the probe carries an amino modification at one terminus and is bound through a pyrene
+derivative, which itself stacks on the graphene and holds the oligonucleotide off the surface
+\citep{campos2019,purwidyantri2021}. A useful probe must therefore retain its ability to hybridise
+while still producing a detectable electronic perturbation at the surface \citep{green2015}, and
+the geometry that follows from this compromise is measured directly in Section~\ref{sec:debyeres}.
 
 \section{Computational design and evaluation of probe sequences}
 

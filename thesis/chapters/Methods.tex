@@ -26,8 +26,8 @@ format, in batches of $200$ identifiers, with short pauses between requests to r
 rate limit of three requests per second without an API key. Each target defines a primary query combining
 the gene name, the organism and a sequence-length range; if it returns fewer than two records, the
 pipeline falls back in turn to one or two broader alternative queries and, failing those, to a fixed RefSeq
-accession. Records outside a coarse per-gene length range are discarded at this stage. For genes with a
-single usable record (allowed only for \emph{rmpM}), a single-sequence mode is used.
+accession. Records outside a coarse per-gene length range are discarded at this stage. For a gene with a
+single usable record, a single-sequence mode is used.
 
 \section{Length clustering}
 
@@ -54,7 +54,7 @@ With the sequences aligned, the first design criterion can be applied. A probe i
 region it targets is present in only part of the strains of the pathogen, since the strains it
 misses become false negatives; the alignment is what makes that measurable, column by column.
 
-Conservation is scored per alignment column using the \acrfull{ppi}, adopted from the \emph{ViruScope}
+Conservation is scored per alignment column using the \acrshort{ppi}, adopted from the \emph{ViruScope}
 tool \citep{viruscope}. For a column, the \acrshort{ppi} is the average identity over all pairs of
 non-gap bases, computed from the base counts; pairs of ambiguous \acrshort{iupac} bases contribute a
 partial weight (for example a purine code $R$ scores $0.5$ against $A$ or $G$, and $N$ scores $0.25$
@@ -103,7 +103,7 @@ physiological temperature; for the stability of the probe--target duplex it is a
 condition than room temperature. Computing every thermodynamic quantity under these conditions gives
 each threshold a direct meaning. The \acrshort{tm} window is a margin over the hybridisation temperature
 $T$: its default, $53$--$72\,^{\circ}$C, places the \acrshort{tm} between $16$ and $35\,^{\circ}$C above
-$37\,^{\circ}$C, and for another assay temperature it can be derived as $[T+15,\,T+35]\,^{\circ}$C. The
+$37\,^{\circ}$C, and for another assay temperature it can be derived as $[T+16,\,T+35]\,^{\circ}$C. The
 lower bound keeps the duplex stable well above the hybridisation temperature; the upper bound excludes
 probes so stable that hybridisation at that temperature would no longer discriminate imperfectly
 matched targets \citep{wetmur1991}. The hairpin and homodimer limits are absolute free energies of
@@ -141,7 +141,7 @@ $37\,^{\circ}$C. Values are overridden per organism type, species or gene where 
 \section{Secondary structure and the No-fold score}
 
 The single-strand secondary structure of each candidate that passed the basic screen is computed with
-\texttt{seqfold}, which returns the \acrfull{mfe} at $37\,^{\circ}$C and the fraction of paired bases. A
+\texttt{seqfold}, which returns the \acrshort{mfe} at $37\,^{\circ}$C and the fraction of paired bases. A
 candidate passes the secondary-structure screen when its \acrshort{mfe} is no more negative than
 $-2.1$~kcal/mol. This value is the fifth percentile of the \acrshort{mfe} distribution of the candidates
 that pass the basic screen in the reference buffer (Figure~\ref{fig:seqfold}). The \texttt{seqfold}
@@ -297,33 +297,17 @@ held against a graphene surface, and it is the geometry of that interface, not o
 molecule, which determines how much of the probe's charge the transistor can register. Building
 that interface requires a model of the surface as well as of the probe.
 
-To obtain atomistic models of the sensing interface, the predicted probe structures were combined
-with a graphene sheet.
-
 \subsection{Generation of the graphene sheet with GOPY}
 
 The graphene component was built with \textbf{GOPY} \citep{muraru2020}, a free and open-source
 Python tool for the automated construction of two-dimensional graphene-based molecular models.
-Building such models by hand is slow and introduces bias, because the position of every atom ---
-and, in functionalised variants, of every chemical group --- has to be placed manually; GOPY
-generates them programmatically instead, which makes larger and more complex sheets practical and
-reproducible. Besides pristine graphene, the tool can produce graphene oxide and its derivatives
-(reduced graphene oxide, carboxyl-, epoxy- and hydroxyl-functionalised forms, PEG-aminated reduced
-graphene oxide and nitrogen-doped graphene), and can introduce vacancy defects (``holes'') in a
-layer. Each model is written directly in PDB format, which makes it usable by standard structural
-biology and molecular modelling software without conversion.
-
-A note on how the tool was obtained is warranted, since it conditions reproducibility. GOPY is not
-published on a package index: it is released by its authors as a standalone Python script under the
-GNU General Public License, hosted in a public repository,\footnote{\url{https://github.com/Iourarum/GOPY}}
-and contains no packaging metadata that would allow installation through \texttt{pip}. Retrieving
-the source directly from that repository and executing it locally is therefore the only available
-distribution route, and it is the one used here. Care is needed because the name \emph{gopy} is
-shared by at least two unrelated projects --- a Go-to-Python bindings generator and a
-data-structures package published on PyPI --- neither of which has any connection to graphene
-modelling; the tool used in this work is specifically the one accompanying \citet{muraru2020},
-developed by S. Muraru, J. S. Burns and M. Ioni\c{t}\u{a}, to whom credit for it belongs. Only
-Python~3 with \texttt{numpy} and \texttt{scipy} is required to run it.
+Building such a lattice by hand is slow and error-prone, since every atom has to be positioned
+individually; GOPY generates it programmatically, which makes a sheet of the size needed here
+practical and reproducible. It writes the model directly in PDB format, so it can be read by
+standard structural-biology software without conversion. The tool is distributed as a standalone
+script under the GNU General Public License rather than through a package
+index,\footnote{\url{https://github.com/Iourarum/GOPY}} and is run from the source obtained there,
+which requires only Python~3 with \texttt{numpy} and \texttt{scipy}.
 
 For this work only the pristine graphene functionality was used, since the sensing channel modelled
 here is unfunctionalised graphene. A single layer was generated with the command
@@ -346,7 +330,7 @@ with a margin.
 
 \subsection{Assembly of the probe--graphene models}
 
-Each probe was placed above the sheet by a rigid-body translation, computed with a script built on
+Each probe is placed above the sheet by a rigid-body translation, computed with a script built on
 Biopython \citep{cock2009}. The probe structure (Boltz-2 CIF) and the sheet
 (GOPY PDB) are read, and the probe is translated by
 \[
@@ -358,11 +342,11 @@ where $\bar{x},\bar{y},\bar{z}$ denote centroid coordinates of the sheet ($g$) a
 ($p$), and $d$ is the chosen separation. The first two components centre the probe over the sheet
 in the plane; the third places its lowest atom at a height $d$ above the graphene plane.
 
-The separation $d$ was taken from the literature rather than chosen arbitrarily. Van der
+The separation $d$ is taken from the literature rather than chosen arbitrarily. Van der
 Waals-corrected density-functional calculations place physisorbed DNA nucleobases at
 $3.16$--$3.22$~\AA{} above the graphene plane, a regime of strong physisorption dominated by van
 der Waals interactions \citep{tayo2023}, consistent with the physisorption picture established for
-the four bases on graphene and h-BN \citep{lee2013}. Accordingly, $d = 3.2$~\AA{} was used as the
+the four bases on graphene and h-BN \citep{lee2013}. Accordingly, $d = 3.2$~\AA{} is used as the
 default, so that the assembled model starts at the reported equilibrium contact distance. The
 separation is an explicit parameter of the script and can be set to any other value.
 
@@ -395,7 +379,7 @@ molecular docking or force-field refinement, but no interaction energy is comput
 \label{sec:debyemethod}
 
 From each model, the part of the probe that lies close enough to the graphene to escape electrostatic
-screening was measured. The mean $z$ of the graphene atoms defines the plane of the sheet, and the height
+screening is measured. The mean $z$ of the graphene atoms defines the plane of the sheet, and the height
 of every probe atom above it is computed. Two quantities are reported: the percentage of probe atoms whose
 height does not exceed the Debye length $\lambda_D$, and the number of phosphorus atoms within it. The
 second is the more direct measure of what the transistor senses, since the charge of DNA is carried by its
@@ -406,12 +390,12 @@ transistors that used these same buffers, where they were calculated with the De
 approximation \citep{purwidyantri2021}: $0.76$~nm for $1\times$~PBS, $2.41$~nm for
 $0.1\times$~PBS and $7.61$~nm for $0.01\times$~PBS.
 
-Three geometries were measured. The first is the rigid placement described above, which keeps the
+Three geometries are measured. The first is the rigid placement described above, which keeps the
 orientation predicted by Boltz-2. The second reproduces the immobilisation used in the graphene-transistor
 studies that define the experimental context of this work, in which the probe carries an amino
 modification at its $3'$ end and is bound through \acrfull{pbse}, a linker whose pyrene group adsorbs on
 graphene by $\pi$--$\pi$ stacking \citep{campos2019,purwidyantri2021}: the probe is tethered by its $3'$
-end. To sample the orientations such a tether allows, each predicted structure was given $20\,000$
+end. To sample the orientations such a tether allows, each predicted structure is given $20\,000$
 orientations, drawn as directions distributed uniformly on the sphere; for a flat sheet, the height of
 every atom depends only on which direction of the molecule points away from the surface, so rotations
 about that direction need not be sampled. In each orientation the lowest atom is placed at the contact
@@ -421,10 +405,10 @@ is added, so the $3'$ end sits as close to the surface as possible. The median a
 retained orientations are reported. The third geometry applies the same procedure to the probe--target
 duplex, anchored by the $3'$ end of the probe, and counts the phosphates of the target strand within
 $\lambda_D$: the charge that hybridisation brings into the sensing volume. As a check on the predicted
-duplex geometry, its rise per base pair was computed from the midpoints of the C1$'$ atoms of the paired
+duplex geometry, its rise per base pair is computed from the midpoints of the C1$'$ atoms of the paired
 nucleotides and compared with the $0.34$~nm of B-form DNA \citep{watsoncrick1953}.
 
-The probes of each gene were finally compared on two independent axes, the Boltz-2 confidence and the
+The probes of each gene are finally compared on two independent axes, the Boltz-2 confidence and the
 median number of phosphates within $\lambda_D$ in $1\times$~PBS for the anchored probe. The probes on the
 Pareto front of the two --- those for which no other probe of the same gene is at least as good on both
 axes and better on one --- form the final selection. Using the front rather than a weighted sum avoids an

@@ -1,7 +1,7 @@
 """
 Schematic figures for the dissertation that are not produced by scripts/analysis.py.
 
-Three figures, each drawn from the committed result tables so that the numbers printed on
+Five figures, each drawn from the committed result tables so that the numbers printed on
 them cannot drift from the text:
 
   pipeline_funnel.png   the stages of the method and the candidate windows surviving each
@@ -10,6 +10,9 @@ them cannot drift from the text:
                         criteria of each probe's own species and type
   debye_geometries.png  the three geometries in which the Debye coverage is measured, with
                         the measured phosphate counts
+  gfet_schematic.png    the sensing interface and the transfer characteristic, with the
+                        vertical axis of the interface drawn to scale
+  pareto_front.png      confidence against anchored charge per gene, with the retained front
 
 Usage:
     python scripts/thesis_figures.py
@@ -223,6 +226,170 @@ def debye_geometries():
     plt.close(fig)
 
 
+# ----------------------------------------------------------------- figure 4
+def gfet_schematic():
+    """Sensing principle of an electrolyte-gated GFET, drawn to scale in z."""
+    fig, (ax, ax2) = plt.subplots(1, 2, figsize=(7.8, 3.5),
+                                  gridspec_kw={"width_ratios": [1.55, 1]})
+
+    # ---- (a) cross-section, vertical axis to scale --------------------------
+    ax.set_xlim(0, 1)
+    ax.set_ylim(0, 1)
+    ax.axis("off")
+
+    GRAPH_Y = 0.26                 # graphene plane
+    NM = 0.0664                    # one nanometre, in axes units
+    LAM = 0.76 * NM                # Debye length at 1x PBS
+    GAP = 0.32 * NM                # 3.2 A contact distance
+    BP = 0.34 * NM                 # rise per base pair
+    NBP = 20                       # a representative probe of the panel
+    XA = 0.36                      # where the probe stands
+
+    # electrolyte
+    ax.add_patch(Rectangle((0.05, GRAPH_Y), 0.90, 0.69,
+                           facecolor=PALE, alpha=0.35, edgecolor="none", zorder=0))
+    ax.text(0.935, 0.80, "electrolyte\n($1\\times$ PBS)", ha="right", va="top",
+            fontsize=8, color=INK2, zorder=5)
+
+    # substrate, graphene, contacts
+    ax.add_patch(Rectangle((0.05, 0.06), 0.90, 0.20,
+                           facecolor="#e8e7e0", edgecolor=LINE, lw=0.8, zorder=1))
+    ax.text(0.50, 0.13, "Si / SiO$_2$", ha="center", va="center",
+            fontsize=8, color=INK2, zorder=2)
+    ax.plot([0.05, 0.95], [GRAPH_Y, GRAPH_Y], color=INK, lw=2.6,
+            solid_capstyle="butt", zorder=4)
+    for x0, lab in ((0.05, "source"), (0.79, "drain")):
+        ax.add_patch(Rectangle((x0, GRAPH_Y), 0.16, 0.075,
+                               facecolor=DARK, edgecolor="none", zorder=5))
+        ax.text(x0 + 0.08, GRAPH_Y + 0.0375, lab, ha="center", va="center",
+                fontsize=7.5, color="white", zorder=6)
+    ax.text(0.50, GRAPH_Y - 0.022, "graphene channel", ha="center", va="top",
+            fontsize=8, color=INK, zorder=6)
+
+    # Debye length, to scale against the duplex
+    ax.add_patch(Rectangle((0.21, GRAPH_Y), 0.58, LAM,
+                           facecolor=MID, alpha=0.6, edgecolor="none", zorder=2))
+    ax.annotate("$\\lambda_D = 0.76$ nm", xy=(0.70, GRAPH_Y + LAM / 2),
+                xytext=(0.72, 0.35), ha="left", fontsize=8, color=INK, zorder=6,
+                arrowprops=dict(arrowstyle="-", color=INK2, lw=0.7,
+                                shrinkA=2, shrinkB=0))
+
+    # pyrene linker on the sheet, then the duplex standing on it
+    ax.plot([XA, XA], [GRAPH_Y + 0.004, GRAPH_Y + GAP], color=INK2, lw=1.1, zorder=6)
+    ax.plot([XA - 0.020, XA + 0.020], [GRAPH_Y + 0.007] * 2,
+            color=INK2, lw=2.6, solid_capstyle="round", zorder=6)
+    ax.annotate("pyrene linker", xy=(XA - 0.018, GRAPH_Y + 0.012),
+                xytext=(0.45, 0.37), ha="left", va="center", fontsize=7.5,
+                color=INK2, zorder=7,
+                arrowprops=dict(arrowstyle="-", color=INK2, lw=0.7,
+                                shrinkA=2, shrinkB=0))
+
+    y0 = GRAPH_Y + GAP
+    top = y0 + NBP * BP
+    for i in range(NBP + 1):
+        y = y0 + i * BP
+        ax.plot([XA - 0.028, XA + 0.028], [y, y], color=MUTED, lw=0.6, zorder=5)
+    ax.plot([XA - 0.028] * 2, [y0, top], color=DARK, lw=2.0, zorder=6)
+    ax.plot([XA + 0.028] * 2, [y0, top], color="#b3541e", lw=2.0, zorder=6)
+    ax.text(XA - 0.046, (y0 + top) / 2, "probe\n($3'$-anchored)", ha="right", va="center",
+            fontsize=7.5, color=DARK, zorder=6)
+    ax.text(XA + 0.046, (y0 + top) / 2, "target", ha="left", va="center",
+            fontsize=7.5, color="#b3541e", zorder=6)
+
+    # the length that matters
+    ax.annotate("", xy=(0.66, y0), xytext=(0.66, top),
+                arrowprops=dict(arrowstyle="<->", color=INK2, lw=0.8), zorder=6)
+    ax.text(0.68, (y0 + top) / 2, f"duplex\n{NBP} bp $=$ {NBP * 0.34:.1f} nm",
+            ha="left", va="center", fontsize=7.5, color=INK2, zorder=6)
+
+    # gate
+    ax.add_patch(Rectangle((0.07, 0.86), 0.24, 0.055,
+                           facecolor=INK2, edgecolor="none", zorder=5))
+    ax.text(0.19, 0.888, "gate $V_G$", ha="center", va="center",
+            fontsize=7.5, color="white", zorder=6)
+    ax.plot([0.19, 0.19], [0.80, 0.86], color=INK2, lw=0.9, zorder=5)
+
+    ax.set_title("(a) sensing interface", fontsize=9, color=INK, loc="left", pad=6)
+
+    # ---- (b) transfer characteristic ---------------------------------------
+    vg = np.linspace(-0.15, 0.75, 400)
+    for vd, col, lab, ls in ((0.24, DARK, "probe only", "-"),
+                             (0.40, "#b3541e", "after hybridisation", "--")):
+        ax2.plot(vg, 0.30 + 3.1 * (vg - vd) ** 2, color=col, lw=1.6, ls=ls, label=lab)
+        ax2.plot([vd], [0.30], "o", color=col, ms=4.5, zorder=5)
+
+    ax2.annotate("", xy=(0.24, 0.17), xytext=(0.40, 0.17),
+                 arrowprops=dict(arrowstyle="<->", color=INK, lw=1.0))
+    ax2.text(0.32, 0.10, "$\\Delta V_{\\mathrm{CNP}}$", ha="center", va="top",
+             fontsize=8.5, color=INK)
+
+    ax2.set_xlabel("gate voltage $V_G$", fontsize=8.5, color=INK2)
+    ax2.set_ylabel("drain current $I_D$", fontsize=8.5, color=INK2)
+    ax2.set_xticks([])
+    ax2.set_yticks([])
+    ax2.set_ylim(0.02, 1.15)
+    for sp in ("top", "right"):
+        ax2.spines[sp].set_visible(False)
+    for sp in ("left", "bottom"):
+        ax2.spines[sp].set_color(LINE)
+    ax2.legend(frameon=False, fontsize=7.5, loc="upper center", handlelength=1.6)
+    ax2.set_title("(b) measured signal", fontsize=9, color=INK, loc="left", pad=6)
+
+    fig.tight_layout()
+    save(fig, "gfet_schematic")
+
+
+# ----------------------------------------------------------------- figure 5
+def pareto_front():
+    """Confidence against anchored charge, per gene, with the retained front."""
+    d = pd.read_csv(BASE_DIR / "results" / "debye_coverage.csv", sep=";")
+    col = "P_anchored_1x PBS"
+    genes = ["nuc", "rmpM", "lytA", "oprL", "algD", "frdB"]
+
+    fig, axes = plt.subplots(2, 3, figsize=(7.8, 4.8), sharex=True, sharey=True)
+    for ax, g in zip(axes.ravel(), genes):
+        sub = d[d.gene == g]
+        front = sub[sub.final_shortlist]
+        rest = sub[~sub.final_shortlist]
+
+        step = front.sort_values("confidence")
+        ax.step(step.confidence, step[col], where="post",
+                color=MID, lw=1.1, ls="--", zorder=1)
+
+        ax.scatter(rest.confidence, rest[col], s=34, facecolor="white",
+                   edgecolor=MUTED, lw=1.0, zorder=2)
+        ax.scatter(front.confidence, front[col], s=44, facecolor=DARK,
+                   edgecolor="none", zorder=3)
+        for _, r in front.iterrows():
+            ax.annotate(r.probe, (r.confidence, r[col]), textcoords="offset points",
+                        xytext=(0, 7), ha="center", fontsize=7, color=DARK)
+
+        ax.set_title(f"$\\mathit{{{g}}}$", fontsize=9, color=INK, loc="left", pad=4)
+        ax.set_ylim(-0.4, 6.4)
+        ax.set_yticks([0, 2, 4, 6])
+        ax.tick_params(labelsize=8, colors=INK2, length=3)
+        ax.grid(axis="y", color=LINE, lw=0.5, alpha=0.5)
+        ax.set_axisbelow(True)
+        for sp in ("top", "right"):
+            ax.spines[sp].set_visible(False)
+        for sp in ("left", "bottom"):
+            ax.spines[sp].set_color(LINE)
+
+    fig.supxlabel("Boltz-2 confidence", fontsize=9, color=INK2, y=0.055)
+    fig.supylabel("phosphates within $\\lambda_D$ (median, $1\\times$ PBS)",
+                  fontsize=9, color=INK2, x=0.015)
+
+    fig.legend(handles=[
+        plt.Line2D([], [], marker="o", ls="", markerfacecolor=DARK,
+                   markeredgecolor="none", ms=7, label="on the front (selected)"),
+        plt.Line2D([], [], marker="o", ls="", markerfacecolor="white",
+                   markeredgecolor=MUTED, ms=7, label="dominated"),
+    ], loc="lower center", ncol=2, frameon=False, fontsize=8, bbox_to_anchor=(0.5, -0.01))
+
+    fig.tight_layout(rect=(0.02, 0.09, 1, 1))
+    save(fig, "pareto_front")
+
+
 if __name__ == "__main__":
     OUT.mkdir(parents=True, exist_ok=True)
     FIGDIR.mkdir(parents=True, exist_ok=True)
@@ -230,3 +397,5 @@ if __name__ == "__main__":
     pipeline_funnel()
     reference_panel()
     debye_geometries()
+    gfet_schematic()
+    pareto_front()
