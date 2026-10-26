@@ -58,7 +58,8 @@ procedure of Chapter~3 and its effect on the candidate pool can be read together
 \begin{center}
 \includegraphics[width=0.84\textwidth]{images/pipeline_funnel.pdf}
 \end{center}
-\caption{Stages of the pipeline and the number of candidates surviving each one. The first four
+\caption[Screening funnel]{Screening funnel: stages of the pipeline and the number of candidates
+surviving each one. The first four
 stages act on sequences rather than on candidate windows, so no count is given for them; the bars
 begin with the windows produced by the sliding window and end with the final selection. The counts
 are those of Table~\ref{tab:funnel}, obtained in $1\times$~PBS.}
@@ -82,7 +83,8 @@ are those of Table~\ref{tab:funnel}, obtained in $1\times$~PBS.}
 \hline
 \end{tabular}
 \end{center}
-\caption{Screening funnel in $1\times$~PBS: candidate windows surviving each successive filter.
+\caption[Candidates surviving each filter]{Screening funnel in $1\times$~PBS: candidate windows
+surviving each successive filter.
 ``Basic'' is the number passing all four thermodynamic criteria; ``Seqfold'' additionally passes the
 secondary-structure screen.}
 \label{tab:funnel}
@@ -206,7 +208,8 @@ and the most conserved/redundant (\emph{frdB}) genes.}
 \begin{center}
 \includegraphics[width=\textwidth]{images/diversity_heatmaps.png}
 \end{center}
-\caption{Pairwise $4$-mer distance heatmaps per gene (alignment-free). Each cell is the $4$-mer
+\caption[Sequence diversity per gene]{Sequence diversity per gene: pairwise $4$-mer distance
+heatmaps (alignment-free). Each cell is the $4$-mer
 distance between two retrieved sequences of the gene.}
 \label{fig:diversity}
 \end{figure}
@@ -224,7 +227,8 @@ available in \acrshort{ncbi} for the data-limited genes.
 \begin{center}
 \includegraphics[width=\textwidth]{images/rarefaction.png}
 \end{center}
-\caption{Rarefaction of the mean $4$-mer diversity (left) and of the richness, i.e.\ the number
+\caption[Choice of sampling depth]{Choice of sampling depth: rarefaction of the mean $4$-mer
+diversity (left) and of the richness, i.e.\ the number
 of distinct $4$-mers (right), per gene, as a function of the number of subsampled sequences.}
 \label{fig:rarefaction}
 \end{figure}
@@ -252,7 +256,8 @@ the composition of each genome, which can tighten the requirement as readily as 
 \begin{center}
 \includegraphics[width=\textwidth]{images/reference_panel.pdf}
 \end{center}
-\caption{The $74$ reference probes under a single global criterion and under the criteria of each
+\caption[Organism-aware criteria on the reference panel]{Organism-aware criteria on the reference
+panel: the $74$ reference probes under a single global criterion and under the criteria of each
 probe's own species and type, by organism type (left), and the probes whose outcome changes
 (right).}
 \label{fig:refpanel}
@@ -324,7 +329,8 @@ surface, which is the property quantified in Section~\ref{sec:debyeres}.
 \hline
 \end{tabular}
 \end{center}
-\caption{Geometry of the $30$ assembled probe--graphene models. ``Extent'' is the largest in-plane
+\caption[Geometry of the assembled models]{Geometry of the $30$ assembled probe--graphene models.
+``Extent'' is the largest in-plane
 dimension of the probe, which determined the sheet size; ``height'' is its vertical extent; and
 ``closest contact'' the shortest probe--sheet interatomic distance.}
 \label{tab:complexes}
@@ -343,7 +349,8 @@ compact, with a vertical extent of 23.3~\AA{}, whereas \emph{p6922} reaches
 \includegraphics[width=\textwidth]{images/complex_p5178_algD.png}\\[0.6em]
 \includegraphics[width=\textwidth]{images/complex_p6922_frdB.png}
 \end{center}
-\caption{Assembled probe--graphene models for \emph{p5178} (\emph{algD}, top) and \emph{p6922}
+\caption[Assembled probe--graphene models]{Assembled probe--graphene models for \emph{p5178}
+(\emph{algD}, top) and \emph{p6922}
 (\emph{frdB}, bottom), rendered from the model coordinates. Left: side view, with the graphene
 plane, the probe above it and the $3.2$~\AA{} separation indicated. Right: top view, showing the
 probe footprint within the $121.6 \times 119.8$~\AA{} sheet. Probe atoms are coloured by element;
@@ -375,7 +382,8 @@ specificity of the duplex without bringing it inside.
 \begin{center}
 \includegraphics[width=0.85\textwidth]{images/debye_scale.png}
 \end{center}
-\caption{Length of a hybridised probe (B-form duplex, $0.34$~nm per base pair \citep{watsoncrick1953})
+\caption[Probe length against the Debye length]{Probe length against the Debye length: a hybridised
+probe (B-form duplex, $0.34$~nm per base pair \citep{watsoncrick1953})
 for the shortest, median and longest probes selected ($18$, $20$ and $26$ nucleotides), compared on the
 same vertical scale with the Debye length of the three PBS dilutions \citep{purwidyantri2021}. The dark
 segment is the part within $\lambda_D$ in $1\times$~PBS. The geometry drawn is the most favourable
@@ -414,7 +422,8 @@ Limit of detection (aM)                     & 22.60 & 7.58  & 5.01  \\
 \hline
 \end{tabular}
 \end{center}
-\caption{Debye length of the three PBS dilutions, the corresponding number of base pairs of a B-form
+\caption[Debye length and device response per dilution]{Debye length of the three PBS dilutions,
+the corresponding number of base pairs of a B-form
 duplex ($0.34$~nm per base pair \citep{watsoncrick1953}), and the response of graphene transistors to the
 hybridisation of a $25$-nucleotide target in each dilution, as reported by \citet{purwidyantri2021}.}
 \label{tab:inl}
@@ -453,7 +462,8 @@ with the measured counts that the following sections report.
 \begin{center}
 \includegraphics[width=\textwidth]{images/debye_geometries.pdf}
 \end{center}
-\caption{The three geometries in which the Debye coverage is measured, drawn against the screening
+\caption[Geometries of the Debye measurement]{Geometries of the Debye measurement, drawn against
+the screening
 length at $1\times$~PBS (shaded band). Left: the rigid placement, which preserves the orientation
 predicted by Boltz-2 and rests the lowest atom at the contact distance. Centre: the probe tethered
 by its $3'$ end, as it is immobilised experimentally. Right: the probe hybridised to its target,
@@ -501,7 +511,8 @@ LOW & 13 & 33.4 & 8.5\% & 73.4\% & 10/13 & 100.0\% \\
 \hline
 \end{tabular}
 \end{center}
-\caption{Debye coverage of the $30$ models by Boltz-2 confidence class. ``Height'' is the median
+\caption[Debye coverage by confidence class]{Debye coverage of the $30$ models by Boltz-2
+confidence class. ``Height'' is the median
 height of the probe above the graphene plane; the coverage columns give the median percentage of
 probe atoms within $\lambda_D$ in each buffer, and the sixth column the number of models of each
 class with at least half of the probe inside $\lambda_D$ at $0.1\times$~PBS.}
@@ -610,7 +621,8 @@ and it is set out in Section~\ref{sec:limitations}.
 \hline
 \end{tabular}
 \end{center}
-\caption{Final selection: the probes on the Pareto front of Boltz-2 confidence and anchored
+\caption[Final selection]{Final selection: the probes on the Pareto front of Boltz-2 confidence
+and anchored
 phosphates within $\lambda_D$ in $1\times$~PBS, by gene. ``Orientations'' is the number of sampled
 orientations retained for the probe.}
 \label{tab:final}
