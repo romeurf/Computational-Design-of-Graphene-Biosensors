@@ -18,6 +18,7 @@ same metrics, the diversity analysis that justifies the sampling depth, and the 
 intermediate results.
 
 \section{Sequence retrieval from NCBI}
+\label{sec:retrieval}
 
 For each target, sequences are retrieved from the \acrshort{ncbi} nucleotide database through the Entrez
 interface. An \texttt{esearch} query returns up to a configurable number of identifiers (set to $100$ in
@@ -32,12 +33,15 @@ single usable record, a single-sequence mode is used.
 \section{Length clustering}
 
 Public records mix full-length genes with partial fragments and oversized entries, which together produce
-gap-ridden alignments. An automatic length-clustering step therefore retains only the dominant length
-cluster: the sequence length whose $\pm 25\%$ band contains the most records is taken as the centre, and
-only records within that band are kept. The selection is data-driven --- no per-gene minimum or maximum
-length is tuned by hand --- so the method transfers to new genes without adjustment. It is applied only
-when at least four records are available, and a safeguard prevents the set from being reduced below two
-sequences.
+gap-ridden alignments. The coarse length range of the retrieval query
+(Section~\ref{sec:retrieval}) excludes only the grossest outliers; the records that survive it still
+differ enough in length to degrade an alignment. An automatic length-clustering step therefore
+retains only the dominant length cluster: the sequence length whose $\pm 25\%$ band contains the most
+records is taken as the centre, and only records within that band are kept. Within the retrieved
+range the selection is thus data-driven --- the band is placed by the distribution of the records
+themselves, not by a bound set by hand for each gene --- so the method transfers to new genes without
+further adjustment. It is applied only when at least four records are available, and the step is
+skipped altogether if the dominant cluster would contain fewer than two records.
 
 \section{Multiple sequence alignment}
 
@@ -216,11 +220,6 @@ threshold; the protozoan profile is AT-shifted.}
 \label{tab:types}
 \end{table}
 
-When the pipeline encounters an organism for which no profile exists and is run interactively, it prompts
-the user for the organism type and for each threshold, proposing a suggested value that can be accepted or
-overridden; the resulting profile is stored and reused in later runs. When run non-interactively, it applies
-the suggested values without prompting.
-
 \paragraph{Gene profiles.} At the most specific layer, each gene of the panel has a profile that departs
 from the global defaults only where its sequences require it (Table~\ref{tab:geneprofiles}). The GC
 windows follow the measured composition of each target: the AT-rich \emph{nuc} and \emph{frdB} sequences
@@ -255,6 +254,11 @@ the reference buffer (Section~\ref{sec:thermo}).
 gaps excluded. Parameters not listed take the global defaults of Table~\ref{tab:params}.}
 \label{tab:geneprofiles}
 \end{table}
+
+When the pipeline encounters an organism for which no profile exists and is run interactively, it prompts
+the user for the organism type and for each threshold, proposing a suggested value that can be accepted or
+overridden; the resulting profile is stored and reused in later runs. When run non-interactively, it applies
+the suggested values without prompting.
 
 \section{Quality-based selection}
 

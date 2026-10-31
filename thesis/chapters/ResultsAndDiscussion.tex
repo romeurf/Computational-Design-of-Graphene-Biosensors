@@ -244,7 +244,7 @@ than of the sampling strategy.
 
 \begin{figure}[H]
 \begin{center}
-\includegraphics[width=\textwidth]{images/rarefaction.png}
+\includegraphics[width=\textwidth]{images/rarefaction.pdf}
 \end{center}
 \caption[Choice of sampling depth]{Choice of sampling depth: rarefaction of the mean $4$-mer
 diversity (left) and of the richness, i.e.\ the number
@@ -418,15 +418,18 @@ probe (B-form duplex, $0.34$~nm per base pair \citep{watsoncrick1953})
 for the shortest, median and longest probes selected ($18$, $20$ and $26$ nucleotides), compared on the
 same vertical scale with the Debye length of the three PBS dilutions \citep{purwidyantri2021}. The dark
 segment is the part within $\lambda_D$ in $1\times$~PBS. The geometry drawn is the most favourable
-one the duplex could adopt, so the dark segment is an upper bound: the duplex stands perpendicular
-to the surface and touches it, and no linker is interposed. Any departure from that arrangement
-lifts the duplex further away. Tilting it raises every base pair above the first, their height
-becoming the rise along the helix multiplied by the cosine of the tilt; the pyrene linker used to
-immobilise the probe adds its own length between the surface and the first nucleotide; and a
-strand adsorbed flat rather than standing, as single-stranded DNA tends to be on graphene
-\citep{green2015}, would lie within $\lambda_D$ but would no longer be free to hybridise.}
+one the duplex could adopt, so that segment is an upper bound: the duplex stands perpendicular to
+the surface and touches it, and no linker is interposed.}
 \label{fig:debyescale}
 \end{figure}
+
+Every departure from that arrangement lifts the duplex further from the surface, so the dark segment
+of Figure~\ref{fig:debyescale} is a quantity that cannot be exceeded in practice. Tilting the duplex
+raises every base pair above the first, their height becoming the rise along the helix multiplied by
+the cosine of the tilt. The pyrene linker used to immobilise the probe adds its own length between
+the surface and the first nucleotide. And a strand adsorbed flat rather than standing, as
+single-stranded DNA tends to be on graphene \citep{green2015}, would lie within $\lambda_D$ but
+would no longer be free to hybridise.
 
 Several further considerations support keeping $1\times$~PBS as the reference condition. It is the
 medium the device is meant to face: its osmolarity and ion concentration approximate those of
@@ -722,7 +725,42 @@ Finally, the same quality ranking was used to export a larger curated dataset: t
 probes per gene ($150$ probes in total), each with its sequence-level features (\acrshort{tm},
 GC, conservation, No-fold and folding energies). This dataset extends the set of $30$ probes
 predicted in 3D to a broader, biophysically annotated selection of the highest-quality
-candidates per gene.
+candidates per gene, summarised in Table~\ref{tab:curated}.
+
+\begin{table}[H]
+\begin{center}
+\begin{tabular}{l c c c c c}
+\hline
+\textbf{Gene} & \textbf{$n$} & \textbf{Conservation} & \textbf{No-fold} & \textbf{$T_m$ ($^{\circ}$C)}
+ & \textbf{Quality} \\
+\hline
+\emph{nuc}  & 25 & 0.976 & 93.7 & 57.0 & 0.957 \\
+\emph{rmpM} & 25 & 0.947 & 93.5 & 64.6 & 0.942 \\
+\emph{lytA} & 25 & 0.859 & 98.2 & 60.1 & 0.916 \\
+\emph{oprL} & 25 & 0.956 & 97.3 & 64.3 & 0.965 \\
+\emph{algD} & 25 & 0.881 & 91.0 & 65.3 & 0.893 \\
+\emph{frdB} & 25 & 0.990 & 97.8 & 60.7 & 0.985 \\
+\hline
+\textbf{All $150$}         & \textbf{150} & \textbf{0.955} & \textbf{96.3} & \textbf{62.4} & \textbf{0.954} \\
+\textbf{The $30$ predicted} & \textbf{30}  & \textbf{0.959} & \textbf{97.4} & \textbf{58.0} & \textbf{0.960} \\
+\hline
+\end{tabular}
+\end{center}
+\caption[Curated dataset]{Median sequence-level features of the curated dataset, by gene, with the
+whole set and the $30$ probes carried into three-dimensional prediction for comparison.}
+\label{tab:curated}
+\end{table}
+
+The comparison between the last two rows is the informative one. The $30$ probes selected for
+prediction sit barely above the median of the pool they were drawn from, on every feature: a quality
+score of $0.960$ against $0.954$, a conservation of $0.959$ against $0.955$, a No-fold score of
+$97.4$ against $96.3$. Across the whole dataset the quality score spans only $0.890$ to $0.993$.
+The sequence-level criteria, in other words, do not separate these candidates strongly; by the time
+a window has passed conservation and thermodynamic screening, the remaining differences between the
+survivors are small. That is the quantitative reason why the structural and interface criteria of
+Sections~\ref{sec:boltz} and~\ref{sec:debyeres} carry the selection, and why a probe ranked
+twentieth of its gene is a reasonable substitute should one of the first five fail a test this
+pipeline does not perform.
 
 Its purpose is to keep the work usable beyond the eleven probes finally selected. The structural
 and interface analyses are expensive and were therefore applied to five candidates per gene, but

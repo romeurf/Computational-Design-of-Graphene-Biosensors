@@ -1,7 +1,7 @@
 """
 Schematic figures for the dissertation that are not produced by scripts/analysis.py.
 
-Five figures, each drawn from the committed result tables so that the numbers printed on
+Six figures, each drawn from the committed result tables so that the numbers printed on
 them cannot drift from the text:
 
   pipeline_funnel.png   the stages of the method and the candidate windows surviving each
@@ -17,6 +17,7 @@ them cannot drift from the text:
 Usage:
     python scripts/thesis_figures.py
 """
+import sys
 from pathlib import Path
 
 import matplotlib
@@ -390,6 +391,67 @@ def pareto_front():
     save(fig, "pareto_front")
 
 
+# ----------------------------------------------------------------- figure 6
+def rarefaction():
+    """Mean 4-mer diversity and richness against subsample size, per gene.
+
+    Recomputed from the stored alignments with the same schedule and seed as
+    scripts/analysis.py, so the curves are identical to the ones that analysis
+    produces; only the drawing differs.
+    """
+    sys.path.insert(0, str(BASE_DIR / "scripts"))
+    from analysis import GENES, gene_input_seqs, kmer_matrix
+    from sklearn.metrics.pairwise import cosine_distances
+
+    rng = np.random.default_rng(0)
+    fig, axes = plt.subplots(1, 2, figsize=(7.8, 3.4))
+    # six unordered categories, so distinct hues and markers rather than one ramp
+    style = dict(zip(GENES, [("#256abf", "o"), ("#b3541e", "s"), ("#2f7d4f", "^"),
+                             ("#7a4fa3", "D"), ("#86b6ef", "v"), (INK2, "P")]))
+
+    for g in GENES:
+        seqs = gene_input_seqs(g)
+        n = len(seqs)
+        if n < 5:
+            continue
+        M = kmer_matrix(seqs)
+        sched = [m for m in (5, 10, 20, 30, 50, 75, 100, 150, 200) if m <= n]
+        if n not in sched:
+            sched.append(n)
+        divs, richs = [], []
+        for m in sched:
+            dd, rr = [], []
+            for _ in range(5):
+                sub = M[rng.choice(n, m, replace=False)]
+                if m >= 2:
+                    dd.append(cosine_distances(sub)[np.triu_indices(m, 1)].mean())
+                rr.append(int((sub.sum(axis=0) > 0).sum()))
+            divs.append(np.mean(dd) if dd else 0.0)
+            richs.append(np.mean(rr))
+        col, mk = style[g]
+        for ax, y in ((axes[0], divs), (axes[1], richs)):
+            ax.plot(sched, y, marker=mk, ms=3.8, lw=1.4, color=col,
+                    label=f"$\\mathit{{{g}}}$")
+
+    axes[0].set_ylabel("mean $4$-mer distance", fontsize=8.5, color=INK2)
+    axes[1].set_ylabel("distinct $4$-mers", fontsize=8.5, color=INK2)
+    for ax in axes:
+        ax.set_xlabel("sequences subsampled", fontsize=8.5, color=INK2)
+        ax.tick_params(labelsize=8, colors=INK2, length=3)
+        ax.grid(axis="y", color=LINE, lw=0.5, alpha=0.6)
+        ax.set_axisbelow(True)
+        for sp in ("top", "right"):
+            ax.spines[sp].set_visible(False)
+        for sp in ("left", "bottom"):
+            ax.spines[sp].set_color(LINE)
+
+    handles, labels = axes[0].get_legend_handles_labels()
+    fig.legend(handles, labels, loc="lower center", ncol=6, frameon=False,
+               fontsize=8.5, bbox_to_anchor=(0.5, -0.02))
+    fig.tight_layout(rect=(0, 0.08, 1, 1))
+    save(fig, "rarefaction")
+
+
 if __name__ == "__main__":
     OUT.mkdir(parents=True, exist_ok=True)
     FIGDIR.mkdir(parents=True, exist_ok=True)
@@ -399,3 +461,4 @@ if __name__ == "__main__":
     debye_geometries()
     gfet_schematic()
     pareto_front()
+    rarefaction()
